@@ -1,0 +1,25 @@
+[
+  {
+    "question": "What is data annotation used for?",
+    "options": [
+      "To decorate data",
+      "To confuse AI models",
+      "To prepare data for training AI models",
+      "To delete incorrect data"
+    ],
+    "answer": "To prepare data for training AI models",
+    "video": "https://youtu.be/FSV1uAMbYqM?list=PLeBirUGntTt1TGeuP3xQX9ZbpeGSdbmzm"
+  },
+
+  {
+    "question": "Why is speech data collection important?",
+    "options": [
+      "To train speech recognition systems",
+      "To collect data for training speech recognition systems",
+      "To collect data for training natural language processing systems",
+      "To collect data for training machine learning models"
+    ],
+    "answer": "To collect data for training speech recognition systems",
+    "video": "https://youtu.be/FSV1uAMbYqM?list=PLeBirUGntTt1TGeuP3xQX9ZbpeGSdbmzm"
+  }
+]
