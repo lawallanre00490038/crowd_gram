@@ -211,4 +211,4 @@ MIT License © 2025 EqualyzAI
 ## 📞 Contact
 
 - Email: uche@equalyz.ai
-- Telegram: [@youradmin](https://t.me/equalyzcrowd)
+- Telegram: [@equalyzcrowd](https://t.me/equalyzcrowd)
