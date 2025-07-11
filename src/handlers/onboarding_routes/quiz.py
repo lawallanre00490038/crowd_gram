@@ -17,13 +17,6 @@ async def start_quiz(message: Message, state: FSMContext):
     await send_quiz_question(message, state)
 
 
-@quiz_router.message(Onboarding.intro, F.text.lower() == "done")
-async def start_quiz_trigger(message: Message, state: FSMContext):
-    await message.answer("✅ Great! Let's begin the short quiz.")
-    await state.update_data(current_q=0, score=0, retry_count=0)
-    await send_quiz_question(message, state)
-
-
 async def send_quiz_question(message: Message, state: FSMContext):
     data = await state.get_data()
     q_index = data["current_q"]
