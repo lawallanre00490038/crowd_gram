@@ -2,7 +2,7 @@ from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from src.states.onboarding import Onboarding
-from src.keyboards.reply import gender_kb, task_type_kb
+from src.keyboards.reply import gender_kb, task_type_kb, industry_kb, primary_device_kb, dialect_fluency_kb, internet_quality_kb
 from src.keyboards.inline import g0_to_tutorials_kb
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.state import State, StatesGroup
@@ -28,9 +28,15 @@ class Tutorial(StatesGroup):
 
 @router.message(F.text == "/start")
 async def cmd_start(message: Message, state: FSMContext):
-    await message.answer(
-        "👋 Welcome! Let's get you onboarded.\n\n"
+    welcome_text=(    
+        "👋 Welcome to EqualyzAI!\n\n"
+        "We're building the future of AI by collecting multilingual data across Africa.\n\n"
+        "As a contributor, you'll help train AI models and earn money for quality work.\n\n"
+        "This quick onboarding sets up your profile so we can match you with the best tasks.\n\n"
+        "Let’s begin! 🚀"
     )
+    await message.answer(welcome_text)
+    
     await message.answer(
         "🧠 You will be guided through a series of videos to learn about the basics of data collection and annotation.\n\n",
         reply_markup=g0_to_tutorials_kb()
@@ -112,12 +118,12 @@ async def quiz_ready_response(callback: CallbackQuery, state: FSMContext):
 
 
 
-
 # --- Collect name ---
 @router.message(Onboarding.name)
 async def get_name(message: Message, state: FSMContext):
     await state.update_data(name=message.text.strip())
-    await message.answer("📱 What's your phone number?")
+    await message.answer("📱 What's your phone number?\n\n" \
+    "Format: +234XXXXXXXXX (include country code)")
     await state.set_state(Onboarding.phone)
 
 
@@ -125,7 +131,7 @@ async def get_name(message: Message, state: FSMContext):
 @router.message(Onboarding.phone)
 async def get_phone(message: Message, state: FSMContext):
     await state.update_data(phone=message.text.strip())
-    await message.answer("⚧ What’s your gender?", reply_markup=gender_kb)
+    await message.answer("⚧ What’s your gender? Your privacy is protected - this data is never shared publicly.", reply_markup=gender_kb)
     await state.set_state(Onboarding.gender)
 
 
@@ -141,7 +147,7 @@ async def get_gender(message: Message, state: FSMContext):
 @router.message(Onboarding.location)
 async def get_location(message: Message, state: FSMContext):
     await state.update_data(location=message.text.strip())
-    await message.answer("🗣️ Which languages or dialects do you speak?")
+    await message.answer("🗣️ Please list the languages or dialects you speak fluently (e.g., English, French, Yoruba, Fulfulde, Gungbe...).")
     await state.set_state(Onboarding.languages)
 
 
@@ -149,34 +155,83 @@ async def get_location(message: Message, state: FSMContext):
 @router.message(Onboarding.languages)
 async def get_languages(message: Message, state: FSMContext):
     await state.update_data(languages=message.text.strip())
-    await message.answer("🎓 What's your highest level of education?")
-    await state.set_state(Onboarding.education)
+    dialect_text = (
+        "🗣️ How well do you speak your local language or dialect?\n\n"
+        "Many of our tasks involve local languages, so this is very valuable!\n\n"
+        "Rate your fluency:"
+    )
+    await message.answer(dialect_text, reply_markup=dialect_fluency_kb)
+    await state.set_state(Onboarding.dialect_fluency)
 
+# --- Dialect Fluency ---
+@router.message(Onboarding.dialect_fluency)
+async def get_dialect_fluency(message: Message, state: FSMContext):
+    await state.update_data(dialect_fluency=message.text.strip())
+    await message.answer("🎓 What's your highest level of education? "\
+    "Examples: High School, Bachelor's Degree, Master's, PhD, Technical Diploma...")
+    await state.set_state(Onboarding.education)
 
 # --- Education ---
 @router.message(Onboarding.education)
 async def get_education(message: Message, state: FSMContext):
     await state.update_data(education=message.text.strip())
+    industry_text=(
+        "💼 What field do you work in or have experience with?\n\n"
+        "Choose the option that best describes you:"
+    )
+    await message.answer(industry_text, reply_markup = industry_kb)
+    await state.set_state(Onboarding.industry)
+
+# --- Industry ---
+@router.message(Onboarding.industry)
+async def get_industry(message: Message, state: FSMContext):
+    await state.update_data(industry=message.text.strip())
+    device_text = (
+        "📱 What device do you mainly use for work and internet?\n\n"
+        "Select your primary device:"
+    )
+    await message.answer(device_text, reply_markup=primary_device_kb)
+    await state.set_state(Onboarding.primary_device)
+
+
+# --- Primary Device ---
+@router.message(Onboarding.primary_device)
+async def get_primary_device(message: Message, state: FSMContext):
+    await state.update_data(primary_device=message.text.strip())
+    internet_text = (
+        "🌐 How reliable is your internet connection?\n\n"
+        "Rate your internet:"
+    )
+    await message.answer(internet_text, reply_markup=internet_quality_kb)
+    await state.set_state(Onboarding.internet_quality)
+
+@router.message(Onboarding.internet_quality)
+async def get_internet_quality(message: Message, state: FSMContext):
+    await state.update_data(internet_quality=message.text.strip())
     await message.answer("📌 What types of tasks would you like to work on?", reply_markup=task_type_kb)
     await state.set_state(Onboarding.task_type)
-
 
 # --- Task preferences ---
 @router.message(Onboarding.task_type)
 async def get_task_type(message: Message, state: FSMContext):
     await state.update_data(task_type=message.text.strip())
-    await message.answer("💡 Do you have a referral code? (If none, type 'none')")
+    await message.answer("🤝 Referral Code (Optional)\n\n" 
+    "Were you invited by another contributor?\n\n"
+    "If yes, please enter their referral code;" 
+    "If none, just type 'none'"
+    )
     await state.set_state(Onboarding.referrer)
 
-
+  
 # --- Referrer ---
 @router.message(Onboarding.referrer)
 async def get_referrer(message: Message, state: FSMContext):
     await state.update_data(referrer=message.text.strip())
-
+   
     user_data = await state.get_data()
     # Here you would save to your DB
-    await message.answer("🎉 Thank you! You're now onboarded and ready for tasks.")
+    await message.answer("🎉 Thank you! You're now onboarded and ready for tasks.\n\n" \
+    "Welcome to the EqualyzAI contributor community! 🌟")
 
     # Set agent status to 'Pending' and notify admin optionally
     # Trigger next stage (demo task, eligibility test, etc.)
@@ -188,9 +243,13 @@ async def get_referrer(message: Message, state: FSMContext):
         f"Gender: {user_data['gender']}\n"
         f"Location: {user_data['location']}\n"
         f"Languages: {user_data['languages']}\n"
+        f"Dialect Fluency: {user_data['dialect_fluency']}\n"
         f"Education: {user_data['education']}\n"
+        f"Industry: {user_data['industry']}\n"
+        f"Primary Device: {user_data['primary_device']}\n"
+        f"Internet Quality: {user_data['internet_quality']}\n"
         f"Task Type: {user_data['task_type']}\n"
         f"Referrer: {user_data['referrer']}"
-    )
-    
+    )  
+
     await state.clear()
