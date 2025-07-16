@@ -1,0 +1,15 @@
+git fetch origin onboarding:onboarding
+git checkout onboarding
+
+git diff main...onboarding
+
+
+
+1. If you’re satisfied with the changes
+Switch back to main and merge:
+
+bash
+Copy
+Edit
+git checkout main
+git merge onboarding
