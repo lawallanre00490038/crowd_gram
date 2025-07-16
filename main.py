@@ -20,9 +20,10 @@ async def main():
     dp.include_router(admin.router)
     dp.include_router(errors.router)
 
+    await bot.delete_webhook(drop_pending_updates=True)
     print("✅ Bot is running... Press Ctrl+C to stop.")
-
-    await dp.start_polling(bot)
+    _ = asyncio.create_task(coro=community.send_leaderboard_weekly())
+    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 if __name__ == "__main__":
     asyncio.run(main())
