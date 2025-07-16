@@ -12,10 +12,14 @@ class Agent(Base):
     gender = Column(String)
     location = Column(String)
     languages = Column(String)
+    industry= Column(String)
+    primary_device= Column (String)
+    dialect_fluency= Column (String)
+    internet_quality= Column (String)
     education = Column(String)
     preferences = Column(String)
-    device = Column(String)
-    internet = Column(String)
+    device = Column(String) #replaced by primary device?
+    internet = Column(String) #replaced by internet_quality?
     referrer_id = Column(Integer)
     status = Column(Enum("pending", "eligible", "ineligible", name="status_enum"))
     score = Column(Integer, default=0)
