@@ -22,7 +22,14 @@ async def main():
 
     await bot.delete_webhook(drop_pending_updates=True)
     print("✅ Bot is running... Press Ctrl+C to stop.")
-    _ = asyncio.create_task(coro=community.send_leaderboard_weekly())
+
+  
+    _ =  asyncio.create_task(coro=community.send_leaderboard_weekly())
+    _ = asyncio.create_task(coro=community.send_broadcast("new_projects"))
+    _ =  asyncio.create_task(coro=community.send_broadcast("new_trainings"))
+    _ = asyncio.create_task(coro=community.send_broadcast("new_policys"))  
+    
+
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 if __name__ == "__main__":

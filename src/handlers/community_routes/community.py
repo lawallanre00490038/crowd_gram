@@ -6,14 +6,14 @@ from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
 from prettytable import PrettyTable
-
-from src.config import CHANNEL_ID
+from time import sleep
+from src.config import CHANNEL_ID, BOT_TOKEN
 from src.loader import bot
-
+from aiogram.utils.formatting import Bold, Text
 
 
 router = Router()
-
+json_data_broadcast_project = "[]"
 json_data = """
 [
   {
@@ -59,6 +59,53 @@ json_data = """
 ]
 """
 
+json_data_broadcast_project_insert1 = """
+    {
+      "Task": "audio",
+      "Cat": "static",
+      "Language": "Yoruba",
+      "Count": 4
+   }
+"""
+json_data_broadcast_project_insert2 = """
+  {
+      "Task": "text",
+      "Cat": "translation",
+      "Lang": "Hausa",
+      "Count": 20
+  }  
+"""
+json_data_broadcast_policy_insert1 = """
+    {
+      "policy 1": "We have decided to increase time of voice recordings",
+      "policy 2": "We have added a annotation fee"
+    }
+"""
+
+json_data_broadcast_policy_insert2 = """
+    {
+      "policy 3": "There are no more tasks for images",
+      "policy 4": "We have added a translation fee"     
+    }
+"""
+
+json_data_broadcast_trainings_insert1 = """
+    {
+      "Message": "We are training on text annotation",
+      "Date":  "11/12/25",
+      "Time": "8:00AM",
+      "Venue": "Zoom" 
+    }
+"""
+
+json_data_broadcast_trainings_insert2 = """
+    {
+      "Message": "We are training on telegram onboarding",
+      "Date":  "12/12/26",
+      "Time": "9:00AM",
+      "Venue": "Zoom"  
+    }
+"""
 
 def format_json_to_table(json_data: str) -> str:
     try:
@@ -134,3 +181,77 @@ async def send_leaderboard_weekly():
         await bot.send_message(chat_id=CHANNEL_ID, text=text)
 
         await asyncio.sleep(delay=delay)
+inserts = []
+
+def json_to_list(data: str):
+    str_lst = ""
+    try:
+        new_list = json.loads(data)
+        for item in new_list:
+           if isinstance(item, dict):
+              for k, v in item.items():
+                str_lst+= f"{k}: {v}\n"
+        return str_lst
+    except Exception as err:
+        print(f"Issue with formatting list {err}")
+
+def insert_item(inserts):
+    try:
+      if len(inserts) == 0:
+        return None   
+      return json.loads(inserts.pop())
+    except Exception as err:
+        print(f"an error occured {err}")
+
+async def send_broadcast(brod_type: str):
+    """Broadcast New Projects, New Training, and New Policies"""
+    title = ""
+    # Logic to retrieve from the backend
+
+    insert_type = {
+        "new_projects":  [json_data_broadcast_project_insert1, json_data_broadcast_project_insert2], 
+        "new_trainings": [json_data_broadcast_trainings_insert1, json_data_broadcast_trainings_insert2] ,
+        "new_policys": [json_data_broadcast_policy_insert1, json_data_broadcast_policy_insert2]
+    }
+    broadcast_type = {
+        "new_projects": format_json_to_table,
+        "new_trainings": json_to_list,
+        "new_policys": json_to_list
+    }
+    title_name = {
+        "new_projects": "Projects",
+        "new_trainings": "Trainings",
+        "new_policys": "Policies"       
+    }    
+    type = broadcast_type.get(brod_type)
+    insert_type = insert_type.get(brod_type)
+    if insert_type:
+        inserts = insert_type
+    struct = brod_type
+    if title_name:
+        title = title_name.get(brod_type)
+    try: 
+      prev_state = "[]"
+      while True:
+          try:
+            if prev_state != "[]":
+                if type:    
+                  struct = type(prev_state)
+                  context = f"📢<b>Here are the New {title}</b>  \n<pre>{struct}</pre>"
+                  await bot.send_message(chat_id=CHANNEL_ID, text=context)
+                  prev_state = "[]"
+            await asyncio.sleep(10)
+            updated_projects = json.loads("[]")
+            updated_projects.append(insert_item(inserts))
+            
+            if None in updated_projects:
+                continue
+            prev_state = json.dumps(updated_projects).strip()
+
+          except Exception as err:
+              print(f"Something went wrong for the function {err}")
+              return
+    except Exception as err:
+        print(f"Something went wrong for the function {err}")
+        return 
+    
