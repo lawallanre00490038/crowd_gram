@@ -7,9 +7,8 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from prettytable import PrettyTable
 from time import sleep
-from src.config import CHANNEL_ID, BOT_TOKEN
+from src.config import CHANNEL_ID
 from src.loader import bot
-from aiogram.utils.formatting import Bold, Text
 
 
 router = Router()
