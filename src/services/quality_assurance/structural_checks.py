@@ -1,12 +1,11 @@
 import unicodedata
 import logging
+import re
 from better_profanity import profanity
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
 
 def check_junk(text):
     """Check for junk text like placeholder or irrelevant content."""
