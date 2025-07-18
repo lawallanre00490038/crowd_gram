@@ -5,6 +5,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.utils.markdown import hbold
 from src.keyboards.inline import quiz_options_kb
 from src.states.onboarding import Onboarding
+from src.states.authentication import Authentication
+from src.keyboards.auth import organization_kb
 
 quiz_router = Router()
 
@@ -23,11 +25,18 @@ async def send_quiz_question(message: Message, state: FSMContext):
 
     if q_index >= len(quiz_data):
         score = data.get("score", 0)
-        await message.answer(f"🎉 Quiz complete! You got {score} out of {len(quiz_data)} right.")
-        await message.answer("✅ Let’s now capture your profile details.\n\nWhat’s your full name?")
-        await state.set_state(Onboarding.name)
+        await message.answer(f"🎉 Quiz complete! You got {score} out of {len(quiz_data)} right.")        
+        #get to authentification
+        await message.answer(
+            "✅ Great! Now let's set up your account.\n\n"
+            "🏢 Are you part of an organization?\n\n"
+            "This helps us customize your experience.",
+            reply_markup=organization_kb()
+        )
+        await state.set_state(Authentication.organization_check)  
         return
-
+    
+      
     question = quiz_data[q_index]
     await message.answer(
         f"❓ {hbold(question['question'])}",

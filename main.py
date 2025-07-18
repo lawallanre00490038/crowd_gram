@@ -7,11 +7,13 @@ from src.handlers.payment_routes import payments
 from src.handlers.task_routes import tasks
 from src.loader import create_bot
 from src.handlers.onboarding_routes import quiz
+from src.handlers.auth_routes import auth
 
 async def main():
     bot, dp = create_bot()
 
     # Register routers
+    dp.include_router(auth.router) 
     dp.include_router(onboarding.router)
     dp.include_router(quiz.quiz_router)
     dp.include_router(tasks.router)
