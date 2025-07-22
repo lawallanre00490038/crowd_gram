@@ -59,7 +59,6 @@ def format_json_to_text(data: str):
    if len(parsed) > 1:
        final = f"<u><b>Check out these New Announcements</b></u>\n\n"
    for item in parsed:
-      print(item)
       final += f"{generate_emoji(item['announcement_title'])}<b>{item['announcement_title']}</b>\n\n {item['body']}"
    return final
    
