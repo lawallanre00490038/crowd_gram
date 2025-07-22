@@ -113,7 +113,7 @@ async def command_base_get_leaderboard(message: Message):
 
     table = format_json_to_table(json_data=json_data)
 
-    text = "🏆 <b>Top Agents This Week</b>\n<pre>{}</pre>".format(table)
+    text = "🏆 <b>Leaderboard This Week</b>\n<pre>{}</pre>".format(table)
 
     await message.answer(text, parse_mode="HTML")
 
@@ -129,7 +129,54 @@ async def send_leaderboard_weekly():
         # format json
         table = format_json_to_table(json_data=json_data)
 
-        text = "🏆 <b>Top Agents This Week</b>\n<pre>{}</pre>".format(table)
+        text = "🏆 <b>Leaderboard This Week</b>\n<pre>{}</pre>".format(table)
+
+        await bot.send_message(chat_id=CHANNEL_ID, text=text)
+
+        await asyncio.sleep(delay=delay)
+
+
+def format_json_str(json_str: str):
+    
+  """Format JSON string to JSON Object"""
+  try:
+    json_object = json.loads(json_str)
+
+    return json_object
+  except Exception as e:
+      logging.error(f"Unable to parse JSON: {e}")
+      return []
+  
+
+async def get_top_agent_this_week():
+
+    delay = 604800
+
+    while True:
+        # logic to retrieve data from backend
+
+        # format json
+        
+        json_object = format_json_str(json_str=json_data)
+
+        max_task_completed = 0
+        top_agent_index = None
+
+        for i, data in enumerate(json_object):
+            if data["TC"] >= max_task_completed:
+                max_task_completed = data["TC"]
+                top_agent_index = i
+
+        top_agent = json_object[top_agent_index]
+
+        agent_text = (
+        f"Name: {top_agent['N']}\n"
+        f"Task Completed: {top_agent['TC']}\n"
+        f"Coins Earned: {top_agent['CE']}\n"
+        f"Rating: {top_agent['R']}"
+        )
+
+        text = f"🏆 <b>Top Agent This Week</b>\n\n{agent_text}"
 
         await bot.send_message(chat_id=CHANNEL_ID, text=text)
 
