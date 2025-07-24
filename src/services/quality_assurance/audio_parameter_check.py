@@ -1,7 +1,7 @@
 import librosa
 from typing import Literal
 
-def check_audio_file_format(file_path: str, expected_format = Literal['mp3', 'wav', 'flac', 'm4a', None]) -> bool:
+def check_audio_file_format(file_path: str, expected_format = Literal['mp3', 'wav', 'flac', '.m4a', '.ogg', '.aac', None]) -> bool:
     """Check if the audio file format is supported.
     
     Args:
@@ -11,7 +11,7 @@ def check_audio_file_format(file_path: str, expected_format = Literal['mp3', 'wa
         bool: True if the file format is supported, False otherwise.
     """
 
-    supported_formats = ['.mp3', '.wav', '.flac']
+    supported_formats = ['.mp3', '.wav', '.flac', '.m4a', '.ogg', '.aac']
 
     if any(file_path.lower().endswith(ext) for ext in supported_formats):
         if expected_format is None:
