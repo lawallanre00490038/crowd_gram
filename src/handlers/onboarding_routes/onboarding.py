@@ -5,6 +5,7 @@ from src.states.onboarding import Onboarding
 from src.states.authentication import Authentication
 from src.keyboards.reply import gender_kb, task_type_kb, industry_kb, primary_device_kb, dialect_fluency_kb
 from src.keyboards.inline import g0_to_tutorials_kb
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.state import State, StatesGroup
 from src.handlers.onboarding_routes.quiz import start_quiz
@@ -29,32 +30,76 @@ class Tutorial(StatesGroup):
 
 @router.message(F.text == "/start")
 async def cmd_start(message: Message, state: FSMContext):
-    #verification user exist??
-    welcome_text=(    
-            "👋 Welcome to Equalyz Crowd!\n\n"
-            "We're building the future of AI by collecting multilingual data across Africa.\n\n"
-            "As a contributor/agent, you'll help train AI models and earn money for quality work.\n\n"
-            "This quick onboarding sets up your profile so we can match you with the best tasks.\n\n"
-            "Let’s begin! 🚀"
-        )
+
+    
+
+    #verification user exist??  
+    welcome_text = (    
+        "👋 Welcome to Equalyz Crowd!\n\n"
+        "We're building the future of AI by collecting multilingual data across Africa.\n\n"
+        "As a contributor/agent, you'll help train AI models and earn money for quality work.\n\n"
+        "Let's begin! 🚀"
+    )
     await message.answer(welcome_text)
+
+    tutorial_intro_text = (
+        "🧠 You will be guided through a series of videos to learn about the basics of data collection and annotation.\n\n"
+        "Would you like to watch the tutorial videos?"
+    )
+    
+    # Créer les boutons avec option skip
+    tutorial_choice_kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="📺 Yes, show me the videos", callback_data="tutorial_yes")],
+            [InlineKeyboardButton(text="⏭️ Skip tutorials", callback_data="skip_tutorials")]
+        ]
+    )
+    await message.answer(tutorial_intro_text, reply_markup=tutorial_choice_kb)
+    await state.set_state(Tutorial.ready_to_start)
+    
+# Ajouter ces handlers après le handler /start
+
+# Handler pour le choix des tutoriels (Oui/Skip)
+@router.callback_query(Tutorial.ready_to_start, F.data.in_(["tutorial_yes", "skip_tutorials"]))
+async def handle_tutorial_choice(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    
+    if callback.data == "tutorial_yes":
+        # L'utilisateur veut voir les vidéos
+        await callback.message.answer("📺 Great! Let's start with the tutorial videos.")
+        await state.update_data(tutorial_index=0)
+        await state.set_state(Tutorial.watching)
+        await send_tutorial(callback.message, state)
+        
+    elif callback.data == "skip_tutorials":
+        # L'utilisateur veut skip les vidéos -> aller directement au choix du type d'utilisateur
+        await show_user_type_selection(callback.message, state)
+
+# Fonction pour montrer la sélection du type d'utilisateur
+async def show_user_type_selection(message: Message, state: FSMContext):
+    selection_text = (
+        "🔽 Now, please tell us what type of user you are:"
+    )
+    await message.answer(selection_text)
+    
+    # Créer les boutons avec option retour
+    user_type_kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="📊 I'm a Collector", callback_data="collector_yes")],
+            [InlineKeyboardButton(text="👤 I'm a Registered User", callback_data="registered_yes")],
+            [InlineKeyboardButton(text="🆕 I'm New Here", callback_data="new_user")],
+            [InlineKeyboardButton(text="🔙 Back to tutorials", callback_data="back_to_tutorials")]
+        ]
+    )
     
     await message.answer(
-            "🧠 You will be guided through a series of videos to learn about the basics of data collection and annotation.\n\n",
-         reply_markup=g0_to_tutorials_kb()
-        )
-    await state.set_state(Tutorial.ready_to_start)
-
-
-
-@router.callback_query(Tutorial.ready_to_start, F.data == "tutorial_yes")
-async def start_tutorial_sequence(callback: CallbackQuery, state: FSMContext):
-    await callback.answer()
-    await state.update_data(tutorial_index=0)
-    await state.set_state(Tutorial.watching)
-    await send_tutorial(callback.message, state)
-
-
+        "Please select your user type:",
+        reply_markup=user_type_kb
+    )
+    await state.set_state(Authentication.collector_check)
+    
+   
+    
 
 # --- Navigation buttons ---
 def tutorial_nav_kb(index: int):
@@ -112,12 +157,34 @@ async def quiz_ready_response(callback: CallbackQuery, state: FSMContext):
         await callback.message.answer("✅ Great! Let's begin the short quiz.")
         await state.set_state(Onboarding.intro)
         await start_quiz(callback.message, state)
+        #await show_user_type_selection(callback.message, state)
+
 
     elif callback.data == "quiz_no":
         await state.update_data(tutorial_index=0)
         await send_tutorial(callback.message, state)
         
 
+# Ajouter ce handler pour retour aux tutoriels
+@router.callback_query(Authentication.collector_check, F.data == "back_to_tutorials")
+async def handle_back_to_tutorials(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    
+    # Retourner au choix des tutoriels
+    tutorial_intro_text = (
+        "🧠 You will be guided through a series of videos to learn about the basics of data collection and annotation.\n\n"
+        "Would you like to watch the tutorial videos?"
+    )
+    
+    tutorial_choice_kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="📺 Yes, show me the videos", callback_data="tutorial_yes")],
+            [InlineKeyboardButton(text="⏭️ Skip tutorials", callback_data="skip_tutorials")]
+        ]
+    )
+    
+    await callback.message.answer(tutorial_intro_text, reply_markup=tutorial_choice_kb)
+    await state.set_state(Tutorial.ready_to_start)
 
 
 # --- Collect location ---
@@ -129,11 +196,6 @@ async def get_location(message: Message, state: FSMContext):
     await state.set_state(Onboarding.gender)
 
 
-# --- Collect phone number ---
-#@router.message(Onboarding.phone)
-#async def get_phone(message: Message, state: FSMContext):
-   # await state.update_data(phone=message.text.strip())
-    
 
 # --- Collect gender ---
 @router.message(Onboarding.gender)
@@ -216,6 +278,17 @@ async def get_referrer(message: Message, state: FSMContext):
     await message.answer("🎉 Thank you! You're now onboarded and ready for tasks.\n\n" \
     "Welcome to the EqualyzAI contributor community! 🌟")
 
+    #diriger vs test acknowledgement
+    await message.answer(
+        "🧠 Next Step: Knowledge Assessment\n\n"
+        "Before you start earning, we'll test your knowledge with a few practical tasks:\n"
+        "• 📝 Text annotation\n"
+        "• 🎵 Audio transcription\n" 
+        "• 🖼️ Image classification\n"
+        "• 🎥 Video analysis\n\n"
+        "This helps us assign you the right tasks for your skill level!\n\n"
+    )
+
     # Set agent status to 'Pending' and notify admin optionally
     # Trigger next stage (demo task, eligibility test, etc.)
     print(message.from_user.id, "has completed onboarding with data:", user_data)
@@ -234,18 +307,7 @@ async def get_referrer(message: Message, state: FSMContext):
         f"Task Type: {user_data['task_type']}\n"
         f"Referrer: {user_data['referrer']}"
     )  
+  
+
     await state.clear()
     
-    #diriger vs test acknowledgement
-    await message.answer("🎉 Thank you! You're now onboarded and ready for tasks.\n\n" \
-"Welcome to the Equalyz Crowd contributor community! 🌟")
-
-    await message.answer(
-        "🧠 Next Step: Knowledge Assessment\n\n"
-        "Before you start earning, we'll test your knowledge with a few practical tasks:\n"
-        "• 📝 Text annotation\n"
-        "• 🎵 Audio transcription\n" 
-        "• 🖼️ Image classification\n"
-        "• 🎥 Video analysis\n\n"
-        "This helps us assign you the right tasks for your skill level!\n\n"
-    )

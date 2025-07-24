@@ -8,7 +8,7 @@
 # )
 
 
-
+   
 
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
@@ -22,7 +22,8 @@ gender_kb = ReplyKeyboardMarkup(
         [KeyboardButton(text="♂️ Male"), KeyboardButton(text=" ♀️ Female")],
         [KeyboardButton(text=" 🙈 Prefer not to say")]
     ],
-    resize_keyboard=True
+    resize_keyboard=True,
+    one_time_keyboard=True
 )
 
 task_type_kb = ReplyKeyboardMarkup(

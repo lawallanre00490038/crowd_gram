@@ -13,6 +13,7 @@ async def main():
     bot, dp = create_bot()
 
     # Register routers
+    #add router for login 
     dp.include_router(auth.router) 
     dp.include_router(onboarding.router)
     dp.include_router(quiz.quiz_router)

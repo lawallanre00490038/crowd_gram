@@ -26,14 +26,9 @@ async def send_quiz_question(message: Message, state: FSMContext):
     if q_index >= len(quiz_data):
         score = data.get("score", 0)
         await message.answer(f"🎉 Quiz complete! You got {score} out of {len(quiz_data)} right.")        
-        #get to authentification
-        await message.answer(
-            "✅ Great! Now let's set up your account.\n\n"
-            "🏢 Are you part of an organization?\n\n"
-            "This helps us customize your experience.",
-            reply_markup=organization_kb()
-        )
-        await state.set_state(Authentication.organization_check)  
+        from src.handlers.onboarding_routes.onboarding import show_user_type_selection  
+        await message.answer("✅ Great! Now let's continue with your setup.")
+        await show_user_type_selection(message, state)
         return
     
       
