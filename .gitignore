@@ -9,10 +9,3 @@ notebook.ipynb
 
 __pycache__/
 
-src/database/__pycache__/
-
-src/handlers/__pycache__/
-
-src/models/__pycache__/
-
-src/utils/__pycache__/
