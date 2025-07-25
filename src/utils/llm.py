@@ -1,7 +1,9 @@
-from langchain_groq import ChatGroq
-import os
 import getpass
+import os
+
 from dotenv import load_dotenv
+from langchain_groq import ChatGroq
+
 # from langchain_huggingface import HuggingFaceEmbeddings
 
 load_dotenv()
@@ -18,10 +20,11 @@ hugging_token: str = os.environ["HUGGINGFACE_TOKEN"]
 
 llm = ChatGroq(
     model= models[0],
-    temperature=0,
+    temperature=0.9,
     max_tokens=None,
     timeout=None,
-    max_retries=2,
+    max_retries=2
+
 )
 
 
