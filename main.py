@@ -1,6 +1,7 @@
 import asyncio
 from src.handlers.admin_routes import admin
 from src.handlers.community_routes import community, broadcast
+from src.handlers.debug import debug_routes
 from src.handlers.errors_routes import errors
 from src.handlers.onboarding_routes import onboarding
 from src.handlers.payment_routes import payments
@@ -19,10 +20,13 @@ async def main():
     dp.include_router(quiz.quiz_router)
     dp.include_router(tasks.router)
     dp.include_router(payments.router)
+
     dp.include_router(community.router)
     dp.include_router(broadcast.router)
+    
     dp.include_router(admin.router)
     dp.include_router(errors.router)
+    dp.include_router(debug_routes.router)
 
     await bot.delete_webhook(drop_pending_updates=True)
     print("✅ Bot is running... Press Ctrl+C to stop.")
@@ -35,6 +39,9 @@ async def main():
     _ = asyncio.create_task(coro=community.get_top_agent_this_week())
 
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+
+
+
 
 if __name__ == "__main__":
     asyncio.run(main())
