@@ -7,11 +7,14 @@ from src.handlers.payment_routes import payments
 from src.handlers.task_routes import tasks
 from src.loader import create_bot
 from src.handlers.onboarding_routes import quiz
+from src.handlers.auth_routes import auth
 
 async def main():
     bot, dp = create_bot()
 
     # Register routers
+    #add router for login 
+    dp.include_router(auth.router) 
     dp.include_router(onboarding.router)
     dp.include_router(quiz.quiz_router)
     dp.include_router(tasks.router)
@@ -28,6 +31,9 @@ async def main():
     _ =  asyncio.create_task(coro=community.send_leaderboard_weekly())
     _ = asyncio.create_task(coro=broadcast.broadcast())
     
+    _ = asyncio.create_task(coro=community.send_leaderboard_weekly())
+    _ = asyncio.create_task(coro=community.get_top_agent_this_week())
+
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 if __name__ == "__main__":
