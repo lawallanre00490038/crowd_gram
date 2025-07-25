@@ -6,14 +6,11 @@ from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
 from prettytable import PrettyTable
-
 from src.config import CHANNEL_ID
 from src.loader import bot
 
 
-
 router = Router()
-
 json_data = """
 [
   {
