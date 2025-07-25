@@ -46,3 +46,30 @@ RETURN A SINGLE OBJECT THAT WILL FOLLOW THIS FORMAT. PLEASE COMPLY WITH THIS FOR
 ]
 ```
 """)  # noqa: E501
+
+EMOJI_PROMPT = PromptTemplate.from_template(
+"""
+You are an emoji generator. Provide or two emoji's that is/are appropriate for {title}
+
+""" 
+)
+
+WELLNESS_PROMPT = PromptTemplate.from_template(
+   """You are a assisting with providing weekly wellness activities for users who are working on language related tasks (text annotation, audio tanscription, ..etc.) for African languages.
+              These wellness activities should be easy to be done regardless of location or resources. It should also generally consider to ways stimulate the user's native language.  The whole content should be between 300 to 500 characters.
+                No themes should be repeated from this weekly theme history that includes {theme_history}
+                The format for the user should be as follows:
+                
+                Title: title-name-here
+                1. (EMOJI) Activity: activity-name-here
+                Instructions: significance-description-here
+                ...
+
+                Before the name of each activity generate one emoji that best encapsulates the activity. PLEASE DO NOT INCLUDE ASTRICKS!
+                
+                Explain the instructions of each activity and you may include the significance of the activity with a new line character after each one.
+                Activites should promote mental, physical, or emotional well-being.  THERE IS A MAX OF 3 ACTIVITIES FOR THE WEEK.       
+                
+ """
+
+)
