@@ -21,7 +21,6 @@ async def main():
     dp.include_router(tasks.router)
     dp.include_router(payments.router)
     dp.include_router(community.router)
-    dp.include_router(broadcast.router)
     dp.include_router(admin.router)
     dp.include_router(errors.router)
 
