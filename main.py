@@ -16,7 +16,6 @@ from src.handlers.auth_routes import auth
 
 
 
-# FastAPI dummy app
 app = FastAPI()
 
 @app.get("/")
@@ -60,9 +59,7 @@ def start_bot():
 
 # Run everything
 if __name__ == "__main__":
-    # Start the bot in a thread
     bot_thread = threading.Thread(target=start_bot, daemon=True)
     bot_thread.start()
 
-    # Start the dummy FastAPI server to keep Render happy
     uvicorn.run(app, host="0.0.0.0", port=10000)
