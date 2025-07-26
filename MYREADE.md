@@ -3,6 +3,9 @@ git checkout onboarding
 
 git diff main...onboarding
 
+git rm --cached MYREADE.md
+
+
 
 echo "__pycache__/" >> .gitignore
 git rm -r --cached **/__pycache__/
