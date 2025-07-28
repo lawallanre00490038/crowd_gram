@@ -1,14 +1,20 @@
 import asyncio
-import json
 import logging
-from aiogram.utils.formatting import Bold, Italic, Text, as_section
+
+from aiogram.utils.formatting import (
+    Bold,
+    Italic,
+    Text,
+    Underline,
+    as_section,
+)
 
 from src.config import CHANNEL_ID
 from src.loader import bot
 from src.utils.llm import llm
 from src.utils.text_utils import format_json_str_to_json, format_json_to_table
 
-from .prompt import CONTEST_PROMPT, EMOJI_PROMPT, WELLNESS_PROMPT
+from .prompt import CONTEST_PROMPT, WELLNESS_PROMPT
 
 json_str = """
 [
@@ -55,26 +61,38 @@ json_str = """
 ]
 """
 
-json_data_broadcast_project_insert = {
+json_data_broadcast_project_insert = [{
       "Task": "audio",
       "Cat": "static",
       "Language": "Yoruba",
       "Count": 4
-   }
+   }]
 
 json_data_broadcast_policy_insert = """
+    [
     {
       "announcement_title": "Upcoming Security Policy Update",
       "body": "To enhance account protection, we're introducing a mandatory two-factor authentication policy starting August 15. Please ensure your mobile number is up to date in your profile settings."
+    },
+    {
+      "announcement_title": "Payment Policy Update",
+      "body": "We're adding additional forms of payment including - PayPal, Venmo, CashApp, & Zelle."
     }
-"""
+    ]
+"""  # noqa: E501
 
 json_data_broadcast_trainings_insert = """
+    [
     {
       "announcement_title": "New User Onboarding Course Available",
       "body":  "We've launched an updated onboarding training for new users. This 45-minute course walks through the core features and best practices for getting started quickly."
+    },
+    {
+      "announcement_title": "Interface Training Available",
+      "body": "To allow better transition into the platform we've provided a new training to allow a new user to become more comfortable. The training is 1-hour and self-paced."
     }
-"""
+    ]
+"""  # noqa: E501
 
 
 
@@ -178,82 +196,117 @@ async def send_monthly_contest():
 
         await asyncio.sleep(delay)
 
-async def format_json_to_text(data: str):
-   parsed = json.loads(data)
-   final = f"<u><b>Check out this New Announcement</b></u>\n\n"
-   if len(parsed) > 1:
-       final = f"<u><b>Check out these New Announcements</b></u>\n\n"
-   for item in parsed:
-       response = await llm.ainvoke(
-                EMOJI_PROMPT.format(title=item["announcement_title"])
+
+#@{name}.post(/projects)
+async def broadcast_new_projects():
+    """Broadcast New Projects"""
+    # TODO Logic to recieve and retrieve json from backend request
+
+    try:
+        structure = format_json_to_table(json_data_broadcast_project_insert)
+        context = f"📢<b>Check out these New Projects</b>  \n<pre>{structure}</pre>"
+        await bot.send_message(chat_id=CHANNEL_ID, text=context)
+    except Exception as err:
+        logging.error(f"Community-Broadcast Projects Router Error: Details: {err}")
+
+# @{name}.post("/trainings")
+async def broadcast_new_trainings():
+    """Broadcast New Trainings"""
+    # TODO Logic to recieve and retrieve json from backend request
+    try:
+            response_obj = format_json_str_to_json(json_data_broadcast_trainings_insert)
+            items = []
+            for i, content in enumerate(response_obj):
+                body = Text(
+                    Bold(Text(i+1), ". "),
+                    Bold(content['announcement_title']),
+                    '\n\n',
+                    content["body"],
+                    '\n\n'
+                )
+                items.append(body)
+            result = as_section(
+                Text(Underline(Bold("📢 Check out these New Policy Announcements\n"))),
+                Text(*items, sep="\n\n")
             )
-       final += f"{response.content[0]}<b>{item['announcement_title']}</b>\n\n {item['body']}"
-   return final
-   
-async def send_projects_trainings_policies():
-    """Broadcast New Projects, Trainings, and Policies"""
-    # @{name}.post("/projects")
-    async def broadcast_new_projects(request: str):
-        """Broadcast New Projects"""
-        # TODO Logic to recieve and retrieve json from backend request
 
-        try:
-            structure = format_json_to_table(request)
-            context = f"📢<b>Check out these New Projects</b>  \n<pre>{structure}</pre>"
-            await bot.send_message(chat_id=CHANNEL_ID, text=context)
-        except Exception as err:
-            logging.error(f"Community-Broadcast Projects Router Error: Failed to parse json. Details: {err}")
-
-    # @{name}.post("/trainings")
-    async def broadcast_new_trainings(request: str):
-        """Broadcast New Trainings"""
-        # TODO Logic to recieve and retrieve json from backend request
-        
-        try:
-            context = await format_json_to_text(request)
-            await bot.send_message(chat_id=CHANNEL_ID, text=context)
-        except Exception as err:
-            logging.error(f"Community-Broadcast Training Router Error: Failed to parse json. Details: {err}")
-
-    # @{name}.post("/policies")
-    async def broadcast_new_policies(request: str):
-        """Broadcast New Policies"""   
-        # TODO Logic to receive and retrieve json from backend request
-
-        try:
-            context = await format_json_to_text(request)
-            await bot.send_message(chat_id=CHANNEL_ID, text=context)
-        except Exception as err:
-         logging.error(f"Community-Broadcast Policies Router Error: Failed to parse json. Details: {err}")
+            await bot.send_message(**result.as_kwargs(), chat_id=CHANNEL_ID)
+    except Exception as err:
+        logging.error(f"Community-Broadcast Policies Router Error: Details: {err}")  # noqa: E501
 
 
-    await broadcast_new_projects([json_data_broadcast_project_insert])
-    await broadcast_new_trainings(f'[{json_data_broadcast_trainings_insert}]')
-    await broadcast_new_policies(f'[{json_data_broadcast_policy_insert}]')
+# @{name}.post("/policies")
+async def broadcast_new_policies():
+    """Broadcast New Policies"""
+    # TODO Logic to receive and retrieve json from backend request
+
+    try:
+            response_obj = format_json_str_to_json(json_data_broadcast_policy_insert)
+            items = []
+            for i, content in enumerate(response_obj):
+                body = Text(
+                    Bold(Text(i+1, ". ")),
+                    Bold(content['announcement_title']),
+                    '\n\n',
+                    content["body"],
+                    '\n\n'
+                )
+                items.append(body)
+            result = as_section(
+                Text(Underline(Bold("📢 Check out these New Policy Announcements\n"))),
+                Text(*items, sep="\n\n")
+            )
+
+            await bot.send_message(**result.as_kwargs(), chat_id=CHANNEL_ID)
+    except Exception as err:
+        logging.error(f"Community-Broadcast Policies Router Error. Details: {err}")
+
+
 
 theme_history = []
 async def send_wellness_weekly():
     """Send Weekly Wellness Activities"""
     delay = 604800 # weekly delay
-   
+    title = ""
+    activities = ""
     while True:
         try:
-          
+
           chat_response = await llm.ainvoke(
               WELLNESS_PROMPT.format(theme_history=str(theme_history))
-          )         
-          
-          index = chat_response.content.find("\n")
-          response = chat_response.content
-          substring_title = response[:index] if index != -1 else response
-          theme_history.append(substring_title)
-          response.strip("***")
+          )
 
-          context = f"🧘‍♀️ <b>Wellness Activities of the Week</b>\n\n {response}"
-          await bot.send_message(chat_id=CHANNEL_ID, text=context)
+          response_obj = format_json_str_to_json(chat_response.content)[0]
+
+
+          items = []
+          try:
+            if response_obj["Title"] and response_obj["Activities"]:
+                title = response_obj["Title"]
+                activities = response_obj["Activities"]
+                for i, activity in enumerate(activities):
+                    body = Text(
+                        Bold(Text(i+1, ". ")),
+                        Bold('Activity: '),
+                        Bold("⚡", activity['Activity Name']),
+                        '\n',
+                        activity['Activity Instructions'],
+                        '\n\n'
+                    )
+                    items.append(body)
+          except Exception as err:
+              logging.error(
+                  f"Community Error Wellness Router Error: Details {err}")
+
+          result = as_section(
+              Text(Underline(Bold("🧘‍♀️ Wellness Activities of the Week\n"))),
+              Text(Bold("Theme: ", title, "\n\n")),
+              Text(*items, sep="\n")
+          )
+          theme_history.append(title)
+          await bot.send_message(**result.as_kwargs(), chat_id=CHANNEL_ID)
           await asyncio.sleep(delay=delay)
-      
+
         except Exception as err:
             logging.error(
-                f"Community Error when trying generate text using groq api: Details: {err}"
-            )
+                f"Community Error Wellness Router Error: Details: {err}")
