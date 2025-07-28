@@ -2,7 +2,7 @@ import asyncio
 
 from src.handlers.admin_routes import admin
 from src.handlers.auth_routes import auth
-from src.handlers.community_routes import broadcast, community
+from src.handlers.community_routes import community
 from src.handlers.errors_routes import errors
 from src.handlers.onboarding_routes import onboarding, quiz
 from src.handlers.payment_routes import payments
@@ -14,8 +14,8 @@ async def main():
     bot, dp = create_bot()
 
     # Register routers
-    #add router for login 
-    dp.include_router(auth.router) 
+    #add router for login
+    dp.include_router(auth.router)
     dp.include_router(onboarding.router)
     dp.include_router(quiz.quiz_router)
     dp.include_router(tasks.router)
