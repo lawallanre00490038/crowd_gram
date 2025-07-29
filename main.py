@@ -1,20 +1,18 @@
 import asyncio
 import threading
+
 import uvicorn
 from fastapi import FastAPI
 
 from src.handlers.admin_routes import admin
-from src.handlers.community_routes import community, broadcast
+from src.handlers.auth_routes import auth
+from src.handlers.community_routes import community
 from src.handlers.debug import debug_routes
 from src.handlers.errors_routes import errors
-from src.handlers.onboarding_routes import onboarding
+from src.handlers.onboarding_routes import onboarding, quiz
 from src.handlers.payment_routes import payments
 from src.handlers.task_routes import tasks
 from src.loader import create_bot
-from src.handlers.onboarding_routes import quiz
-from src.handlers.auth_routes import auth
-
-
 
 app = FastAPI()
 
@@ -32,24 +30,14 @@ async def bot_main():
     dp.include_router(quiz.quiz_router)
     dp.include_router(tasks.router)
     dp.include_router(payments.router)
-
     dp.include_router(community.router)
-    # dp.include_router(broadcast.router)
-    
     dp.include_router(admin.router)
     dp.include_router(errors.router)
     dp.include_router(debug_routes.router)
 
     await bot.delete_webhook(drop_pending_updates=True)
     print("✅ Bot is running... Press Ctrl+C to stop.")
-
-  
-    _ =  asyncio.create_task(coro=community.send_leaderboard_weekly())
-    # _ = asyncio.create_task(coro=broadcast.broadcast())
-    
-    _ = asyncio.create_task(coro=community.send_leaderboard_weekly())
-    _ = asyncio.create_task(coro=community.get_top_agent_this_week())
-
+    _ = asyncio.create_task(coro=community.start_community_background_tasks())
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 
