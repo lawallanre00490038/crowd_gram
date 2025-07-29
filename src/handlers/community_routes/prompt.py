@@ -46,3 +46,35 @@ RETURN A SINGLE OBJECT THAT WILL FOLLOW THIS FORMAT. PLEASE COMPLY WITH THIS FOR
 ]
 ```
 """)  # noqa: E501
+
+
+WELLNESS_PROMPT = PromptTemplate.from_template(
+"""
+You are a assisting with providing weekly wellness activities for users who are working
+on language related tasks (text annotation, audio tanscription, ..etc.) for African languages.
+These wellness activities should be easy to be done regardless of location or resources.
+No themes should be repeated from this weekly theme history that includes {theme_history}
+It should also generally consider to ways stimulate the user's native language.
+The whole content should be between 300 to 500 characters.
+Activites should promote mental, physical, or emotional well-being.  THERE IS A MAX OF 3 ACTIVITIES FOR THE WEEK.
+The language should be in ENGLISH
+
+#Output Format
+
+RETURN A SINGLE OBJECT THAT WILL FOLLOW THIS FORMAT. PLEASE COMPLY WITH THIS FORMAT ONLY. DO NOT INCLUDE ANYTHING ELSE OUTSIDE OF THIS FORMAT.
+```json
+[
+    {{
+        "Title": "<<Catchy, culturally resonant title reflecting the theme>>",
+        "Activities": <<A numbered ordered list for each activity>>
+            [
+            {{
+                "Activity Name": "<<Clear name for the activity>>",
+                "Activity Instructions": "<<Clear steps on what users must do>>"
+            }}
+            ]
+    }}
+]
+```
+"""  # noqa: E501
+)
