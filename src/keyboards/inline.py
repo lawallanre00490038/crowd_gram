@@ -21,3 +21,10 @@ def g0_to_tutorials_kb():
             [InlineKeyboardButton(text="👍 Yes, I'm ready", callback_data="tutorial_yes")]
         ]
     )
+def accept_support_request(chat_id):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Accept", callback_data=f'{{"text": "accept","chat_id": {chat_id} }}')  # noqa: E501
+                                  ],
+        ]
+    )
