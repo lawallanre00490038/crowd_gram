@@ -15,6 +15,7 @@ router = Router()
 
 @router.message(Command("support"))
 async def send_support(message: Message):
+    """Send support request to admin"""
     start_message = Text("Hello ",Bold(message.from_user.full_name), " 👋," ," I will try and connect you to an available agent to support you!")  # noqa: E501
     await bot.send_message(**start_message.as_kwargs(), chat_id=message.from_user.id)
     all_messages = [bot.send_message(chat_id=admin_id, reply_markup=accept_support_request(message.from_user.id), text=f"{message.from_user.username} is requesting support from an agent!") for admin_id in ADMIN_IDS]  # noqa: E501
@@ -22,6 +23,7 @@ async def send_support(message: Message):
 
 @router.callback_query()
 async def accept_user_request(callback: CallbackQuery):
+    """Accept support request from user"""
     await callback.answer()
     try:
         callback_data = json.loads(callback.data)
