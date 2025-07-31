@@ -21,12 +21,12 @@ async def send_support(message: Message):
     await asyncio.gather(*all_messages)
 
 @router.callback_query()
-async def start_support_admin(callback: CallbackQuery):
+async def accept_user_request(callback: CallbackQuery):
     await callback.answer()
     try:
         callback_data = json.loads(callback.data)
     except Exception as e:
-        logging.error(f"Community Support Error in start_support_admin() when parsing json. Details: {e} ")  # noqa: E501
+        logging.error(f"Community Support Error in accept_user_request() when parsing json. Details: {e} ")  # noqa: E501
     try:
         if callback_data['text']:
             await bot.send_message(chat_id=callback_data['chat_id'], text=f"{callback.from_user.full_name} has accepted your request and will reach out to you shortly!")  # noqa: E501
