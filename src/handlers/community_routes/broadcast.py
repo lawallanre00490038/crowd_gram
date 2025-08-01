@@ -181,14 +181,13 @@ async def send_monthly_contest():
 
             reward = json_object["Reward"]
 
-            criteria_text = "\n".join(f"- {criteria}" for criteria in judging_criteria)
-
             result = as_section(
                 Bold(f"📢 {title}\n\n"),
                 Text(Bold("📝 Task Instruction"), f"\n{task_instruction}\n\n"),
                 Text(Bold("📦 Submission Requirements"),
                      f"\n{submission_requirements}\n\n"),
-                Text(Bold("⚖️ Judging Criteria\n"),f"{criteria_text}\n\n",Italic(f"{social_media_instruction}\n\n")),# noqa: E501
+                Text(Bold("⚖️ Judging Criteria\n"),
+                     f"{'\n'.join(f"- {criteria}" for criteria in judging_criteria)}\n\n"),  # noqa: E501
                 Italic(f"{social_media_instruction}\n\n"),
                 Text(Bold("📅 Deadline"), f"\n{deadline}\n\n"),
                 Text(Bold("🏆 Reward"), f"\n{reward}")
@@ -200,7 +199,6 @@ async def send_monthly_contest():
             print(f"Error sending contest message: {e}")
 
         await asyncio.sleep(delay)
-
 
 #@{name}.post(/projects)
 async def broadcast_new_projects():
