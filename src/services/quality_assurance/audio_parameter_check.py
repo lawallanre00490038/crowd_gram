@@ -82,13 +82,65 @@ def check_audio_bit_depth(file_path: str, expected_bit_depth: int = 16) -> bool:
     
 
 if __name__ == "__main__":
-    import argparse
+    import os
+    import sys
+    import logging
 
-    parser = argparse.ArgumentParser(description="Check audio file format.")
-    parser.add_argument("--file_path", type=str, required=True, help="Path to the audio file")
-    parser.add_argument("--expected_format", type=str, choices=['mp3', 'wav', 'flac', 'm4a', None], default=None, help="Expected audio format")
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
 
-    args = parser.parse_args()
+    tests = {
+        "1": "Check audio file format",
+        "2": "Check audio file length",
+        "3": "Check audio sample rate",
+        "4": "Check audio bit depth"
+    }
 
-    result = check_audio_file_format(args.file_path, args.expected_format)
-    print("Audio file format check passed?" , result)
+    print("Available tests:")
+    for key, val in tests.items():
+        print(f"{key}. {val}")
+
+    choice = input("\nSelect a test by entering the corresponding number: ").strip()
+
+    if choice not in tests:
+        print("Invalid selection.")
+        sys.exit(1)
+
+    file_path = input("Enter the path to the audio file: ").strip()
+    if not os.path.exists(file_path):
+        print("File not found.")
+        sys.exit(1)
+
+    if choice == "1":
+        expected_format = input("Enter expected format (mp3, wav, flac, m4a, ogg, aac) or leave blank for any: ").strip().lower()
+        expected_format = expected_format if expected_format in ['mp3', 'wav', 'flac', 'm4a', 'ogg', 'aac'] else None
+        result = check_audio_file_format(file_path, expected_format)
+
+    elif choice == "2":
+        try:
+            min_length = float(input("Enter minimum length in seconds (default 0.5): ") or 0.5)
+            max_length = float(input("Enter maximum length in seconds (default 60.0): ") or 60.0)
+        except ValueError:
+            print("Invalid number entered.")
+            sys.exit(1)
+
+        logger.info(f"Checking audio file length between {min_length} and {max_length} seconds.")
+        result = check_audio_file_length(file_path, min_length, max_length)
+
+    elif choice == "3":
+        try:
+            expected_sr = int(input("Enter expected sample rate (default 16000): ") or 16000)
+        except ValueError:
+            print("Invalid number entered.")
+            sys.exit(1)
+        result = check_audio_sample_rate(file_path, expected_sr)
+
+    elif choice == "4":
+        try:
+            expected_bd = int(input("Enter expected bit depth (16 or 32, default 16): ") or 16)
+        except ValueError:
+            print("Invalid number entered.")
+            sys.exit(1)
+        result = check_audio_bit_depth(file_path, expected_bd)
+
+    print(f"\nResult: {'PASS ✅' if result else 'FAIL ❌'}")
