@@ -1,6 +1,3 @@
-
-
-from functools import lru_cache
 import logging
 import pandas as pd
 from transformers import pipeline
@@ -13,9 +10,8 @@ logger = logging.getLogger("afrolid")
 try:
     afrolid_model = pipeline("text-classification", model="UBC-NLP/afrolid_1.5")
 except Exception as e:
-    logger.error(f"Failed to load AfroLID model: {e}")
+    logger.error(f"Failed to load AfroL ID model: {e}")
     raise
-
 
 
 # Load supported languages CSV file 
