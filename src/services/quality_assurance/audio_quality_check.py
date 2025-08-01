@@ -1,48 +1,14 @@
 import json
-import time
-import boto3
-import json
 import librosa 
 import argparse
 import numpy as np
 import noisereduce as nr
 from pydub import AudioSegment
 
-
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 
-def current_time_millis():
-    '''Get the milliseconds of the current time'''
-    return int(time.time() * 1000)
-
-def upload_file_to_s3(file_path, bucket_name, s3_folder=""):
-    """
-    Uploads a file to an S3 bucket with a unique filename using the current timestamp in milliseconds.
-
-    Args:
-        file_path (str): Path to the local file.
-        bucket_name (str): Target S3 bucket name.
-        s3_folder (str): Optional folder path in S3 bucket.
-
-    Returns:
-        str: Full S3 key (object path) of the uploaded file.
-    """
-    s3 = boto3.client('s3')
-
-    unique_name = f"task_audio-{current_time_millis()}.mp3"
-
-    # Combine folder and filename
-    s3_key = f"{s3_folder}/{unique_name}"
-
-    try:
-        s3.upload_file(file_path, bucket_name, s3_key)
-        print(f"Uploaded to s3://{bucket_name}/{s3_key}")
-        return s3_key
-    except Exception as e:
-        print(f"Upload failed: {e}")
-        return None
 
 def save_librosa_audio_as_mp3(y, sr, output_path, bitrate="256k"):
     """
@@ -190,10 +156,6 @@ def main(file_path, min_snr_value=40,
     file_name = f"audio.mp3"
     save_librosa_audio_as_mp3(data, sr, file_name)
 
-
-    s3_key = upload_file_to_s3(file_name, 
-                                bucket_name=bucket_name, 
-                                s3_folder=bucket_path)
     # s3_key = "Hello"
     return json.dumps({
       "snr": float(result["snr"]),
@@ -201,7 +163,6 @@ def main(file_path, min_snr_value=40,
       "noise_power": float(result["noise_power"]),
       "signal_power": float(result["signal_power"]),
       "message": result["message"],
-      "s3_key": s3_key
      })
 
 
