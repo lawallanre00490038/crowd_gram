@@ -2,9 +2,6 @@ import cv2
 from PIL import Image
 import numpy as np
 from scipy.stats import entropy
-import torch
-import torchvision.transforms as T
-from skimage import filters, measure
 
 
 def is_blurry(image_path, threshold=100.0):
