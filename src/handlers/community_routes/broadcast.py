@@ -14,7 +14,11 @@ from aiogram.utils.formatting import (
 from src.config import CHANNEL_ID
 from src.loader import bot
 from src.utils.llm import llm
-from src.utils.text_utils import format_json_str_to_json, format_json_to_table
+from src.utils.text_utils import (
+    format_all_trivia,
+    format_json_str_to_json,
+    format_json_to_table,
+)
 
 from .prompt import CONTEST_PROMPT, TRIVIA_PROMT, WELLNESS_PROMPT
 
@@ -323,29 +327,6 @@ async def send_wellness_weekly():
 current_trivia = None
 current_trivia_message_id = None
 user_answers = {}
-
-"""Format trivia questions into a single message with options."""
-
-def format_all_trivia(trivia_list):
-    """Format 4 trivia questions + options as one HTML string message."""
-    message = "<b> Trivia Time! Answer all 4 questions below:</b>\n\n"
-    option_labels = ['A', 'B', 'C', 'D']
-
-    for idx, trivia in enumerate(trivia_list, start=1):
-        question = trivia.get("q")
-        options = trivia.get("options", [])
-        message += f"<b>{idx}. {question}</b>\n"
-        for label, option_text in zip(option_labels, options):
-            clean_option = re.sub(r"^\d+\.\s*", "", option_text)
-            message += f"{label}. {clean_option}\n"
-        message += "\n"
-
-    message += (
-        " Please reply to this message in this exact format:\n"
-        "<code>1. A\n2. B\n3. C\n4. D</code>\n\n"
-        "<b>You have 1 hour to submit your answers!</b>"
-    )
-    return message
 
 """Parse user response text into a list of uppercase letters (A-D). """
 
