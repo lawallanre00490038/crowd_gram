@@ -1,5 +1,7 @@
 import asyncio
+import json
 import logging
+import re
 
 from aiogram.utils.formatting import (
     Bold,
@@ -13,8 +15,10 @@ from src.config import CHANNEL_ID
 from src.loader import bot
 from src.utils.llm import llm
 from src.utils.text_utils import format_json_str_to_json, format_json_to_table
+from aiogram.exceptions import TelegramForbiddenError,TelegramBadRequest
+from aiogram.types import Message
 
-from .prompt import CONTEST_PROMPT, WELLNESS_PROMPT
+from .prompt import CONTEST_PROMPT, WELLNESS_PROMPT, POLL_PROMPT
 
 json_str = """
 [
@@ -177,13 +181,12 @@ async def send_monthly_contest():
 
             reward = json_object["Reward"]
 
+            judging_criteria_text = "\n".join(f"- {criteria}" for criteria in judging_criteria)
             result = as_section(
                 Bold(f"📢 {title}\n\n"),
                 Text(Bold("📝 Task Instruction"), f"\n{task_instruction}\n\n"),
-                Text(Bold("📦 Submission Requirements"),
-                     f"\n{submission_requirements}\n\n"),
-                Text(Bold("⚖️ Judging Criteria\n"),
-                     f"{'\n'.join(f"- {criteria}" for criteria in judging_criteria)}\n\n"),  # noqa: E501
+                Text(Bold("📦 Submission Requirements"), f"\n{submission_requirements}\n\n"),
+                Text(Bold("⚖️ Judging Criteria\n"), f"{judging_criteria_text}\n\n"),
                 Italic(f"{social_media_instruction}\n\n"),
                 Text(Bold("📅 Deadline"), f"\n{deadline}\n\n"),
                 Text(Bold("🏆 Reward"), f"\n{reward}")
@@ -296,7 +299,7 @@ async def send_wellness_weekly():
                     items.append(body)
           except Exception as err:
               logging.error(
-                  f"Community Error Wellness Router Error: Details {err}")
+                  f"Community Error POLL CREATION  Error: Details {err}")
 
           result = as_section(
               Text(Underline(Bold("🧘‍♀️ Wellness Activities of the Week\n"))),
@@ -309,4 +312,148 @@ async def send_wellness_weekly():
 
         except Exception as err:
             logging.error(
-                f"Community Error Wellness Router Error: Details: {err}")
+                f"Community Error POLL CREATION  Error: Details: {err}")
+
+
+
+
+#=================================POLL CREATION=================================
+
+
+
+async def generate_poll(message_text: str) -> tuple[str, list[str]]:
+    """
+    Call the LLM to generate a poll question and options based on the input text.
+    
+    Args:
+        message_text (str): The text of the replied-to message.
+    
+    Returns:
+        tuple[str, list[str]]: The generated question and list of options.
+    
+    Raises:
+        ValueError: If the LLM fails or returns invalid output.
+    """
+    try:
+        # Format the prompt
+        try:
+            formatted_prompt = POLL_PROMPT.format(message_text=message_text)
+        except KeyError as e:
+            logging.error(f"Community Error POLL CREATION Error: Details: Prompt formatting failed: Invalid placeholder {str(e)}")
+            raise ValueError(f"Prompt formatting failed: Invalid placeholder {str(e)}")
+        
+        # Call the LLM
+        response = await llm.ainvoke(formatted_prompt)
+        
+        
+        # Extract the content field (LangChain response)
+        content = response.content if hasattr(response, 'content') else response.get('content') if isinstance(response, dict) else None
+        if not content:
+            logging.error(f"Community Error POLL CREATION  Error: Details: LLM response does not contain 'content' field: {response}")
+            raise ValueError(f"LLM response does not contain 'content' field: {response}")
+        
+        # Log content
+        logging.debug(f"LLM content: {content}")
+        
+        # Extract JSON from content
+        # Look for JSON block within ```json ... ``` or standalone JSON
+        json_match = re.search(r'```json\n([\s\S]*?)\n```|({[\s\S]*?})', content)
+        if not json_match:
+            logging.error(f"Community Error POLL CREATION  Error: Details: LLM response content does not contain valid JSON: {content}")
+            raise ValueError(f"LLM response content does not contain valid JSON: {content}")
+        
+        json_str = json_match.group(1) or json_match.group(2)
+        
+        # Parse JSON
+        try:
+            poll_data = json.loads(json_str)
+        except json.JSONDecodeError as e:
+            logging.error(f"Community Error POLL CREATION  Error: Details: Failed to parse JSON from LLM response: {str(e)}")
+            raise ValueError(f"Failed to parse JSON from LLM response: {str(e)}")
+        
+        # Validate and extract question and options
+        if not isinstance(poll_data, dict):
+            logging.error(f"Community Error POLL CREATION  Error: Details: Parsed LLM response is not a dictionary: {poll_data}")
+            raise ValueError(f"Parsed LLM response is not a dictionary: {poll_data}")
+        
+        question = poll_data.get("question")
+        options = poll_data.get("options")
+        
+        # Validate LLM output
+        if not isinstance(question, str) or not question:
+            logging.error(f"Community Error POLL CREATION  Error: Details: LLM returned invalid or empty question: {question}")
+            raise ValueError(f"LLM returned invalid or empty question: {question}")
+        if not isinstance(options, list) or len(options) < 2 or len(options) > 10:
+            logging.error(f"Community Error POLL CREATION  Error: Details: LLM returned invalid options (must be 2-10 options): {options}")
+            raise ValueError(f"LLM returned invalid options (must be 2-10 options): {options}")
+        if any(not isinstance(opt, str) or not opt for opt in options):
+            logging.error(f"Community Error POLL CREATION  Error: Details: LLM returned empty or invalid options: {options}")
+            raise ValueError(f"LLM returned empty or invalid options: {options}")
+        
+        logging.info(f"LLM generated question: {question}")
+        logging.info(f"LLM generated options: {options}")
+        
+        return question, options
+    
+    except Exception as e:
+        logging.error(f"Community Error POLL CREATION  Error: Details: LLM failed to generate poll: {str(e)}")
+        raise ValueError(f"LLM failed to generate poll: {str(e)}")
+
+async def create_poll(message: Message):
+    try:
+        # Check if user is admin or creator in the chat
+        member = await bot.get_chat_member(message.chat.id, message.from_user.id)
+        if member.status not in ("administrator", "creator"):
+            logging.error(f"Community Error POLL CREATION  Error: Details: User {message.from_user.id} is not an admin")
+            return
+        
+        # Check if the command is a reply to a message
+        if not message.reply_to_message or not message.reply_to_message.text:
+            logging.error("Community Error POLL CREATION  Error: Details: No valid reply message provided for /poll")
+            return
+        
+        # Get the replied message's text
+        input_text = message.reply_to_message.text
+        
+        
+        # Generate poll question and options using LLM
+        question, options = await generate_poll(input_text)
+        
+        # Validate inputs
+        if not question:
+            logging.error("Community Error POLL CREATION  Error: Details: Sanitized question is empty")
+            return
+        if len(options) < 2:
+            logging.error("Community Error POLL CREATION  Error: Details: At least two options are required")
+            return
+        if len(options) > 10:
+            logging.error("Community Error POLL CREATION  Error: Details: Telegram polls support a maximum of 10 options")
+            return
+        if len(question) > 255:
+            logging.error("Community Error POLL CREATION  Error: Details: Poll question cannot exceed 255 characters")
+            return
+        if any(len(opt) > 100 for opt in options):
+            logging.error("Community Error POLL CREATION  Error: Details: Poll options cannot exceed 100 characters each")
+            return
+        if any(not opt for opt in options):
+            logging.error("Community Error POLL CREATION  Error: Details: One or more sanitized options are empty")
+            return
+        
+        # Send the poll to the chat
+        await bot.send_poll(
+            chat_id=message.chat.id,
+            question=question,
+            options=options,
+            is_anonymous=False,
+            allows_multiple_answers=False,
+        )
+        logging.info(f"Poll created successfully: Question: {question}, Options: {options}")
+    
+    except TelegramForbiddenError as e:
+        logging.error(f"Community Error POLL CREATION  Error: Details: Bot lacks permission: {str(e)}")
+    except TelegramBadRequest as e:
+        logging.error(f"Community Error POLL CREATION  Error: Details: Invalid poll format: {str(e)}")
+    except (ValueError, IndexError) as e:
+        logging.error(f"Community Error POLL CREATION  Error: Details: {str(e)}")
+    except Exception as e:
+        logging.error(f"Community Error POLL CREATION  Error: Details: Failed to create poll: {str(e)}")
