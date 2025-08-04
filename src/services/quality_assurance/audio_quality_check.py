@@ -1,10 +1,9 @@
-import json
 import librosa 
-import argparse
+from typing import Tuple, Dict
+import numpy as np
 import numpy as np
 import noisereduce as nr
 from pydub import AudioSegment
-
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -39,13 +38,13 @@ def reduce_noise(data, sr):
         y=data,
         sr=sr,
         stationary=False,
-        prop_decrease=0.7,
-        n_fft=512,
-        win_length=512,
-        hop_length=128
-    )
-    return enhanced
+        time_constant_s = 3.5,  # 3.5
+        freq_mask_smooth_hz = 300.0,  # 2000.0
+        time_mask_smooth_ms = 100.0,  # 100.0
+        thresh_n_mult_nonstationary = 0.5 # 1.0
+    ) 
 
+    return enhanced
 def cal_signal_power(data):
     '''Calculate the signal power'''
     rms = librosa.feature.rms(y = data, frame_length=len(data), center=False) 
@@ -81,7 +80,7 @@ def cal_silence_percentage(data, noise_floor):
 
     return silence_percentage
 
-def get_analysis(data, sr):
+def analyze_audio(data, sr):
     '''Get Analysis of the Audio'''
     noise_power = cal_noise_floor(data, sr = sr)
     signal_power = cal_signal_power(data)
@@ -96,16 +95,49 @@ def get_analysis(data, sr):
             "signal_power": float(signal_power)}
 
 
-def analyze_audio(data, sr, try_enhance = 2, min_snr_value = 40, min_snr_value_edit = 30, min_speech_level = -10, max_speech_level = -30, min_noise_level = -40):
+def check_audio_quality(
+    data: np.ndarray,
+    sr: int,
+    try_enhance: int = 2,
+    min_snr_value: float = 40,
+    min_snr_value_edit: float = 30,
+    min_speech_level: float = -10,
+    max_speech_level: float = -30,
+    min_noise_level: float = -40
+) -> Tuple[np.ndarray, Dict[str, float | str]]:
+    
+    """
+    Evaluates the quality of an audio signal and attempts enhancement if necessary.
 
-    # Parameters on admin pannel 
-    # min_snr_value
-    # min_snr_value_edit
-    # min_speech_level
-    # max_speech_level
-    # min_noise_level
-     
-    analysis = get_analysis(data, sr)
+    Parameters:
+    -----------
+    data : np.ndarray
+        The audio waveform data.
+    sr : int
+        The sample rate of the audio signal.
+    try_enhance : int, optional
+        Number of noise reduction attempts if SNR is near acceptable (default: 2).
+    min_snr_value : float, optional
+        Minimum acceptable Signal-to-Noise Ratio (SNR) for approval (default: 40).
+    min_snr_value_edit : float, optional
+        Lower SNR threshold that triggers enhancement attempts (default: 30).
+    min_speech_level : float, optional
+        Minimum acceptable speech level in dB (default: -10).
+    max_speech_level : float, optional
+        Maximum acceptable speech level in dB (default: -30).
+    min_noise_level : float, optional
+        Maximum acceptable background noise level in dB (default: -40).
+
+    Returns:
+    --------
+    Tuple[np.ndarray, Dict[str, float | str]]
+        - The (possibly enhanced) audio data.
+        - A dictionary with signal analysis results including:
+          'signal_power', 'noise_power', 'snr', and 'message'.
+    """
+         
+    analysis = analyze_audio(data, sr)
+    
     message = ""
     if analysis['signal_power'] > max_speech_level:
         message = "Move your phone away from your mouth a little"
@@ -118,7 +150,7 @@ def analyze_audio(data, sr, try_enhance = 2, min_snr_value = 40, min_snr_value_e
     elif (analysis['snr'] >= min_snr_value_edit) and (analysis['snr'] < min_snr_value):
         for _ in range(try_enhance):
             data = reduce_noise(data, sr)
-            analysis = get_analysis(data, sr)
+            analysis = analyze_audio(data, sr)
 
             if analysis['snr'] >= min_snr_value:
                 break
@@ -135,63 +167,41 @@ def analyze_audio(data, sr, try_enhance = 2, min_snr_value = 40, min_snr_value_e
     analysis['message'] = message
     return data, analysis
 
-
-def main(file_path, min_snr_value=40, 
-         min_snr_value_edit=30, 
-         min_speech_level=-10, 
-         max_speech_level=-30, 
-         min_noise_level=-40, 
-         bucket_name="name_bucket",  
-         bucket_path="path_bucket"): 
-
-    data, sr = librosa.load(file_path, sr=None)
-
-    data, result = analyze_audio(data, sr, 
-                                 min_snr_value=min_snr_value, 
-                                 min_snr_value_edit=min_snr_value_edit, 
-                                 min_speech_level=min_speech_level, 
-                                 max_speech_level=max_speech_level, 
-                                 min_noise_level=min_noise_level)
-
-    file_name = f"audio.mp3"
-    save_librosa_audio_as_mp3(data, sr, file_name)
-
-    # s3_key = "Hello"
-    return json.dumps({
-      "snr": float(result["snr"]),
-      "silence": float(result["silence"]),
-      "noise_power": float(result["noise_power"]),
-      "signal_power": float(result["signal_power"]),
-      "message": result["message"],
-     })
-
-
 if __name__ == "__main__":
-    import sys
+    import os
+    import sys 
+    import argparse
 
-    parser = argparse.ArgumentParser(description="Analyze audio quality and upload to S3")
-    parser.add_argument("files", nargs='+', help="Path(s) to the audio file(s)")
-
-    parser.add_argument("--min_snr_value", type=float, default=40, help="Minimum SNR value")
-    parser.add_argument("--min_snr_value_edit", type=float, default=30, help="Minimum SNR edit value")
-    parser.add_argument("--min_speech_level", type=float, default=-10, help="Minimum speech level (dB)")
-    parser.add_argument("--max_speech_level", type=float, default=-30, help="Maximum speech level (dB)")
-    parser.add_argument("--min_noise_level", type=float, default=-40, help="Minimum noise level (dB)")
-    parser.add_argument("--bucket_name", type=str, default="name_bucket", help="S3 bucket name")
-    parser.add_argument("--bucket_path", type=str, default="path_bucket", help="S3 bucket path")
+    parser = argparse.ArgumentParser(description="Audio Quality Check")
+    parser.add_argument("file_path", type=str, help="Path to the audio file")
+    parser.add_argument("--try_enhance", type=int, default=2, help="Number of noise reduction attempts")
+    parser.add_argument("--min_snr_value", type=float, default=40, help="Minimum acceptable SNR value")
+    parser.add_argument("--min_snr_value_edit", type=float, default=20, help="Lower SNR threshold for enhancement")
+    parser.add_argument("--min_speech_level", type=float, default=-40, help="Minimum acceptable speech level in dB")
+    parser.add_argument("--max_speech_level", type=float, default=-15, help="Maximum acceptable speech level in dB")
+    parser.add_argument("--min_noise_level", type=float, default=-40, help="Maximum acceptable noise level in dB") 
 
     args = parser.parse_args()
+    file_path = args.file_path
 
-    results = []
-    for file_path in args.files:
-        result = main(file_path,
-                      min_snr_value=args.min_snr_value,
-                      min_snr_value_edit=args.min_snr_value_edit,
-                      min_speech_level=args.min_speech_level,
-                      max_speech_level=args.max_speech_level,
-                      min_noise_level=args.min_noise_level,
-                      bucket_name=args.bucket_name,
-                      bucket_path=args.bucket_path)
-        results.append(json.loads(result))
+    if not file_path:
+        print("Please provide a valid audio file path.")
+        sys.exit(1)   
 
-    print(json.dumps(results, indent=2))
+    try:
+        y, sr = librosa.load(file_path, sr=None)
+        enhanced_audio, analysis = check_audio_quality(data = y, sr=sr,
+                                                       try_enhance=args.try_enhance, min_snr_value=args.min_snr_value,
+                                                       min_snr_value_edit=args.min_snr_value_edit,
+                                                       min_speech_level=args.min_speech_level,
+                                                       max_speech_level=args.max_speech_level,
+                                                       min_noise_level=args.min_noise_level)
+        print(f"Analysis Results: {analysis}")
+        os.path.split(file_path)
+        output_path = file_path.replace(".wav", "_enhanced.mp3")
+        print(f"Saving enhanced audio to {output_path}")
+        save_librosa_audio_as_mp3(enhanced_audio, sr, output_path)
+
+    except Exception as e:
+        print(f"Error processing audio file: {e}")
+        sys.exit(1)
