@@ -9,3 +9,5 @@ crowdenv/
 notebook.ipynb
 
 __pycache__/
+
+app.log
