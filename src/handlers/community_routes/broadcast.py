@@ -2,6 +2,7 @@ import asyncio
 import logging
 import re
 
+from aiogram import types
 from aiogram.utils.formatting import (
     Bold,
     Italic,
@@ -10,15 +11,12 @@ from aiogram.utils.formatting import (
     as_section,
 )
 
-from src.config import CHANNEL_ID, BOT_TOKEN
-from aiogram import Bot, types
-from aiogram.enums import ParseMode
-
+from src.config import CHANNEL_ID
 from src.loader import bot
 from src.utils.llm import llm
 from src.utils.text_utils import format_json_str_to_json, format_json_to_table
 
-from .prompt import CONTEST_PROMPT, WELLNESS_PROMPT,TRIVIA_PROMT
+from .prompt import CONTEST_PROMPT, TRIVIA_PROMT, WELLNESS_PROMPT
 
 json_str = """
 [
@@ -315,17 +313,16 @@ async def send_wellness_weekly():
                 f"Community Error Wellness Router Error: Details: {err}")
 
 
-#<=======Trivia Questions=======>
+
+
+#<==============================Trivia Questions==========================>
 
 
 
 """Global variables for trivia management"""
-
-bot = Bot(token=BOT_TOKEN)
-
-current_trivia = None             
-current_trivia_message_id = None 
-user_answers = {}                
+current_trivia = None
+current_trivia_message_id = None
+user_answers = {}
 
 """Format trivia questions into a single message with options."""
 
@@ -369,8 +366,8 @@ def parse_user_response(text: str):
         if match:
             answers.append(match.group(1).upper())
         else:
-            return None 
-        
+            return None
+
     return answers if answers else None
 
 """Send trivia results to channel after collecting answers."""
@@ -409,13 +406,20 @@ async def send_trivia_results():
     winners = winners[:10]  # Limit to top 10 winners
 
     if winners:
-        winner_text = "\n🎉 <b>Congratulations to the Top 3 Participants who got all answers correct:</b>\n"
+        winner_text = (
+            "\n🎉 <b>Congratulations to the Top 3 Participants who got all "
+            "answers correct:</b>\n"
+        )
         for rank, (uid, uname) in enumerate(winners, start=1):
             winner_text += f"{rank}. @{uname}\n"
     else:
         winner_text = "\n😞 No one answered all questions correctly this time."
 
-    await bot.send_message(chat_id=CHANNEL_ID, text=answer_msg + winner_text, parse_mode="HTML")
+    await bot.send_message(
+        chat_id=CHANNEL_ID,
+        text=answer_msg + winner_text,
+        parse_mode="HTML"
+    )
 
 # === Main Trivia Loop ===
 
@@ -437,7 +441,9 @@ async def daily_trivia():
             trivia_list = format_json_str_to_json(response.content)
 
             if not trivia_list or len(trivia_list) < 4:
-                logging.error("Failed to load 4 trivia questions. Retrying in 1 hour...")
+                logging.error(
+                    "Failed to load 4 trivia questions. Retrying in 1 hour..."
+                )
                 await asyncio.sleep(3600)
                 continue
 
@@ -445,16 +451,21 @@ async def daily_trivia():
             current_trivia = trivia_list[:4]
 
             # Send trivia questions to channel
-            # Note: Uncomment if you want to see what happens when a person gets everything correct
-            # the correct answers will be sent first before the trivia questions
+            # Note: Uncomment if you want to see what happens when a person gets
+            # everything correct. The correct answers will be sent first before
+            # the trivia questions.
             """await send_trivia_results()"""
 
             trivia_message = format_all_trivia(current_trivia)
-            sent_message = await bot.send_message(chat_id=CHANNEL_ID, text=trivia_message, parse_mode="HTML")
+            sent_message = await bot.send_message(
+                chat_id=CHANNEL_ID,
+                text=trivia_message,
+                parse_mode="HTML"
+            )
 
             current_trivia_message_id = sent_message.message_id
 
-            
+
             await asyncio.sleep(3600)  # 1 hour in seconds
 
             # Announce results
@@ -463,7 +474,7 @@ async def daily_trivia():
         except Exception:
             logging.exception("Trivia session failed.")
 
-        
+
         await asyncio.sleep(86400)  # 24 hours in seconds
 
 
@@ -478,16 +489,19 @@ async def handle_message(message: types.Message):
     Requires user to reply to trivia question message.
     """
 
-     # Note: Comment if you want to see what happens when a person gets everything correct
-     # the correct answers will be sent first before the trivia questions
+     # Note: Comment if you want to see what happens when a person gets everything
+     # correct. The correct answers will be sent first before the trivia questions.
     if not current_trivia:
-        
+
         return
-    
 
 
-    if not message.reply_to_message or message.reply_to_message.message_id != current_trivia_message_id:
-       
+
+    if (
+        not message.reply_to_message
+        or message.reply_to_message.message_id != current_trivia_message_id
+    ):
+
         return
 
     answers = parse_user_response(message.text)

@@ -1,21 +1,17 @@
 import asyncio
 
-from aiogram import Router
-
-from aiogram import types
+from aiogram import Router, types
 
 from .broadcast import (
     broadcast_new_policies,
     broadcast_new_projects,
     broadcast_new_trainings,
+    daily_trivia,
     get_top_agent_this_week,
+    handle_message,
     send_leaderboard_weekly,
     send_monthly_contest,
     send_wellness_weekly,
-    daily_trivia,
-    current_trivia,
-    user_answers,
-    handle_message,
 )
 
 router = Router()
