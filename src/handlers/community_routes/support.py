@@ -18,7 +18,7 @@ async def send_support(message: Message):
     """Send support request to admin"""
     start_message = Text("Hello ",Bold(message.from_user.full_name), " 👋," ," I will try and connect you to an available agent to support you!")  # noqa: E501
     await bot.send_message(**start_message.as_kwargs(), chat_id=message.from_user.id)
-    all_messages = [bot.send_message(chat_id=admin_id, reply_markup=accept_support_request(message.from_user.id), text=f"{message.from_user.username} is requesting support from an agent!") for admin_id in ADMIN_IDS]  # noqa: E501
+    all_messages = [bot.send_message(chat_id=admin_id, reply_markup=accept_support_request(message.from_user.id), text=f"{message.from_user.username or message.from_user.full_name} is requesting support from an agent!") for admin_id in ADMIN_IDS]  # noqa: E501
     await asyncio.gather(*all_messages)
 
 @router.callback_query()
