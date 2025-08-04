@@ -15,11 +15,13 @@ from aiogram.utils.formatting import (
 from src.config import CHANNEL_ID
 from src.loader import bot
 from src.utils.llm import llm
+
 from src.utils.text_utils import format_json_str_to_json, format_json_to_table,format_all_trivia
 from aiogram.exceptions import TelegramForbiddenError,TelegramBadRequest
 from aiogram.types import Message
 
 from .prompt import CONTEST_PROMPT, TRIVIA_PROMT, WELLNESS_PROMPT, POLL_PROMPT
+
 
 json_str = """
 [
@@ -311,7 +313,12 @@ async def send_wellness_weekly():
           await asyncio.sleep(delay=delay)
 
         except Exception as err:
+
             logging.error(f"Community Error POLL CREATION  Error: Details: {err}")
+
+            logging.error(
+                f"Community Error POLL CREATION  Error: Details: {err}")
+
 
 
 
@@ -455,6 +462,7 @@ async def create_poll(message: Message):
     except (ValueError, IndexError) as e:
         logging.error(f"Community Error POLL CREATION  Error: Details: {str(e)}")
     except Exception as e:
+
         logging.error(f"Community Error POLL CREATION  Error: Details: Failed to create poll: {str(e)}")
 
 
@@ -641,3 +649,6 @@ async def handle_message(message: types.Message):
         "username": username,
         "answers": answers
     }
+
+        logging.error(f"Community Error POLL CREATION  Error: Details: Failed to create poll: {str(e)}")
+
