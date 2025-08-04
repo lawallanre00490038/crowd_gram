@@ -24,9 +24,12 @@ def is_blurry(image, threshold=100.0):
     Check if image is blurry using Laplacian variance.
     Lower variance = more blur.
     """
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # print(image.shape)
     if image is None:
         return True
+    
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
     variance = cv2.Laplacian(image, cv2.CV_64F).var()
     return bool (variance < threshold)
 
@@ -84,9 +87,6 @@ def run_image_quality_checks(image_path, blur_thresh=100.0):
     """
 
     image = cv2.imread(image_path)
-    if image is None:
-        raise ValueError(f"Cannot open image file: {image_path}")
-    
     return {
         "blurry": is_blurry(image),
         "entropy": image_entropy(image),
