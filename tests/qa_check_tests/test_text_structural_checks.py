@@ -4,7 +4,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))
 
 import pytest
-from services.quality_assurance.structural_checks import (
+from src.services.quality_assurance.text_structural_checks import (
     check_junk,
     has_repeated_chars,
     check_unicode_script,
