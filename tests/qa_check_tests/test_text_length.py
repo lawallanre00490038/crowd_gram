@@ -3,7 +3,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))
 import pytest
-from services.quality_assurance.text_length_check import check_length_and_truncation
+from src.services.quality_assurance.text_length_check import check_length_and_truncation
 
 @pytest.mark.parametrize("source,translation,expected_pass,expected_reason", [
     # Good translations (balanced)
