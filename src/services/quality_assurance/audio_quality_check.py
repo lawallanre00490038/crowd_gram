@@ -1,9 +1,9 @@
 import librosa 
-from typing import Tuple, Dict
-import numpy as np
 import numpy as np
 import noisereduce as nr
 from pydub import AudioSegment
+from typing import Tuple, Dict
+
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -137,7 +137,7 @@ def check_audio_quality(
     """
          
     analysis = analyze_audio(data, sr)
-    
+
     message = ""
     if analysis['signal_power'] > max_speech_level:
         message = "Move your phone away from your mouth a little"
