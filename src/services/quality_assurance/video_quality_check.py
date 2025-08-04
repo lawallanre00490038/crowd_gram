@@ -3,17 +3,26 @@ import cv2
 import json
 import librosa
 import tempfile
+import logging
 from typing import Optional
 
 from moviepy import VideoFileClip, AudioFileClip
-from img_quality_checks import is_blurry_frame, frame_entropy, calculate_niqe_score_frame
+from img_quality_checks import is_blurry, image_entropy, calculate_niqe_score
 from audio_quality_check import check_audio_quality, save_librosa_audio_as_mp3
 
 def extract_audio_from_video(video_path: str, output_format: str = "wav") -> str:
     """Extract audio from video and save as WAV or other format for processing."""
+    logging.info(f"Extracting audio from video: {video_path}")
     clip = VideoFileClip(video_path)
-    temp_audio_file = tempfile.NamedTemporaryFile(suffix=f".{output_format}", delete=False)
-    clip.audio.write_audiofile(temp_audio_file.name, codec='pcm_s16le')  # WAV with 16-bit PCM
+    
+    logging.info(clip.audio)
+    if clip.audio is None:
+        raise ValueError("No audio track found in the video file.")
+    else:
+        logging.info("Audio track found, proceeding with extraction.")
+        temp_audio_file = tempfile.NamedTemporaryFile(suffix=f".{output_format}", delete=False)
+        clip.audio.write_audiofile(temp_audio_file.name, codec='pcm_s16le')  # WAV with 16-bit PCM
+    
     return temp_audio_file.name
 
 def replace_audio_in_video(video_path: str, new_audio_path: str, output_video_path: str):
@@ -29,7 +38,7 @@ def replace_audio_in_video(video_path: str, new_audio_path: str, output_video_pa
     new_audio_clip = AudioFileClip(new_audio_path)
 
     # Set new audio
-    final_video = video_clip.set_audio(new_audio_clip)
+    final_video = video_clip.with_audio(new_audio_clip)
 
     # Export video with new audio
     final_video.write_videofile(output_video_path, codec='libx264', audio_codec='aac', threads=4)
@@ -82,12 +91,12 @@ def check_video_audio_quality(
                                  min_noise_level=min_noise_level)
 
     # Step 4: Save enhanced audio to file
-    enhanced_audio_path = "enhanced_audio.mp3"
-    save_librosa_audio_as_mp3(data, sr, enhanced_audio_path)
+    temp_audio = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+    save_librosa_audio_as_mp3(data, sr, temp_audio.name)
 
     # Step 5: Replace video audio
     if is_video and replace_audio:
-        replace_audio_in_video(file_path, enhanced_audio_path, output_video_path)
+        replace_audio_in_video(file_path, temp_audio.name, output_video_path)
         result["output_video_path"] = output_video_path
 
     # Step 6: Clean up extracted audio if temp
@@ -104,7 +113,7 @@ def check_video_audio_quality(
         "output_video": result.get("output_video_path", None)
     }, indent=2)
 
-def run_video_quality_checks_with_average(video_path, blur_thresh=100.0, max_frames=100):
+def check_video_image_quality(video_path, blur_thresh=100.0, max_frames=100):
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         raise ValueError(f"Cannot open video file: {video_path}")
@@ -121,9 +130,9 @@ def run_video_quality_checks_with_average(video_path, blur_thresh=100.0, max_fra
         if not ret:
             break
 
-        blurry = is_blurry_frame(frame, threshold=blur_thresh)
-        ent = frame_entropy(frame)
-        niqe = calculate_niqe_score_frame(frame)
+        blurry = is_blurry(frame, threshold=blur_thresh)
+        ent = image_entropy(frame)
+        niqe = calculate_niqe_score(frame)
 
         results.append({
             "frame": frame_count,
@@ -150,3 +159,44 @@ def run_video_quality_checks_with_average(video_path, blur_thresh=100.0, max_fra
         "average_niqe_score": avg_niqe,
         "frames_processed": frame_count
     }
+
+if __name__ == "__main__":
+    import argparse
+
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', filename='app.log', filemode='w')
+
+    parser = argparse.ArgumentParser(description="Run video quality checks.")
+    parser.add_argument("video_path", type=str, help="Path to the video file.")
+    parser.add_argument("--blur_thresh", type=float, default=100.0, help="Blurriness threshold.")
+    parser.add_argument("--max_frames", type=int, default=100, help="Maximum frames to analyze.")
+    parser.add_argument("--output_video_path", type=str, default="output_video.mp4", help="Path to save the output video with enhanced audio.")
+    parser.add_argument("--replace_audio", action='store_true', help="Replace audio in the video with enhanced audio.")
+    parser.add_argument("--min_snr_value", type=float, default=40, help="Minimum acceptable SNR value.")
+    parser.add_argument("--min_snr_value_edit", type=float, default=30, help="Lower SNR threshold for enhancement.")
+    parser.add_argument("--min_speech_level", type=float, default=-10, help="Minimum acceptable speech level in dB.")
+    parser.add_argument("--max_speech_level", type=float, default=-30, help="Maximum acceptable speech level in dB.")
+    parser.add_argument("--min_noise_level", type=float, default=-40, help="Maximum acceptable noise level in dB.") 
+    
+    args = parser.parse_args()
+
+    print(f"Checking video quality for: {args.video_path}")
+
+    results, averages = check_video_image_quality(args.video_path, args.blur_thresh, args.max_frames)
+    print(f"Processed {averages['frames_processed']} frames.")
+    print(f"Average Blurriness: {averages['average_blurry']}")
+    print(f"Average Entropy: {averages['average_entropy']}")
+    print(f"Average NIQE Score: {averages['average_niqe_score']}")
+
+    print(f"Checking Audio quality for: {args.video_path}")
+    audio_quality_report = check_video_audio_quality(
+        file_path=args.video_path,
+        min_snr_value=args.min_snr_value,
+        min_snr_value_edit=args.min_snr_value_edit,
+        min_speech_level=args.min_speech_level,
+        max_speech_level=args.max_speech_level,
+        min_noise_level=args.min_noise_level)
+    
+    print(f"Audio Quality Report: {audio_quality_report}") 
+
+    if args.replace_audio:
+        print(f"Output video with enhanced audio saved to: {args.output_video_path}")
