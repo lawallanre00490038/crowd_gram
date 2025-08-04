@@ -4,7 +4,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))
 
 import pytest
-from services.quality_assurance.text_coherence_check import calculate_perplexity, embedding_entropy, check_coherence
+from src.services.quality_assurance.text_coherence_check import calculate_perplexity, embedding_entropy, check_coherence
 
 # --------------------------
 # Unit Tests: calculate_perplexity
