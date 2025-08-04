@@ -1,5 +1,4 @@
 import cv2
-from PIL import Image
 import numpy as np
 from scipy.stats import entropy
 
@@ -20,38 +19,52 @@ def sobel_edge_cv2(image):
     return sobel_mag
 
 
-def is_blurry(image_path, threshold=100.0):
+def is_blurry(image, threshold=100.0):
     """
     Check if image is blurry using Laplacian variance.
     Lower variance = more blur.
     """
-    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     if image is None:
         return True
     variance = cv2.Laplacian(image, cv2.CV_64F).var()
     return bool (variance < threshold)
 
 
-def image_entropy(image_path):
+def image_entropy(image):
     """
     Estimate compression/noise by measuring entropy of the image histogram.
     Low entropy may indicate poor quality or blank images.
     """
     try:
-        with Image.open(image_path) as img:
-            histogram = img.histogram()
-            histogram = np.array(histogram) / sum(histogram)
-            return entropy(histogram)
+        # Load image in grayscale
+        img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        if img is None:
+            return 0.0
+
+        # Compute histogram (256 bins for grayscale)
+        hist = cv2.calcHist([img], [0], None, [256], [0, 256])
+        hist = hist.ravel()
+
+        # Normalize histogram to get probabilities
+        hist_sum = hist.sum()
+        if hist_sum == 0:
+            return 0.0
+        prob = hist / hist_sum
+
+        # Compute entropy
+        return entropy(prob, base=2)
     except Exception:
         return 0.0
 
 
-def calculate_niqe_score(image_path):
+def calculate_niqe_score(image):
     """
     Estimate image quality using image sharpness metrics.
     """
     try:
-        image = Image.open(image_path).convert("L")  # Convert to grayscale
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        
         img_array = np.array(image)
 
         # # Calculate image sharpness using Sobel filter
@@ -69,10 +82,15 @@ def run_image_quality_checks(image_path, blur_thresh=100.0):
     """
     Run all image quality checks and return a report.
     """
+
+    image = cv2.imread(image_path)
+    if image is None:
+        raise ValueError(f"Cannot open image file: {image_path}")
+    
     return {
-        "blurry": is_blurry(image_path, threshold=blur_thresh),
-        "entropy": image_entropy(image_path),
-        "niqe_score": calculate_niqe_score(image_path)
+        "blurry": is_blurry(image),
+        "entropy": image_entropy(image),
+        "niqe_score": calculate_niqe_score(image)
     }
 
 if __name__ == "__main__":
