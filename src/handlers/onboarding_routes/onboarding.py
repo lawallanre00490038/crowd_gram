@@ -2,13 +2,17 @@ from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from src.states.onboarding import Onboarding
-from src.keyboards.reply import gender_kb, task_type_kb, industry_kb, primary_device_kb, dialect_fluency_kb, internet_quality_kb
+from src.states.authentication import Authentication
+from src.keyboards.reply import gender_kb, task_type_kb, industry_kb, primary_device_kb, dialect_fluency_kb
 from src.keyboards.inline import g0_to_tutorials_kb
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.state import State, StatesGroup
 from src.handlers.onboarding_routes.quiz import start_quiz
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-
+from pathlib import Path
+from aiogram.types import InputFile
+from aiogram.types import FSInputFile
 
 router = Router()
 
@@ -17,6 +21,13 @@ tutorial_videos = [
     "🎥 Video 2: How Annotation Works\nhttps://youtu.be/FSV1uAMbYqM?list=PLeBirUGntTt1TGeuP3xQX9ZbpeGSdbmzm",
     "🎥 Video 3: Quality and Submission Guide\nhttps://youtu.be/FSV1uAMbYqM?list=PLeBirUGntTt1TGeuP3xQX9ZbpeGSdbmzm"
 ]
+
+
+# tutorial_videos = [
+#     Path("compressed/tutorial_1.mp4"),
+#     Path("compressed/tutorial_2.mp4"),
+#     Path("compressed/tutorial_3.mp4")
+# ]
 
 
 # --- Custom tutorial states ---
@@ -28,31 +39,76 @@ class Tutorial(StatesGroup):
 
 @router.message(F.text == "/start")
 async def cmd_start(message: Message, state: FSMContext):
-    welcome_text=(    
-        "👋 Welcome to EqualyzAI!\n\n"
+
+    
+
+    #verification user exist??  
+    welcome_text = (    
+        "👋 Welcome to Equalyz Crowd!\n\n"
         "We're building the future of AI by collecting multilingual data across Africa.\n\n"
-        "As a contributor, you'll help train AI models and earn money for quality work.\n\n"
-        "This quick onboarding sets up your profile so we can match you with the best tasks.\n\n"
-        "Let’s begin! 🚀"
+        "As a contributor/agent, you'll help train AI models and earn money for quality work.\n\n"
+        "Let's begin! 🚀"
     )
     await message.answer(welcome_text)
+
+    tutorial_intro_text = (
+        "🧠 You will be guided through a series of videos to learn about the basics of data collection and annotation.\n\n"
+        "Would you like to watch the tutorial videos?"
+    )
+    
+    # Créer les boutons avec option skip
+    tutorial_choice_kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="📺 Yes, show me the videos", callback_data="tutorial_yes")],
+            [InlineKeyboardButton(text="⏭️ Skip tutorials", callback_data="skip_tutorials")]
+        ]
+    )
+    await message.answer(tutorial_intro_text, reply_markup=tutorial_choice_kb)
+    await state.set_state(Tutorial.ready_to_start)
+    
+# Ajouter ces handlers après le handler /start
+
+# Handler pour le choix des tutoriels (Oui/Skip)
+@router.callback_query(Tutorial.ready_to_start, F.data.in_(["tutorial_yes", "skip_tutorials"]))
+async def handle_tutorial_choice(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    
+    if callback.data == "tutorial_yes":
+        # L'utilisateur veut voir les vidéos
+        await callback.message.answer("📺 Great! Let's start with the tutorial videos.")
+        await state.update_data(tutorial_index=0)
+        await state.set_state(Tutorial.watching)
+        await send_tutorial(callback.message, state)
+        
+    elif callback.data == "skip_tutorials":
+        # L'utilisateur veut skip les vidéos -> aller directement au choix du type d'utilisateur
+        await show_user_type_selection(callback.message, state)
+
+# Fonction pour montrer la sélection du type d'utilisateur
+async def show_user_type_selection(message: Message, state: FSMContext):
+    selection_text = (
+        "🔽 Now, please tell us what type of user you are:"
+    )
+    await message.answer(selection_text)
+    
+    # Créer les boutons avec option retour
+    user_type_kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            # [InlineKeyboardButton(text="📊 I'm a Contibutor", callback_data="collector_yes")],
+            [InlineKeyboardButton(text="👤 Sign Up", callback_data="registered_yes")],
+            [InlineKeyboardButton(text="🆕 Sign In", callback_data="new_user")],
+            [InlineKeyboardButton(text="🔙 Back to tutorials", callback_data="back_to_tutorials")]
+        ]
+    )
     
     await message.answer(
-        "🧠 You will be guided through a series of videos to learn about the basics of data collection and annotation.\n\n",
-        reply_markup=g0_to_tutorials_kb()
+        "Please select your user type:",
+        reply_markup=user_type_kb
     )
-    await state.set_state(Tutorial.ready_to_start)
-
-
-
-@router.callback_query(Tutorial.ready_to_start, F.data == "tutorial_yes")
-async def start_tutorial_sequence(callback: CallbackQuery, state: FSMContext):
-    await callback.answer()
-    await state.update_data(tutorial_index=0)
-    await state.set_state(Tutorial.watching)
-    await send_tutorial(callback.message, state)
-
-
+    await state.set_state(Authentication.collector_check)
+    
+   
+    
 
 # --- Navigation buttons ---
 def tutorial_nav_kb(index: int):
@@ -72,6 +128,27 @@ async def send_tutorial(message: Message, state: FSMContext):
     data = await state.get_data()
     index = data.get("tutorial_index", 0)
     await message.answer(tutorial_videos[index], reply_markup=tutorial_nav_kb(index))
+
+
+
+
+# async def send_tutorial(message: Message, state: FSMContext):
+#     data = await state.get_data()
+#     index = data.get("tutorial_index", 0)
+#     video_path = tutorial_videos[index]  # this is a pathlib.Path object
+
+#     try:
+#         video_file = FSInputFile(path=video_path)  # ✅ This is the correct class to use
+#         print(video_file)
+        
+#         await message.answer_video(
+#             video=video_file,
+#             caption=f"Tutorial {index + 1}",
+#             reply_markup=tutorial_nav_kb(index)
+#         )
+#     except FileNotFoundError:
+#         await message.answer("⚠️ Video file not found.")
+
 
 
 # --- Handle navigation (next/back/ready) ---
@@ -110,47 +187,54 @@ async def quiz_ready_response(callback: CallbackQuery, state: FSMContext):
         await callback.message.answer("✅ Great! Let's begin the short quiz.")
         await state.set_state(Onboarding.intro)
         await start_quiz(callback.message, state)
+        #await show_user_type_selection(callback.message, state)
+
 
     elif callback.data == "quiz_no":
         await state.update_data(tutorial_index=0)
         await send_tutorial(callback.message, state)
         
 
-
-
-# --- Collect name ---
-@router.message(Onboarding.name)
-async def get_name(message: Message, state: FSMContext):
-    await state.update_data(name=message.text.strip())
-    await message.answer("📱 What's your phone number?\n\n" \
-    "Format: +234XXXXXXXXX (include country code)")
-    await state.set_state(Onboarding.phone)
-
-
-# --- Collect phone number ---
-@router.message(Onboarding.phone)
-async def get_phone(message: Message, state: FSMContext):
-    await state.update_data(phone=message.text.strip())
-    await message.answer("⚧ What’s your gender? Your privacy is protected - this data is never shared publicly.", reply_markup=gender_kb)
-    await state.set_state(Onboarding.gender)
-
-
-# --- Collect gender ---
-@router.message(Onboarding.gender)
-async def get_gender(message: Message, state: FSMContext):
-    await state.update_data(gender=message.text.strip())
-    await message.answer("🌍 What's your current location?")
-    await state.set_state(Onboarding.location)
+# Ajouter ce handler pour retour aux tutoriels
+@router.callback_query(Authentication.collector_check, F.data == "back_to_tutorials")
+async def handle_back_to_tutorials(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    
+    # Retourner au choix des tutoriels
+    tutorial_intro_text = (
+        "🧠 You will be guided through a series of videos to learn about the basics of data collection and annotation.\n\n"
+        "Would you like to watch the tutorial videos?"
+    )
+    
+    tutorial_choice_kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="📺 Yes, show me the videos", callback_data="tutorial_yes")],
+            [InlineKeyboardButton(text="⏭️ Skip tutorials", callback_data="skip_tutorials")]
+        ]
+    )
+    
+    await callback.message.answer(tutorial_intro_text, reply_markup=tutorial_choice_kb)
+    await state.set_state(Tutorial.ready_to_start)
 
 
 # --- Collect location ---
 @router.message(Onboarding.location)
 async def get_location(message: Message, state: FSMContext):
     await state.update_data(location=message.text.strip())
+    #phone number already collected from authentification
+    await message.answer("⚧ What’s your gender? Your privacy is protected - this data is never shared publicly.", reply_markup=gender_kb)
+    await state.set_state(Onboarding.gender)
+
+
+
+# --- Collect gender ---
+@router.message(Onboarding.gender)
+async def get_gender(message: Message, state: FSMContext):
+    await state.update_data(gender=message.text.strip())
     await message.answer("🗣️ Please list the languages or dialects you speak fluently (e.g., English, French, Yoruba, Fulfulde, Gungbe...).")
     await state.set_state(Onboarding.languages)
 
-
+    
 # --- Collect spoken languages ---
 @router.message(Onboarding.languages)
 async def get_languages(message: Message, state: FSMContext):
@@ -198,18 +282,9 @@ async def get_industry(message: Message, state: FSMContext):
 @router.message(Onboarding.primary_device)
 async def get_primary_device(message: Message, state: FSMContext):
     await state.update_data(primary_device=message.text.strip())
-    internet_text = (
-        "🌐 How reliable is your internet connection?\n\n"
-        "Rate your internet:"
-    )
-    await message.answer(internet_text, reply_markup=internet_quality_kb)
-    await state.set_state(Onboarding.internet_quality)
-
-@router.message(Onboarding.internet_quality)
-async def get_internet_quality(message: Message, state: FSMContext):
-    await state.update_data(internet_quality=message.text.strip())
     await message.answer("📌 What types of tasks would you like to work on?", reply_markup=task_type_kb)
     await state.set_state(Onboarding.task_type)
+
 
 # --- Task preferences ---
 @router.message(Onboarding.task_type)
@@ -233,6 +308,17 @@ async def get_referrer(message: Message, state: FSMContext):
     await message.answer("🎉 Thank you! You're now onboarded and ready for tasks.\n\n" \
     "Welcome to the EqualyzAI contributor community! 🌟")
 
+    #diriger vs test acknowledgement
+    await message.answer(
+        "🧠 Next Step: Knowledge Assessment\n\n"
+        "Before you start earning, we'll test your knowledge with a few practical tasks:\n"
+        "• 📝 Text Annotation\n"
+        "• 🎵 Audio Recording\n" 
+        "• 🖼️ Image Annotation\n"
+        "• 🎥 Video Annotation\n\n"
+        "This helps us assign you the right tasks for your skill level!\n\n"
+    )
+
     # Set agent status to 'Pending' and notify admin optionally
     # Trigger next stage (demo task, eligibility test, etc.)
     print(message.from_user.id, "has completed onboarding with data:", user_data)
@@ -247,9 +333,11 @@ async def get_referrer(message: Message, state: FSMContext):
         f"Education: {user_data['education']}\n"
         f"Industry: {user_data['industry']}\n"
         f"Primary Device: {user_data['primary_device']}\n"
-        f"Internet Quality: {user_data['internet_quality']}\n"
+        #f"Internet Quality: {user_data['internet_quality']}\n"
         f"Task Type: {user_data['task_type']}\n"
         f"Referrer: {user_data['referrer']}"
     )  
+  
 
     await state.clear()
+    

@@ -1,5 +1,8 @@
 venv/
 env/
+MYREADME.md
+
+MYREADE.md
 
 .env
 
@@ -10,6 +13,10 @@ notebook.ipynb
 
 __pycache__/
 
-app.log
 
+compressed/
+video/
+
+.vscode/
+env/
 .pytest_cache/
