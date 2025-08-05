@@ -7,8 +7,8 @@ import logging
 from typing import Optional
 
 from moviepy import VideoFileClip, AudioFileClip
-from img_quality_checks import is_blurry, image_entropy, calculate_niqe_score
-from audio_quality_check import check_audio_quality, save_librosa_audio_as_mp3
+from src.services.quality_assurance.img_quality_checks import is_blurry, image_entropy, calculate_niqe_score
+from src.services.quality_assurance.audio_quality_check import check_audio_quality, save_librosa_audio_as_mp3
 
 def extract_audio_from_video(video_path: str, output_format: str = "wav") -> str:
     """Extract audio from video and save as WAV or other format for processing."""
