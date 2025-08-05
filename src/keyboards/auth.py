@@ -14,11 +14,10 @@ def company_kb():
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="OpenAI")],
-            [KeyboardButton(text="Google")],
-            [KeyboardButton(text="Meta")],
-            [KeyboardButton(text="Anthropic")],
+            [KeyboardButton(text="EqualyzAI")],
+            [KeyboardButton(text="African Voices")],
             [KeyboardButton(text="Microsoft")],
-            [KeyboardButton(text="Other company")]
+            [KeyboardButton(text="HausaNLP")]
         ],
         resize_keyboard=True,
         one_time_keyboard=True
