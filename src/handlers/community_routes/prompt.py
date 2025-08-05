@@ -1,5 +1,6 @@
 from langchain_core.prompts import PromptTemplate
 
+
 CONTEST_PROMPT = PromptTemplate.from_template("""
 You are a cultural linguist and creative contest designer working for EqualyzAI — a platform that collects high-quality data from African indigenous languages by assigning paid language-related tasks to its community.
 
@@ -78,3 +79,32 @@ RETURN A SINGLE OBJECT THAT WILL FOLLOW THIS FORMAT. PLEASE COMPLY WITH THIS FOR
 ```
 """  # noqa: E501
 )
+#<====== POLL PROMPT ======>
+
+
+POLL_PROMPT = PromptTemplate.from_template("""
+You are a skilled conversational designer and poll strategist for a Telegram bot that engages users through thought-provoking, relevant, and concise polls.
+
+Your task is to take a given **user message or topic** and turn it into a clear and engaging **Telegram poll**. The poll must stimulate meaningful engagement while remaining brief and easy to understand.
+here is the user message: '{message_text}'
+## Poll Requirements
+
+Each poll must:
+- Contain a **short, direct question** that is inspired by the user's message.
+- Offer ** 2 to 10 options** that are **diverse**, **balanced**, and **non-repetitive**.
+- Avoid biased or leading language.
+- Stay **relevant** to the topic or message provided.
+- Be appropriate for general audiences and maintain a respectful tone.
+- Avoid yes/no questions unless they’re truly the best fit.
+
+## Output Format
+
+Return a single JSON object using the following structure:
+
+```json
+{{
+  "question": "<<A concise and engaging question derived from the user's message>>",
+  "options": ["<<Option 1>>", "<<Option 2>>", "... up to 5 options"]
+}}
+```
+""")  # noqa: E501
