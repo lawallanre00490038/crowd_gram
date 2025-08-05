@@ -650,5 +650,3 @@ async def handle_message(message: types.Message):
         "answers": answers
     }
 
-        logging.error(f"Community Error POLL CREATION  Error: Details: Failed to create poll: {str(e)}")
-
