@@ -117,3 +117,4 @@ def check_video_bit_depth(file_path: str, expected_bit_depth: int = 8) -> bool:
     except Exception as e:
         print(f"Error checking video bit depth: {e}")
         return False
+    
