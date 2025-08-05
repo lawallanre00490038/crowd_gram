@@ -1,36 +1,13 @@
 import librosa 
 import numpy as np
 import noisereduce as nr
-from pydub import AudioSegment
 from typing import Tuple, Dict
+
+from src.utils.save_audio import save_librosa_audio_as_mp3
 
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
-
-
-def save_librosa_audio_as_mp3(y, sr, output_path, bitrate="256k"):
-    """
-    Save audio loaded with librosa (y, sr) as an MP3 file.
-
-    Args:
-        y (np.ndarray): Audio time series.
-        sr (int): Sampling rate.
-        output_path (str): Path to save MP3 file.
-        bitrate (str): Bitrate for MP3 file (default: '192k').
-    """
-    # Normalize to 16-bit PCM and convert to bytes
-    audio_int16 = np.int16(y / np.max(np.abs(y)) * 32767)
-    audio_bytes = audio_int16.tobytes()
-
-    # Create an in-memory WAV file
-    wav_audio = AudioSegment(
-        data=audio_bytes,
-        sample_width=2,       # 16-bit PCM
-        frame_rate=sr,
-        channels=1 if y.ndim == 1 else y.shape[0]
-    )
-    wav_audio.export(output_path, format="mp3", bitrate=bitrate)
 
 def reduce_noise(data, sr):
     '''Reduce the amount of noise in the Audio'''
@@ -101,8 +78,8 @@ def check_audio_quality(
     try_enhance: int = 2,
     min_snr_value: float = 40,
     min_snr_value_edit: float = 30,
-    min_speech_level: float = -10,
-    max_speech_level: float = -30,
+    min_speech_level: float = -40,
+    max_speech_level: float = -15,
     min_noise_level: float = -40
 ) -> Tuple[np.ndarray, Dict[str, float | str]]:
     
