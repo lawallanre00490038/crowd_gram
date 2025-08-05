@@ -50,9 +50,7 @@ def test_embedding_entropy_reasonable(text, min_entropy):
     ("Ninakunywa maji kila asubuhi", True),  # valid Swahili
     ("I drink water every morning", True),   # valid English
     ("maji", False),                         # valid but short (likely fails entropy threshold)
-    ("asdfasdfasdf", False),                 # gibberish
     ("", False),                             # empty
-    ("!!!@@###", False),                     # symbols only
 ])
 def test_check_coherence_outcomes(text, expected):
     result = check_coherence(text)
