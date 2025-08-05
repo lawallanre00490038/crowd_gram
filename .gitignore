@@ -11,3 +11,5 @@ notebook.ipynb
 __pycache__/
 
 app.log
+
+.pytest_cache/
