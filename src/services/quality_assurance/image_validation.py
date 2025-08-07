@@ -1,7 +1,7 @@
 from typing import Dict, Any, List
 import logging
 
-from ....services.quality_assurance.img_quality_checks import (
+from .img_quality_checks import (
     is_blurry,
     image_entropy,
     calculate_niqe_score,
@@ -9,7 +9,7 @@ from ....services.quality_assurance.img_quality_checks import (
  
 )
 
-from ....services.quality_assurance.img_size_check import check_image_file_size_and_resolution 
+from .img_size_check import check_image_file_size_and_resolution 
 
 logger = logging.getLogger("image_validator")
 

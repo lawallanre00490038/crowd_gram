@@ -3,10 +3,10 @@
 from typing import Dict, List, Union
 
 
-from qa_checks.language_validation_text import detect_message_language
-from qa_checks.structural_checks import check_junk, has_repeated_chars, check_unicode_script, check_profanity
-from qa_checks.text_coherence_check import check_coherence
-from qa_checks.text_length_check import check_length_and_truncation
+from .text_language_validation import detect_message_language
+from .text_structural_checks import check_junk, has_repeated_chars, check_unicode_script, check_profanity
+from .text_coherence_check import check_coherence
+from .text_length_check import check_length_and_truncation
 
 
 
