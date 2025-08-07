@@ -2,7 +2,8 @@ import asyncio
 import json
 import logging
 
-from aiogram import Router
+from aiogram import F, Router
+from aiogram.enums import ChatType
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils.formatting import Bold, Text
@@ -35,3 +36,78 @@ async def accept_user_request(callback: CallbackQuery):
 
     except Exception as e:
         logging.error(f"Community Support Error Details: {e}")
+
+active_request = {}
+
+# get admins
+@router.message(Command("community_support"), F.chat.type.in_({ChatType.GROUP, ChatType.SUPERGROUP}))  # noqa: E501
+async def perform_community_support(message: Message):
+    user_id = message.chat.id
+    user_username = message.from_user.username
+    user_name = f"@{user_username}" if user_username else message.from_user.full_name
+
+    # Notify all admins
+    requests = []
+    for admin_id in ADMIN_IDS:
+        bot_message = bot.send_message(
+            chat_id=admin_id,
+            text=f"🚨 <b>Support Request</b>\nUser <b>{user_name}</b> is requesting help.",  # noqa: E501
+            reply_markup=accept_support_request(chat_id=user_id),
+            parse_mode="HTML"
+        )
+
+        requests.append(bot_message)
+
+    await asyncio.gather(*requests)
+
+    await message.reply(
+        f"👋 Hi {user_name}, our admin team has been notified. Please hold on while someone attends to you."  # noqa: E501
+    )
+
+
+@router.callback_query()
+async def handle_take_request(callback_query: CallbackQuery):
+
+    callback_data = json.loads(callback_query.data)
+    user_id = int(callback_data["user_id"])
+    admin_id = callback_query.from_user.id
+
+    # check if request is in active request
+    if user_id in active_request:
+        await callback_query.answer("❌ This request has already been taken.")
+        return
+
+    # Assign this admin
+    active_request[user_id] = admin_id
+    await callback_query.answer("✅ You've taken up the request.")
+
+    # Disable button for other admins
+    try:
+        await callback_query.message.edit_reply_markup(reply_markup=None)
+    except Exception:
+        pass
+
+    # Inform the user
+    await bot.send_message(
+        chat_id=user_id,
+        text=(
+            f"✅ An admin has taken up your support request.\n"
+            f"You can now message them directly here: "
+            f"<a href='tg://user?id={admin_id}'>Contact Admin</a>."
+        ),
+        parse_mode="HTML"
+    )
+
+    # Inform other admins
+
+    requests = []
+    for other_admin in ADMIN_IDS:
+        if int(other_admin) != admin_id:
+            bot_message = bot.send_message(
+                chat_id=other_admin,
+                text="This support request has already been taken by another admin."
+            )
+
+            requests.append(bot_message)
+
+    await asyncio.gather(**requests)

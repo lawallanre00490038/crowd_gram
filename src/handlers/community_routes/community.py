@@ -1,23 +1,20 @@
 import asyncio
-from aiogram import Router, F
-from aiogram.filters import Command
-from aiogram.enums import ChatType
-from aiogram.types import Message
 
+from aiogram import F, Router
+from aiogram.enums import ChatType
+from aiogram.filters import Command
+from aiogram.types import Message
 
 from .broadcast import (
     broadcast_new_policies,
     broadcast_new_projects,
     broadcast_new_trainings,
+    create_poll,
     get_top_agent_this_week,
     send_leaderboard_weekly,
     send_monthly_contest,
     send_wellness_weekly,
-    create_poll,
 )
-
-
-
 
 router = Router()
 
