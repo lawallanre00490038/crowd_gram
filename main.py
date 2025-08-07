@@ -5,6 +5,8 @@ from src.handlers.errors_routes import errors
 from src.handlers.onboarding_routes import onboarding
 from src.handlers.payment_routes import payments
 from src.handlers.task_routes import tasks
+from src.handlers.task_routes import test_knowledge_router 
+
 from src.loader import create_bot
 from src.handlers.onboarding_routes import quiz
 from src.handlers.auth_routes import auth
@@ -18,6 +20,7 @@ async def main():
     dp.include_router(onboarding.router)
     dp.include_router(quiz.quiz_router)
     dp.include_router(tasks.router)
+    dp.include_router(test_knowledge_router.router)
     dp.include_router(payments.router)
     dp.include_router(community.router)
     dp.include_router(admin.router)
