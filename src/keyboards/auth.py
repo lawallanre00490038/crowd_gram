@@ -15,10 +15,17 @@ def company_kb():
         keyboard=[
             [KeyboardButton(text="OpenAI")],
             [KeyboardButton(text="EqualyzAI")],
+
+            [KeyboardButton(text="Google")],
+            [KeyboardButton(text="Meta")],
+            [KeyboardButton(text="Anthropic")],
+
             [KeyboardButton(text="African Voices")],
+
             [KeyboardButton(text="Microsoft")],
             [KeyboardButton(text="HausaNLP")]
         ],
         resize_keyboard=True,
         one_time_keyboard=True
     )
+

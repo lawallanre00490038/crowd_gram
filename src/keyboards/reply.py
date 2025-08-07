@@ -31,23 +31,21 @@ task_type_kb = ReplyKeyboardMarkup(
         [KeyboardButton(text="📝Text annotation"), KeyboardButton(text="🎤 Voice recording")],
         [KeyboardButton(text="🖼️ Image tagging"), KeyboardButton(text="🌐 Translation")]
     ],
-    resize_keyboard=True
+    resize_keyboard=True,
+    one_time_keyboard=True
 )
 
 industry_kb = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="🌾 Agriculture & Farming")],
-        [KeyboardButton(text="🏥 Healthcare & Medicine")],
-        [KeyboardButton(text="🎓 Education & Training")],
-        [KeyboardButton(text="💻 Technology & IT")],
-        [KeyboardButton(text="💰 Finance & Banking")],
-        [KeyboardButton(text="🛒 Trade & Commerce")],
-        [KeyboardButton(text="🏭 Manufacturing")],
-        [KeyboardButton(text="🏛️ Government & Public Service")],
-        [KeyboardButton(text="🚛 Transportation")],
-        [KeyboardButton(text="🏗️ Construction")],
-        [KeyboardButton(text="📚 Student/No work experience")],
-        [KeyboardButton(text="🔄 Other")]
+        [KeyboardButton(text="Education")],
+        [KeyboardButton(text="Engineering")],
+        [KeyboardButton(text="Farming")],
+        [KeyboardButton(text="Governance")],
+        [KeyboardButton(text="Health")],
+        [KeyboardButton(text="Security")],
+        [KeyboardButton(text="Technology")],
+        [KeyboardButton(text="Telecommunication")]
+
     ],
     resize_keyboard=True,
     one_time_keyboard=True

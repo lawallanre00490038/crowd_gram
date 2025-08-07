@@ -12,6 +12,8 @@ from src.handlers.errors_routes import errors
 from src.handlers.onboarding_routes import onboarding, quiz
 from src.handlers.payment_routes import payments
 from src.handlers.task_routes import tasks
+from src.handlers.task_routes import test_knowledge_router 
+
 from src.loader import create_bot
 
 app = FastAPI()
@@ -29,6 +31,7 @@ async def bot_main():
     dp.include_router(onboarding.router)
     dp.include_router(quiz.quiz_router)
     dp.include_router(tasks.router)
+    dp.include_router(test_knowledge_router.router)
     dp.include_router(payments.router)
     dp.include_router(community.router)
     dp.include_router(support.router)

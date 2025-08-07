@@ -10,6 +10,7 @@ class Onboarding(StatesGroup):
     profile_name = State()
 
     name = State()
+    age_range= State()
     phone = State()
     gender = State()
     location = State()
