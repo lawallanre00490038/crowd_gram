@@ -3,7 +3,7 @@ import pandas as pd
 from transformers import pipeline
 
 # Setup logging
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("afrolid")
 
 # Load AfroLID model globally
