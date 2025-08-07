@@ -10,7 +10,13 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.state import State, StatesGroup
 from src.handlers.onboarding_routes.quiz import start_quiz
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+
 import re
+
+from pathlib import Path
+from aiogram.types import InputFile
+from aiogram.types import FSInputFile
+
 
 router = Router()
 
@@ -171,6 +177,16 @@ tutorial_videos = [
 ]
 
 
+
+# tutorial_videos = [
+#     Path("compressed/tutorial_1.mp4"),
+#     Path("compressed/tutorial_2.mp4"),
+#     Path("compressed/tutorial_3.mp4")
+# ]
+
+
+# --- Custom tutorial states ---
+
 class Tutorial(StatesGroup):
     ready_to_start = State()
     watching = State()
@@ -224,8 +240,14 @@ async def show_user_type_selection(message: Message, state: FSMContext):
     
     user_type_kb = InlineKeyboardMarkup(
         inline_keyboard=[
+
             [InlineKeyboardButton(text="👤 I'm a Registered User", callback_data="registered_yes")],
             [InlineKeyboardButton(text="🆕 I'm New Here", callback_data="new_user")],
+
+            # [InlineKeyboardButton(text="📊 I'm a Contibutor", callback_data="collector_yes")],
+            [InlineKeyboardButton(text="👤 Sign Up", callback_data="registered_yes")],
+            [InlineKeyboardButton(text="🆕 Sign In", callback_data="new_user")],
+
             [InlineKeyboardButton(text="🔙 Back to tutorials", callback_data="back_to_tutorials")]
         ]
     )
@@ -258,6 +280,29 @@ async def send_tutorial(message: Message, state: FSMContext):
     data = await state.get_data()
     index = data.get("tutorial_index", 0)
     await message.answer(tutorial_videos[index], reply_markup=tutorial_nav_kb(index))
+
+
+
+# async def send_tutorial(message: Message, state: FSMContext):
+#     data = await state.get_data()
+#     index = data.get("tutorial_index", 0)
+#     video_path = tutorial_videos[index]  # this is a pathlib.Path object
+
+#     try:
+#         video_file = FSInputFile(path=video_path)  # ✅ This is the correct class to use
+#         print(video_file)
+        
+#         await message.answer_video(
+#             video=video_file,
+#             caption=f"Tutorial {index + 1}",
+#             reply_markup=tutorial_nav_kb(index)
+#         )
+#     except FileNotFoundError:
+#         await message.answer("⚠️ Video file not found.")
+
+
+
+# --- Handle navigation (next/back/ready) ---
 
 @router.callback_query(Tutorial.watching, F.data.in_(["next", "prev", "ready"]))
 async def tutorial_navigation(callback: CallbackQuery, state: FSMContext):
@@ -670,6 +715,7 @@ async def get_referrer(message: Message, state: FSMContext):
     await message.answer("🎉 Thank you! You're now onboarded and ready for tasks.\n\n" \
     "Welcome to the EqualyzAI contributor community! 🌟")
     await message.answer(
+
         "📝 Your profile:\n"
         f"Name: {user_data.get('auth_name', 'N/A')}\n"
         f"Phone: {user_data.get('auth_phone', 'N/A')}\n"
@@ -682,6 +728,15 @@ async def get_referrer(message: Message, state: FSMContext):
         f"Primary Device: {user_data.get('primary_device', 'N/A')}\n"
         f"Task Type: {user_data.get('task_type', 'N/A')}\n"
         f"Referrer: {user_data.get('referrer', 'N/A')}"
+
+        "🧠 Next Step: Knowledge Assessment\n\n"
+        "Before you start earning, we'll test your knowledge with a few practical tasks:\n"
+        "• 📝 Text Annotation\n"
+        "• 🎵 Audio Recording\n" 
+        "• 🖼️ Image Annotation\n"
+        "• 🎥 Video Annotation\n\n"
+        "This helps us assign you the right tasks for your skill level!\n\n"
+
     )
 
     from src.handlers.task_routes.test_knowledge_router import start_knowledge_assessment

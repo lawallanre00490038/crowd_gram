@@ -1,4 +1,7 @@
 venv/
+MYREADME.md
+
+MYREADE.md
 
 .env
 
@@ -8,3 +11,7 @@ crowdenv/
 notebook.ipynb
 
 __pycache__/
+
+
+compressed/
+video/
