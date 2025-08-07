@@ -1,7 +1,6 @@
 import numpy as np
 from pydub import AudioSegment
 
-
 def save_librosa_audio_as_mp3(y, sr, output_path, bitrate="256k"):
     """
     Save audio loaded with librosa (y, sr) as an MP3 file.
