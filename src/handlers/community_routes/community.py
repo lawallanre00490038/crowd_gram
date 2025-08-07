@@ -1,26 +1,22 @@
 import asyncio
-from aiogram import Router, F,types
-from aiogram.filters import Command
+from aiogram import F, Router,types
+
 from aiogram.enums import ChatType
+from aiogram.filters import Command
 from aiogram.types import Message
-
-
 
 from .broadcast import (
     broadcast_new_policies,
     broadcast_new_projects,
     broadcast_new_trainings,
     daily_trivia,
+    create_poll,
     get_top_agent_this_week,
     handle_message,
     send_leaderboard_weekly,
     send_monthly_contest,
     send_wellness_weekly,
-    create_poll,
 )
-
-
-
 
 router = Router()
 
@@ -38,13 +34,9 @@ async def start_community_background_tasks():
 
 @router.message(Command("poll"), F.chat.type.in_({ChatType.GROUP, ChatType.SUPERGROUP}))
 async def handle_poll(message: Message):
-
     await create_poll(message)
 
 #For handling trivia questions
 @router.message()
 async def handle_message_wrapper(message: types.Message):
     await handle_message(message)
-
-
-    await create_poll(message)
