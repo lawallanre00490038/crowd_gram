@@ -3,6 +3,7 @@ import json
 import logging
 import re
 
+from aiogram import types
 from aiogram.utils.formatting import (
     Bold,
     Italic,
@@ -14,11 +15,13 @@ from aiogram.utils.formatting import (
 from src.config import CHANNEL_ID
 from src.loader import bot
 from src.utils.llm import llm
-from src.utils.text_utils import format_json_str_to_json, format_json_to_table
+
+from src.utils.text_utils import format_json_str_to_json, format_json_to_table,format_all_trivia
 from aiogram.exceptions import TelegramForbiddenError,TelegramBadRequest
 from aiogram.types import Message
 
-from .prompt import CONTEST_PROMPT, WELLNESS_PROMPT, POLL_PROMPT
+from .prompt import CONTEST_PROMPT, TRIVIA_PROMT, WELLNESS_PROMPT, POLL_PROMPT
+
 
 json_str = """
 [
@@ -199,7 +202,6 @@ async def send_monthly_contest():
 
         await asyncio.sleep(delay)
 
-
 #@{name}.post(/projects)
 async def broadcast_new_projects():
     """Broadcast New Projects"""
@@ -311,8 +313,12 @@ async def send_wellness_weekly():
           await asyncio.sleep(delay=delay)
 
         except Exception as err:
+
+            logging.error(f"Community Error POLL CREATION  Error: Details: {err}")
+
             logging.error(
                 f"Community Error POLL CREATION  Error: Details: {err}")
+
 
 
 
@@ -456,4 +462,191 @@ async def create_poll(message: Message):
     except (ValueError, IndexError) as e:
         logging.error(f"Community Error POLL CREATION  Error: Details: {str(e)}")
     except Exception as e:
+
         logging.error(f"Community Error POLL CREATION  Error: Details: Failed to create poll: {str(e)}")
+
+
+
+
+#<==============================Trivia Questions==========================>
+
+
+
+"""Global variables for trivia management"""
+current_trivia = None
+current_trivia_message_id = None
+user_answers = {}
+
+"""Parse user response text into a list of uppercase letters (A-D). """
+
+def parse_user_response(text: str):
+    """
+    Parse user answer text like:
+      1. C
+      2. A
+      3. D
+      4. B
+    Returns a list of uppercase letters, or None if parsing fails.
+    """
+    lines = text.strip().splitlines()
+    answers = []
+
+    for line in lines:
+        match = re.match(r"^\s*\d+\.\s*([A-Da-d])\s*$", line)
+        if match:
+            answers.append(match.group(1).upper())
+        else:
+            return None
+
+    return answers if answers else None
+
+"""Send trivia results to channel after collecting answers."""
+
+async def send_trivia_results():
+    """
+    Evaluate all collected answers and announce winners.
+    """
+    global current_trivia, user_answers
+
+    if not current_trivia:
+        return
+
+    option_labels = ['A', 'B', 'C', 'D']
+    correct_letters = []
+    for q in current_trivia:
+        correct_answer = q.get("a")
+        options = q.get("options", [])
+        try:
+            idx = options.index(correct_answer)
+            correct_letters.append(option_labels[idx])
+        except ValueError:
+            correct_letters.append("?")
+
+    # Compose correct answers message
+    answer_msg = "<b>Correct Answers:</b>\n"
+    for i, letter in enumerate(correct_letters, start=1):
+        answer_msg += f"{i}. {letter}\n"
+
+    # Find winners who got all answers correct
+    winners = []
+    for user_id, data in user_answers.items():
+        if data.get("answers") == correct_letters:
+            winners.append((user_id, data.get("username", "User")))
+
+    winners = winners[:10]  # Limit to top 10 winners
+
+    if winners:
+        winner_text = (
+            "\n🎉 <b>Congratulations to the Top 3 Participants who got all "
+            "answers correct:</b>\n"
+        )
+        for rank, (uid, uname) in enumerate(winners, start=1):
+            winner_text += f"{rank}. @{uname}\n"
+    else:
+        winner_text = "\n😞 No one answered all questions correctly this time."
+
+    await bot.send_message(
+        chat_id=CHANNEL_ID,
+        text=answer_msg + winner_text,
+        parse_mode="HTML"
+    )
+
+# === Main Trivia Loop ===
+
+async def daily_trivia():
+    """
+    Runs the trivia loop indefinitely:
+    - Fetch 4 questions
+    - Send them in one message, record message ID
+    - Wait 1 hour for answers
+    - Evaluate and announce winners
+    - Wait 24 hours before next trivia
+    """
+    global current_trivia, user_answers, current_trivia_message_id
+
+    while True:
+        try:
+            # Get trivia questions from LLM (ensure your prompt needs no .format())
+            response = await llm.ainvoke(TRIVIA_PROMT.format())
+            trivia_list = format_json_str_to_json(response.content)
+
+            if not trivia_list or len(trivia_list) < 4:
+                logging.error(
+                    "Failed to load 4 trivia questions. Retrying in 1 hour..."
+                )
+                await asyncio.sleep(3600)
+                continue
+
+            user_answers.clear()
+            current_trivia = trivia_list[:4]
+
+            # Send trivia questions to channel
+            # Note: Uncomment if you want to see what happens when a person gets
+            # everything correct. The correct answers will be sent first before
+            # the trivia questions.
+            """await send_trivia_results()"""
+
+            trivia_message = format_all_trivia(current_trivia)
+            sent_message = await bot.send_message(
+                chat_id=CHANNEL_ID,
+                text=trivia_message,
+                parse_mode="HTML"
+            )
+
+            current_trivia_message_id = sent_message.message_id
+
+
+            await asyncio.sleep(3600)  # 1 hour in seconds
+
+            # Announce results
+            await send_trivia_results()
+
+        except Exception:
+            logging.exception("Trivia session failed.")
+
+
+        await asyncio.sleep(86400)  # 24 hours in seconds
+
+
+
+
+
+# === Message Handler ===#
+
+async def handle_message(message: types.Message):
+    """
+    Handles incoming messages to collect trivia answers.
+    Requires user to reply to trivia question message.
+    """
+
+     # Note: Comment if you want to see what happens when a person gets everything
+     # correct. The correct answers will be sent first before the trivia questions.
+    if not current_trivia:
+
+        return
+
+
+
+    if (
+        not message.reply_to_message
+        or message.reply_to_message.message_id != current_trivia_message_id
+    ):
+
+        return
+
+    answers = parse_user_response(message.text)
+    if not answers:
+        await message.reply(
+            "Please use this exact format:\n\n"
+            "1. A\n2. B\n3. C\n4. D",
+            parse_mode="Markdown"
+        )
+        return
+
+    user_id = message.from_user.id
+    username = message.from_user.username or message.from_user.full_name
+    user_answers[user_id] = {
+        "username": username,
+        "answers": answers
+    }
+

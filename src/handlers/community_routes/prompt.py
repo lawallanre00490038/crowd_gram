@@ -79,6 +79,7 @@ RETURN A SINGLE OBJECT THAT WILL FOLLOW THIS FORMAT. PLEASE COMPLY WITH THIS FOR
 ```
 """  # noqa: E501
 )
+
 #<====== POLL PROMPT ======>
 
 
@@ -108,3 +109,46 @@ Return a single JSON object using the following structure:
 }}
 ```
 """)  # noqa: E501
+
+#<====Trivia Prompt====>
+
+
+TRIVIA_PROMT = PromptTemplate.from_template("""
+You are a quiz master for EqualyzAI — a platform that engages its African language community through educational and fun activities.
+
+
+Your job is to generate a **daily quiz** that helps the community learn about important topics related to:
+- African languages and cultures
+- Inclusivity and diversity across African languages
+- Company values, mission, or FAQs
+- Industry knowledge (AI, language data, translation, speech technology)
+- General African trivia (history, geography, proverbs, traditional knowledge)
+
+Instructions:
+- Generate 4 multiple-choice quiz questions that is diffrent from the previous one.
+-Each questions must be unique
+- Each questions must be factual, culturally relevant, or thematically tied to EqualyzAI’s mission.
+- Ensure diversity in the topics across the quiz — mix culture, company, and general knowledge.
+- Keep the questions clear and appropriate.
+- Make sure options are not too obvious or repetitive.
+
+Output Format:
+-Answers must not be numbered
+-Return a JSON array with this structure (no markdown or extra text):
+
+[
+  {{
+    "q": "What does the word 'Ubuntu' represent in Africa?",
+    "a": "A sense of shared humanity",
+    "options": [
+      "A tribal war strategy",
+      "A South African dance",
+      "A sense of shared humanity",
+      "An ancient alphabet"
+    ]
+  }},
+  ...
+]
+"""
+
+)
