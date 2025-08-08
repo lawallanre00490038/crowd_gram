@@ -13,7 +13,13 @@ from src.handlers.task_routes.task_formaters import TEXT_TASK_PROMPT
 
 logger = logging.getLogger(__name__)
 
+from src.states.tasks import TaskState, TextTaskSubmission, ImageTaskSubmission
 router = Router()
+
+
+
+
+
 
 @router.message(F.text == "/welcome")
 async def cmd_welcome(message: Message):
