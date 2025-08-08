@@ -16,6 +16,7 @@ from .broadcast import (
     send_leaderboard_weekly,
     send_monthly_contest,
     send_wellness_weekly,
+    is_trivia_reply,
 )
 
 router = Router()
@@ -37,6 +38,6 @@ async def handle_poll(message: Message):
     await create_poll(message)
 
 #For handling trivia questions
-@router.message()
+@router.message(is_trivia_reply)
 async def handle_message_wrapper(message: types.Message):
     await handle_message(message)
