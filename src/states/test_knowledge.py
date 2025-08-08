@@ -9,3 +9,8 @@ class TestKnowledge(StatesGroup):
     translation_task = State()        # Saisie de la traduction
     validation_pending = State()      # En attente de validation
     # ajotuer etat validee? simulee
+    
+    # Image assessment states
+    image_instructions = State()
+    image_quiz = State()
+    image_quiz_feedback = State()
