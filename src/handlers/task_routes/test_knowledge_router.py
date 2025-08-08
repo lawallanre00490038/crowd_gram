@@ -1,17 +1,30 @@
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, FSInputFile
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.utils.markdown import hbold
+from src.keyboards.inline import quiz_options_kb
+from src.states.test_knowledge import TestKnowledge
 import json
+import random
+import asyncio
 
 router = Router()
 
-# États pour Test Your Knowledge
-class TestKnowledge(StatesGroup):
-    ready_to_start = State()
-    language_selection = State()
-    translation_task = State()
-    validation_pending = State()
+# Load image quiz data
+with open("src/data/image_quiz.json", 'r') as f:
+    image_quiz_data = json.load(f)
+
+# # États pour Test Your Knowledge
+# class TestKnowledge(StatesGroup):
+#     ready_to_start = State()
+#     language_selection = State()
+#     translation_task = State()
+#     validation_pending = State()
+#     # Image assessment states
+#     image_instructions = State()
+#     image_quiz = State()
+#     image_quiz_feedback = State()
 
 # Textes samples pour traduction (seulement English source)
 SAMPLE_TEXTS = {
@@ -108,7 +121,7 @@ async def handle_start_knowledge_assessment(message: Message, state: FSMContext)
         "• 🖼️ Image classification\n"
         "• 🎥 Video analysis\n\n"
         "This helps us assign you the right tasks for your skill level!\n\n"
-         "🚀 Ready to take the test?\n"
+        "🚀 Ready to take the test?\n"
     )
     await message.answer(welcome_text, reply_markup=create_ready_button())
     await state.set_state(TestKnowledge.ready_to_start)
@@ -246,8 +259,7 @@ async def handle_translation_submission(message: Message, state: FSMContext):
 
 async def simulate_validation(message: Message, state: FSMContext):
     """Simulation du processus de validation"""
-    import asyncio
-    
+
     # Attendre 3 secondes pour simuler la validation
     await asyncio.sleep(3)
     
@@ -265,35 +277,35 @@ async def simulate_validation(message: Message, state: FSMContext):
             "Your task has been approved!\n" 
             "Now, let's continue with the next task... [audio, image, video...)]")
         
+        
+        # Start image assessment
         await asyncio.sleep(3)
-
-        success_text = (
-            "🎉 (simulation) Congratulations! Test Passed!\n"  
-            "You're now eligible for real tasks!\n\n" \
-            "Ready to start earning?"
+        
+        # Image assessment instructions
+        image_instructions_text = (
+            "Great!\n"
+            "Let's move to Image Annotation task!\n\n"
+            "📋 Instructions:\n"
+            "• You'll receive an image with description options\n"
+            "• Select the best option that best describes the image\n"
+            "• Focus on accuracy and attention to detail\n\n"
+            "Ready to begin the image test?"
         )
         
-        await message.answer(success_text)
-        
-        # Bouton pour accéder aux tâches réelles
-        start_tasks_kb = InlineKeyboardMarkup(
+        image_ready_kb = InlineKeyboardMarkup(
             inline_keyboard=[
-                [InlineKeyboardButton(text="Start Real Tasks", callback_data="start_real_tasks")],
-                [InlineKeyboardButton(text="View Commands", callback_data="view_commands")]
+                [InlineKeyboardButton(text="🖼️ Start Image Test", callback_data="start_image_test")]
             ]
         )
         
-        await message.answer(
-            "Click below to access the task portal:",
-            reply_markup=start_tasks_kb
-        )
-
+        await message.answer(image_instructions_text, reply_markup=image_ready_kb)
+        await state.set_state(TestKnowledge.image_instructions)
         
-
-        #add task for audio, image (...)
         # Log pour l'admin
-        print(f"✅ ASSESSMENT PASSED - User {message.from_user.id}")
+        print(f"✅ TRANSLATION PASSED - User {message.from_user.id}")
         print(f"Translation: {data.get('user_translation')}")
+        
+        # Don't clear state here - let image assessment complete first
         
     else:
         failure_text = (
@@ -304,8 +316,108 @@ async def simulate_validation(message: Message, state: FSMContext):
         )
         
         await message.answer(failure_text)
+        # Only clear state on failure
+        await state.clear()
+
+# Image Assessment Handlers
+@router.callback_query(TestKnowledge.image_instructions, F.data == "start_image_test")
+async def handle_start_image_test(callback: CallbackQuery, state: FSMContext):
+    """Start the image assessment"""
+    await callback.answer()
     
-    await state.clear()
+    # Initialize image quiz data
+    await state.update_data(current_q=random.choice(range(len(image_quiz_data))), num_q=2)
+    await state.set_state(TestKnowledge.image_quiz)
+    
+    # Send first image question
+    await send_image_question(callback.message, state)
+
+async def send_image_question(message: Message, state: FSMContext):
+    """Send an image quiz question"""
+    data = await state.get_data()
+    q_index = data["current_q"]
+    
+    if not image_quiz_data:
+        await message.answer("❌ No quiz data available")
+        return
+    
+    if q_index >= len(image_quiz_data):
+        await message.answer("❌ Question index out of range")
+        return
+    
+    selected_question = image_quiz_data[q_index]
+    print(f"📝 Selected question: {selected_question}")
+    
+    try:
+        # Use FSInputFile for local image files
+        image_file = FSInputFile(selected_question['image'])
+        await message.answer_photo(
+            photo=image_file,
+            caption=f"❓{hbold(selected_question['question'])}",
+            reply_markup=quiz_options_kb(selected_question['options'])
+        )
+        print("✅ Image sent successfully")
+        await state.set_state(TestKnowledge.image_quiz_feedback)
+    except Exception as e:
+        print(f"❌ Error sending image: {e}")
+        await message.answer(f"❌ Error loading image: {e}")
+        # Try without image for debugging
+        await message.answer(
+            f"❓{hbold(selected_question['question'])}",
+            reply_markup=quiz_options_kb(selected_question['options'])
+        )
+        await state.set_state(TestKnowledge.image_quiz_feedback)
+
+@router.callback_query(TestKnowledge.image_quiz_feedback)
+async def handle_image_answer(callback: CallbackQuery, state: FSMContext):
+    """Handle image quiz answers"""
+    user_answer = callback.data
+    await callback.answer()
+
+    data = await state.get_data()
+    q_index = data['current_q']
+    num_q = data.get('num_q', 0)
+    num_q -= 1
+
+    correct_answer = image_quiz_data[q_index]['answer']
+
+    if user_answer == correct_answer:
+        await callback.message.answer("✅ Correct!")
+    else:
+        await callback.message.answer("❌ Incorrect.")
+
+    if num_q > 0:
+        await state.update_data(num_q=num_q, current_q=random.choice(range(len(image_quiz_data))))
+        await send_image_question(callback.message, state)
+    else:
+        # Image assessment completed!
+        await callback.message.answer("🎉 Image annotation test completed!")
+
+        await asyncio.sleep(3)
+
+        success_text = (
+            "🎉 (simulation) Congratulations! Test Passed!\n"  
+            "You're now eligible for real tasks!\n\n" \
+            "Ready to start earning?"
+        )
+        
+        await callback.message.answer(success_text)
+        
+        # Show final completion buttons
+        start_tasks_kb = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="Start Real Tasks", callback_data="start_real_tasks")],
+                [InlineKeyboardButton(text="View Commands", callback_data="view_commands")]
+            ]
+        )
+        
+        await callback.message.answer(
+            "🎉 All assessments completed!\n\nClick below to access the task portal:",
+            reply_markup=start_tasks_kb
+        )
+        
+        # Clear state
+        await state.clear()
 
 @router.callback_query(F.data == "start_real_tasks")
 async def handle_start_real_tasks(callback: CallbackQuery, state: FSMContext):
