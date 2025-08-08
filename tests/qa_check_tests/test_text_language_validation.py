@@ -5,7 +5,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))
 
 import pytest
 import pandas as pd
-from src.services.quality_assurance.text_language_validation_text import detect_message_language
+from src.services.quality_assurance.text_language_validation import detect_message_language
 
 
 # --------------------------
