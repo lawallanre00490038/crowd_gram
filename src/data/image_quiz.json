@@ -1,0 +1,68 @@
+[
+  {
+    "image": "src/data/images/agric.jpg",
+    "question": "What is the primary use of data annotation in agriculture AI systems?",
+    "options": [
+      "To grow better crops",
+      "To label agricultural images for training AI models",
+      "To water plants automatically",
+      "To harvest corn using robots"
+    ],
+    "answer": "To label agricultural images for training AI models"
+  },
+  {
+    "image": "src/data/images/blue_bicycle.jpg",
+    "question": "Why would data annotation be applied to an image like this?",
+    "options": [
+      "To identify the age of the boy",
+      "To classify and locate objects such as the bicycle and helmet",
+      "To change the colors of the bike",
+      "To create animation from static images"
+    ],
+    "answer": "To classify and locate objects such as the bicycle and helmet"
+  },
+  {
+    "image": "src/data/images/health.jpg",
+    "question": "How is data annotation relevant in healthcare imagery like this?",
+    "options": [
+      "To remove patient data from images",
+      "To detect fake medical equipment",
+      "To label tools and actions for training diagnostic AI systems",
+      "To count the number of doctors in hospitals"
+    ],
+    "answer": "To label tools and actions for training diagnostic AI systems"
+  },
+  {
+    "image": "src/data/images/everyday_C.jpg",
+    "question": "What does this image suggest about casual social interaction?",
+    "options": [
+      "That people only gather for business meetings",
+      "That casual clothes are required for public speaking",
+      "That informal settings encourage open conversations",
+      "That friends always argue when gathered"
+    ],
+    "answer": "That informal settings encourage open conversations"
+  },
+  {
+    "image": "src/data/images/image_1.jpg",
+    "question": "What type of event is shown in this image and how do people engage?",
+    "options": [
+      "Formal political debate with structured speeches",
+      "Night party with celebratory mood and dancing",
+      "Educational seminar with quiet note-taking",
+      "Traditional ceremony involving prayer rituals"
+    ],
+    "answer": "Night party with celebratory mood and dancing"
+  },
+  {
+    "image": "src/data/images/owambe.jpg",
+    "question": "What cultural significance does this image represent?",
+    "options": [
+      "Corporate business meeting",
+      "Western classical music concert",
+      "Nigerian celebration showcasing traditional attire and dance",
+      "Sports competition award ceremony"
+    ],
+    "answer": "Nigerian celebration showcasing traditional attire and dance"
+  }
+]
