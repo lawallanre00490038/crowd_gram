@@ -1,12 +1,11 @@
 from typing import Dict, Any, List
 import logging
 
+import cv2 as cv
 from .img_quality_checks import (
     is_blurry,
     image_entropy,
     calculate_niqe_score,
-   
- 
 )
 
 from .img_size_check import check_image_file_size_and_resolution 
@@ -34,18 +33,19 @@ def validate_image_input(image_path: str,
     fail_reasons: List[str] = []
     metadata: Dict[str, Any] = {}
 
+    image = cv.imread(image_path)
     # --- 1. Blur Check ---
     try:
-        blurry = is_blurry(image_path)
+        blurry = is_blurry(image)
         metadata["is_blurry"] = blurry
         if blurry:
             fail_reasons.append("Image is too blurry.")
     except Exception as e:
-        logger.warning(f"Blur check failed: {e}")
+        logger.warning(f"Blur check fa  iled: {e}")
 
     # --- 2. Entropy Check ---
     try:
-        entropy = image_entropy(image_path)
+        entropy = image_entropy(image)
         metadata["entropy"] = entropy
         if entropy < entropy_threshold:
             fail_reasons.append(f"Image entropy too low ({entropy:.2f} < {entropy_threshold}).")
@@ -54,18 +54,16 @@ def validate_image_input(image_path: str,
 
     # --- 3. NIQE Score ---
     try:
-        niqe = calculate_niqe_score(image_path)
+        niqe = calculate_niqe_score(image)
         metadata["niqe_score"] = niqe
         if niqe > niqe_threshold:
             fail_reasons.append(f"NIQE score too high ({niqe:.2f} > {niqe_threshold}).")
     except Exception as e:
         logger.warning(f"NIQE check failed: {e}")
 
-
-
     # --- 5. File Size and Resolution ---
     try:
-        size_check = check_image_file_size_and_resolution(image_path)
+        size_check = check_image_file_size_and_resolution(image)
         metadata.update(size_check)
         if size_check.get("file_too_small"):
             fail_reasons.append("File size is too small.")
