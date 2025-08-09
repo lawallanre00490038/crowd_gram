@@ -4,153 +4,23 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from src.states.tasks import TaskState
 import random
+from src.data.sample_text import TASK_SAMPLES
+from src.keyboards.inline import create_task_action_keyboard, create_next_task_keyboard, create_task_ready_keyboard, create_ready_button
 
 router = Router()
 
 
-TASK_SAMPLES = [
-    {
-        "id": 1,
-        "text": "The internet has revolutionized how we communicate and share information globally.",
-        "category": "technology",
-        "difficulty": "easy"
-    },
-    {
-        "id": 2, 
-        "text": "Sustainable agriculture practices help protect the environment while feeding growing populations.",
-        "category": "environment",
-        "difficulty": "medium"
-    },
-    {
-        "id": 3,
-        "text": "Financial literacy is essential for making informed decisions about saving and investing money.",
-        "category": "finance",
-        "difficulty": "medium"
-    },
-    {
-        "id": 4,
-        "text": "Regular exercise and a balanced diet contribute significantly to overall health and well-being.",
-        "category": "health",
-        "difficulty": "easy"
-    },
-    {
-        "id": 5,
-        "text": "Artificial intelligence and machine learning are transforming industries across the globe.",
-        "category": "technology", 
-        "difficulty": "hard"
-    },
-    {
-        "id": 6,
-        "text": "Education opens doors to opportunities and helps build stronger communities.",
-        "category": "education",
-        "difficulty": "easy"
-    },
-    {
-        "id": 7,
-        "text": "Climate change requires immediate action from governments, businesses, and individuals worldwide.",
-        "category": "environment",
-        "difficulty": "hard"
-    },
-    {
-        "id": 8,
-        "text": "Small businesses play a crucial role in local economic development and job creation.",
-        "category": "business",
-        "difficulty": "medium"
-    },
-    {
-        "id": 9,
-        "text": "Cultural diversity enriches societies and promotes understanding between different communities.",
-        "category": "culture",
-        "difficulty": "medium"
-    },
-    {
-        "id": 10,
-        "text": "Innovation in renewable energy sources is key to achieving sustainable development goals.",
-        "category": "energy",
-        "difficulty": "hard"
-    },
-   
-    {
-        "id": 11,
-        "text": "Social media platforms connect people across the world but also raise privacy concerns.",
-        "category": "technology",
-        "difficulty": "medium"
-    },
-    {
-        "id": 12,
-        "text": "Clean water access remains a critical challenge in many developing countries.",
-        "category": "health",
-        "difficulty": "easy"
-    },
-    {
-        "id": 13,
-        "text": "Renewable energy investments are essential for reducing global carbon emissions.",
-        "category": "environment",
-        "difficulty": "medium"
-    },
-    {
-        "id": 14,
-        "text": "Digital payment systems are transforming how businesses and consumers handle transactions.",
-        "category": "finance",
-        "difficulty": "medium"
-    },
-    {
-        "id": 15,
-        "text": "Remote work has become more common since the global pandemic changed workplace dynamics.",
-        "category": "business",
-        "difficulty": "easy"
-    }
-]
-
-AVAILABLE_LANGUAGES = [
-    ("French", "français"), 
-    ("Fulani", "fulani"),
-    ("Hausa", "hausa"),
-    ("Hindi", "hindi"),
-    ("Igbo", "igbo"),
-    ("Pidgin", "pidgin"),
-    ("Punjabi", "punjabi"),
-    ("Shona", "shona"),
-    ("Swahili", "swahili"),
-    ("Yoruba", "yoruba")
-]
-
-def create_language_keyboard():
-    buttons = []
-    for lang_name, lang_code in AVAILABLE_LANGUAGES:
-        buttons.append([InlineKeyboardButton(text=f"🌍 {lang_name}", callback_data=f"task_lang_{lang_code}")])
-    
-    return InlineKeyboardMarkup(inline_keyboard=buttons)
-
-def create_task_action_keyboard():
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="Start Translation", callback_data="start_translate")],
-            [InlineKeyboardButton(text="Get Another Task", callback_data="get_next_task")],
-            [InlineKeyboardButton(text="View Progress", callback_data="view_progress")]
-        ]
-    )
-
-def create_next_task_keyboard():
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="Next Task", callback_data="get_next_task")],
-            [InlineKeyboardButton(text="View Progress", callback_data="view_progress")],
-        ]
-    )
 
 def get_unused_sample(user_data):
-    """Récupère un sample non utilisé pour éviter les répétitions"""
+    # to avoid repetition of the same sample
     used_samples = user_data.get("used_samples", [])
     
-    # Si tous les samples ont été utilisés, réinitialiser
     if len(used_samples) >= len(TASK_SAMPLES):
         used_samples = []
     
-    # Filtrer les samples non utilisés
     available_samples = [sample for sample in TASK_SAMPLES if sample["id"] not in used_samples]
     
-    # Sélectionner aléatoirement parmi les disponibles
+    #select randomly asample
     return random.choice(available_samples), used_samples
 
 @router.message(F.text == "/welcome")
@@ -164,19 +34,16 @@ async def cmd_welcome(message: Message):
         "✅ Content review\n"
         "🎧 Audio work\n"
         "...and much more!\n\n"
-        "Want to dive into translation tasks? Pick a language below! 👇\n"
+        "Want to dive into translation tasks? start right now!\n"
         "Or explore other opportunities through the main menu.\n\n"
         "Let's start earning together! 💪"
-        )
-
-
-  
+        )  
     
     start_kb = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="🌍 Select Language & Start task", callback_data="select_task_language")],
-            [InlineKeyboardButton(text="View Commands", callback_data="view_commands")],
-            [InlineKeyboardButton(text="View My Status", callback_data="view_status")]
+            [InlineKeyboardButton(text="Start task", callback_data="select_task_language")],
+            [InlineKeyboardButton(text="Menu", callback_data="view_commands")],
+            #[InlineKeyboardButton(text="View My Status", callback_data="view_status")]
         ]
     )
     
@@ -189,17 +56,16 @@ async def cmd_status(message: Message, state: FSMContext):
     user_name = message.from_user.first_name or "User"
     telegram_id = message.from_user.id
 
-    # Simulation for now 
     completed_tasks = user_data.get("completed_tasks", 0)
-    preferred_language = user_data.get("preferred_language", "Not set")
     
     status_text = (
-        f"Status for {user_name}\n\n"
-        f"Telegram ID: {telegram_id}\n"
-        f"Account Status: Active\n"
-        f"Preferred Language: {preferred_language}\n"
-        f"Tasks Completed: {completed_tasks}/∞\n\n"
-        f"Ready for your next task?"
+        f"Name: {user_name}\n\n"
+        f"Task Type: \n"
+        f"Task Language: Yoruba\n"
+        f"Batch: name\n"
+        f"Number of tasks assigned: \n"
+        f"Tasks Completed: {completed_tasks}\n"
+        f"Number of tasks aproved:"
     )
     
     await message.answer(status_text, reply_markup=create_task_action_keyboard())
@@ -207,68 +73,34 @@ async def cmd_status(message: Message, state: FSMContext):
 @router.callback_query(F.data == "select_task_language")
 async def handle_language_selection_start(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
-    
-    lang_text = (
-        "Choose Your Translation Language\n\n"
-        "Select the language you want to translate the texts to:\n\n"
-        "💡 Tip: Choose the language you're most fluent in!"
-    )
-    
-    await callback.message.answer(lang_text, reply_markup=create_language_keyboard())
-    await state.set_state(TaskState.language_selection)
 
-@router.callback_query(TaskState.language_selection, F.data.startswith("task_lang_"))
-async def handle_task_language_selection(callback: CallbackQuery, state: FSMContext):
-    await callback.answer()
-    
-    selected_lang_code = callback.data.replace("task_lang_", "")
-    
-    # Trouver le nom de la langue
-    selected_lang_name = None
-    for lang_name, lang_code in AVAILABLE_LANGUAGES:
-        if lang_code == selected_lang_code:
-            selected_lang_name = lang_name
-            break
-    
-    if not selected_lang_name:
-        await callback.message.answer("Language selection error. Please try again.")
-        return
-    
-    # Sauvegarder la préférence
-    await state.update_data(preferred_language=selected_lang_name, preferred_lang_code=selected_lang_code)
+    await state.update_data(preferred_language="Yoruba", preferred_lang_code="yoruba")
     
     confirmation_text = (
-        f"✅ Language Selected: {selected_lang_name}\n\n"
-        f"You'll be translating English texts to {selected_lang_name}\n\n"
+        f"✅ Language: Yoruba\n\n"
+        f"You'll be translating English texts to Yoruba\n\n"
         f"Ready for your first task?"
     )
     
     await callback.message.answer(confirmation_text, reply_markup=create_task_action_keyboard())
 
+
 @router.callback_query(F.data == "start_translate")
 async def handle_start_task(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     
+
+    preferred_language = "Yoruba"
+    await state.update_data(preferred_language=preferred_language, preferred_lang_code="yoruba")
+    
     user_data = await state.get_data()
-    preferred_language = user_data.get("preferred_language")
-    
-    if not preferred_language:
-        await callback.message.answer(
-            "Please select a language first!",
-            reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=[[InlineKeyboardButton(text="🌍 Select Language", callback_data="select_task_language")]]
-            )
-        )
-        return
-    
-   
     current_task, used_samples = get_unused_sample(user_data)
     task_number = user_data.get("completed_tasks", 0) + 1
     
-    # Marquer ce sample comme utilisé
+
     used_samples.append(current_task["id"])
     
-    # Sauvegarder la tâche courante et les samples utilisés
+
     await state.update_data(
         current_task=current_task, 
         current_task_number=task_number,
@@ -289,7 +121,6 @@ async def handle_start_task(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(task_text)
     await state.set_state(TaskState.task_in_progress)
 
-
 @router.callback_query(F.data == "get_next_task")
 async def handle_get_another_task(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
@@ -304,7 +135,7 @@ async def handle_get_another_task(callback: CallbackQuery, state: FSMContext):
     continue_kb = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="Start Translation", callback_data="start_translate")],
-            [InlineKeyboardButton(text="View Progress", callback_data="view_progress")]
+            [InlineKeyboardButton(text="Menu", callback_data="view_commands")]
         ]
     )
     
@@ -327,7 +158,7 @@ async def handle_task_submission(message: Message, state: FSMContext):
         await message.answer("No active task found. Please start a new task.")
         return
     
-    # Mettre à jour stats utilisateur
+   
     completed_tasks = user_data.get("completed_tasks", 0) + 1
 
     await state.update_data(
@@ -335,7 +166,7 @@ async def handle_task_submission(message: Message, state: FSMContext):
         last_translation=user_translation
     )
     
-    # Confirmation de soumission
+    
     confirmation_text = (
         f"✅ Task #{task_number} Completed!\n\n"
         f"Original (English):\n"
@@ -347,14 +178,14 @@ async def handle_task_submission(message: Message, state: FSMContext):
     
     await message.answer(confirmation_text)
     
-    # Simulation validation rapide
+    # Simulation 
     await simulate_task_validation(message, state)
 
 async def simulate_task_validation(message: Message, state: FSMContext):
     """Validation simulation"""
     import asyncio
     
-    await asyncio.sleep(2)  # Validation rapide pour les tâches
+    await asyncio.sleep(1)  
     
     user_data = await state.get_data()
     current_task = user_data.get("current_task")
@@ -373,8 +204,8 @@ async def simulate_task_validation(message: Message, state: FSMContext):
         
         next_kb = InlineKeyboardMarkup(
             inline_keyboard=[
-                [InlineKeyboardButton(text="Start Translation", callback_data="start_translate")],
-                [InlineKeyboardButton(text="View Progress", callback_data="view_progress")],
+                [InlineKeyboardButton(text="Next task", callback_data="start_translate")],
+                [InlineKeyboardButton(text="Menu", callback_data="view_commands")],
             ]
         )
         
@@ -395,36 +226,10 @@ async def simulate_task_validation(message: Message, state: FSMContext):
         retry_kb = InlineKeyboardMarkup(
             inline_keyboard=[
                 [InlineKeyboardButton(text="Retry Task", callback_data="start_translate")],
-                [InlineKeyboardButton(text="View Progress", callback_data="view_progress")]
+                [InlineKeyboardButton(text="Menu", callback_data="view_commands")]
             ]
         )
         
         await message.answer(failure_text, reply_markup=retry_kb)
     
     await state.set_state(TaskState.task_completed)
-
-@router.callback_query(F.data.in_(["view_progress", "view_status"]))
-async def handle_view_progress(callback: CallbackQuery, state: FSMContext):
-    """Afficher progression utilisateur"""
-    await callback.answer()
-    
-    user_data = await state.get_data()
-    completed_tasks = user_data.get("completed_tasks", 0)
-    preferred_language = user_data.get("preferred_language", "Not set")
-    used_samples = user_data.get("used_samples", [])
-    
-    progress_text = (
-        f"Your Progress Report:\n\n"
-        f"Tasks Completed: {completed_tasks}\n"
-        f"Active Language: {preferred_language}\n"
-        f"Unique texts seen: {len(used_samples)}/{len(TASK_SAMPLES)}\n\n"
-        f"Keep up the great work!"
-    )
-    
-    await callback.message.answer(progress_text, reply_markup=create_task_action_keyboard())
-
-@router.message(TaskState.waiting_for_submission)
-async def handle_submission(message: Message, state: FSMContext):
-    """Legacy handler"""
-    await message.answer("Please use /welcome to start tasks properly.")
-    await state.clear()
