@@ -650,3 +650,13 @@ async def handle_message(message: types.Message):
         "answers": answers
     }
 
+async def is_trivia_reply(message: Message) -> bool:
+
+    if message.text and message.text.startswith("/"):
+        return False
+
+    return (
+        current_trivia_message_id is not None and
+        message.reply_to_message is not None and
+        message.reply_to_message.message_id == current_trivia_message_id
+    )
