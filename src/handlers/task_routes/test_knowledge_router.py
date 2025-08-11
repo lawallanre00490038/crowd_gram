@@ -5,6 +5,8 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.utils.markdown import hbold
 from src.keyboards.inline import quiz_options_kb
 from src.states.test_knowledge import TestKnowledge
+from src.utils.test_knowledge import create_language_selection_keyboard, create_ready_button, create_task_ready_keyboard
+from src.constant.test_knowledge_constant import AVAILABLE_LANGUAGES, SAMPLE_TEXTS
 import json
 import random
 import asyncio
@@ -15,85 +17,9 @@ router = Router()
 with open("src/data/image_quiz.json", 'r') as f:
     image_quiz_data = json.load(f)
 
+# Pick 2 images task @random
+image_tasks = random.sample(image_quiz_data, 2)
 
-# Textes samples pour traduction (seulement English source)
-SAMPLE_TEXTS = {
-    "english_to_french": {
-        "source_lang": "English", 
-        "target_lang": "French",
-        "text": "Artificial intelligence is transforming the way we work. It's important to learn and adapt."
-    },
-    "english_to_hausa": {
-        "source_lang": "English", 
-        "target_lang": "Hausa",
-        "text": "Education opens the door to a better future. Keep learning and growing."
-    },
-    "english_to_swahili": {
-        "source_lang": "English", 
-        "target_lang": "Swahili",
-        "text": "Climate change is a global issue. We must all act to protect the environment."
-    },
-    "english_to_yoruba": {
-        "source_lang": "English", 
-        "target_lang": "Yoruba",
-        "text": "Technology is changing the world rapidly. We must adapt to these changes to succeed in the future."
-    },
-    "english_to_igbo": {
-        "source_lang": "English", 
-        "target_lang": "Igbo",
-        "text": "Health is wealth. Eating well and staying active keeps the mind and body strong."
-    },
-    "english_to_pidgin": {
-        "source_lang": "English", 
-        "target_lang": "Pidgin",
-        "text": "Make sure you understand the task before you start. Take your time and do your best."
-    },
-    "english_to_default": {  
-        "source_lang": "English", 
-        "target_lang": "Default",
-        "text": "Welcome to our translation platform. Your skills help us build better AI systems."
-    }
-}
-
-# Langues disponibles pour la traduction
-AVAILABLE_LANGUAGES = [
-    ("English", "english"),
-    ("French", "français"), 
-    ("Fulani", "fulani"),
-    ("Hausa", "hausa"),
-    ("Hindi", "hindi"),
-    ("Igbo", "igbo"),
-    ("Pidgin", "pidgin"),
-    ("Punjabi", "punjabi"),
-    ("Shona", "shona"),
-    ("Swahili", "swahili"),
-    ("Yoruba", "yoruba")
-     #add more languages later --> these corespond to the ones on the equalyz paltform 
-]
-
-def create_ready_button():
-    """Bouton Ready to start"""
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="Yes I'm ready!", callback_data="ready_start")]
-        ]
-    )
-
-def create_language_selection_keyboard():
-    """Clavier pour sélection de langue"""
-    buttons = []
-    for lang_name, lang_code in AVAILABLE_LANGUAGES:
-        buttons.append([InlineKeyboardButton(text=f"🌍 {lang_name}", callback_data=f"lang_{lang_code}")])
-    
-    return InlineKeyboardMarkup(inline_keyboard=buttons)
-
-def create_task_ready_keyboard():
-    """Bouton pour commencer la tâche de traduction"""
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="✅ I understand, let's begin!", callback_data="begin_translation")]
-        ]
-    )
 
 @router.message(F.text == "/start_test_knowledge")
 async def start_knowledge_test(message: Message, state: FSMContext):
@@ -313,7 +239,7 @@ async def handle_start_image_test(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     
     # Initialize image quiz data
-    await state.update_data(current_q=random.choice(range(len(image_quiz_data))), num_q=2)
+    await state.update_data(current_q=0, num_q=2)
     await state.set_state(TestKnowledge.image_quiz)
     
     # Send first image question
@@ -332,7 +258,7 @@ async def send_image_question(message: Message, state: FSMContext):
         await message.answer("❌ Question index out of range")
         return
     
-    selected_question = image_quiz_data[q_index]
+    selected_question = image_tasks[q_index]
     print(f"📝 Selected question: {selected_question}")
     
     try:
@@ -371,7 +297,7 @@ async def handle_image_answer(callback: CallbackQuery, state: FSMContext):
     
     try:
         option_index = int(callback.data.replace("opt_", ""))
-        selected_question = image_quiz_data[q_index]
+        selected_question = image_tasks[q_index]
         
         # Get the actual answer text from the option index
         if option_index >= len(selected_question['options']):
@@ -387,7 +313,7 @@ async def handle_image_answer(callback: CallbackQuery, state: FSMContext):
             num_q -= 1
 
             if num_q > 0:
-                await state.update_data(num_q=num_q, current_q=random.choice(range(len(image_quiz_data))))
+                await state.update_data(num_q=num_q, current_q=1)
                 await send_image_question(callback.message, state)
             else:
                 # Image assessment completed!
