@@ -101,20 +101,6 @@ async def handle_take_request(callback_query: CallbackQuery):
     await asyncio.gather(**requests)
 
 
-    #    try:
-    #         result = await bot.create_chat_invite_link(chat_id=CHANNEL_ID, name="Equalyz Support Link")
-    #     except Exception as e:
-    #         logging.error(f"Error when generating a chat invite link. Details {e}")
-    # # Inform the user
-    # await bot.send_message(
-    #     chat_id=user_id,
-    #     text=(
-    #         f"✅ An admin has taken up your support request.\n"
-    #         f"You can now message them directly here: "
-    #         f"{result.invite_link}"
-    #     ),
-    #     parse_mode="HTML"
-    # )
 
 
     # @router.message(Command("end_support"), F.chat.type.in_({ChatType.GROUP, ChatType.SUPERGROUP}))
