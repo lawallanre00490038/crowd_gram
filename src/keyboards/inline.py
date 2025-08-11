@@ -10,7 +10,7 @@ def task_inline_keyboard():
 
 def quiz_options_kb(options: list[str]):
     return InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text=opt, callback_data=opt)] for opt in options]
+        inline_keyboard=[[InlineKeyboardButton(text=opt, callback_data=f"opt_{i}")] for i, opt in enumerate(options)]
     )
 
 
