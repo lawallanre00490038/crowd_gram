@@ -10,7 +10,7 @@ def task_inline_keyboard():
 
 def quiz_options_kb(options: list[str]):
     return InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text=opt, callback_data=opt)] for opt in options]
+        inline_keyboard=[[InlineKeyboardButton(text=opt, callback_data=f"opt_{i}")] for i, opt in enumerate(options)]
     )
 
 
@@ -25,7 +25,7 @@ def accept_support_request(chat_id):
     """Inline Keyboard with JSON string format for callback_data"""
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="Accept", callback_data=f'{{"text": "accept","chat_id": {chat_id} }}')  # noqa: E501
+            [InlineKeyboardButton(text="Accept", callback_data=f'{{"text": "accept","user_id": {chat_id} }}')  # noqa: E501
                                   ],
         ]
     )

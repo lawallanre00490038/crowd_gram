@@ -5,7 +5,12 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.utils.markdown import hbold
 from src.keyboards.inline import quiz_options_kb
 from src.states.test_knowledge import TestKnowledge
+
 from src.data.sample_text import SAMPLE_TEXTS, AVAILABLE_LANGUAGES
+
+from src.utils.test_knowledge import create_language_selection_keyboard, create_ready_button, create_task_ready_keyboard
+from src.constant.test_knowledge_constant import AVAILABLE_LANGUAGES, SAMPLE_TEXTS
+
 import json
 import random
 import asyncio
@@ -38,6 +43,10 @@ def create_task_ready_keyboard():
             [InlineKeyboardButton(text="✅ I understand, let's begin!", callback_data="begin_translation")]
         ]
     )
+
+# Pick 2 images task @random
+image_tasks = random.sample(image_quiz_data, 2)
+
 
 @router.message(F.text == "/start_test_knowledge")
 async def start_knowledge_test(message: Message, state: FSMContext):
@@ -171,8 +180,7 @@ async def simulate_validation(message: Message, state: FSMContext):
             "Let's move to Image Annotation task!\n\n"
             "📋 Instructions:\n"
             "• You'll receive an image with description options\n"
-            "• Select the best option that best describes the image\n"
-            "• Focus on accuracy and attention to detail\n\n"
+            "• Select the best option that best describes the image\n\n"
             "Ready to begin the image test?"
         )
         
@@ -189,7 +197,6 @@ async def simulate_validation(message: Message, state: FSMContext):
         print(f"✅ TRANSLATION PASSED - User {message.from_user.id}")
         print(f"Translation: {data.get('user_translation')}")
         
-        # Don't clear state here - let image assessment complete first
         
     else:
         failure_text = (
@@ -200,7 +207,6 @@ async def simulate_validation(message: Message, state: FSMContext):
         )
         
         await message.answer(failure_text)
-        # Only clear state on failure
         await state.clear()
 
 # Image Assessment Handlers
@@ -210,7 +216,7 @@ async def handle_start_image_test(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     
     # Initialize image quiz data
-    await state.update_data(current_q=random.choice(range(len(image_quiz_data))), num_q=2)
+    await state.update_data(current_q=0, num_q=2)
     await state.set_state(TestKnowledge.image_quiz)
     
     # Send first image question
@@ -229,7 +235,7 @@ async def send_image_question(message: Message, state: FSMContext):
         await message.answer("❌ Question index out of range")
         return
     
-    selected_question = image_quiz_data[q_index]
+    selected_question = image_tasks[q_index]
     print(f"📝 Selected question: {selected_question}")
     
     try:
@@ -255,53 +261,80 @@ async def send_image_question(message: Message, state: FSMContext):
 @router.callback_query(TestKnowledge.image_quiz_feedback)
 async def handle_image_answer(callback: CallbackQuery, state: FSMContext):
     """Handle image quiz answers"""
-    user_answer = callback.data
     await callback.answer()
 
     data = await state.get_data()
     q_index = data['current_q']
     num_q = data.get('num_q', 0)
-    num_q -= 1
 
-    correct_answer = image_quiz_data[q_index]['answer']
+    # Extract option index from callback data (format: "opt_0", "opt_1", etc.)
+    if not callback.data.startswith("opt_"):
+        await callback.message.answer("❌ Invalid answer format")
+        return
+    
+    try:
+        option_index = int(callback.data.replace("opt_", ""))
+        selected_question = image_tasks[q_index]
+        
+        # Get the actual answer text from the option index
+        if option_index >= len(selected_question['options']):
+            await callback.message.answer("❌ Invalid option selected")
+            return
+            
+        user_answer = selected_question['options'][option_index]
+        correct_answer = selected_question['answer']
 
-    if user_answer == correct_answer:
-        await callback.message.answer("✅ Correct!")
-    else:
-        await callback.message.answer("❌ Incorrect.")
+        if user_answer == correct_answer:
+            await callback.message.answer("✅ Correct!")
+            
+            num_q -= 1
 
-    if num_q > 0:
-        await state.update_data(num_q=num_q, current_q=random.choice(range(len(image_quiz_data))))
+            if num_q > 0:
+                await state.update_data(num_q=num_q, current_q=1)
+                await send_image_question(callback.message, state)
+            else:
+                # Image assessment completed!
+                await callback.message.answer("🎉 Image annotation test completed!")
+
+                await asyncio.sleep(3)
+
+                success_text = (
+                    "🎉 (simulation) Congratulations! Test Passed!\n"  
+                    "You're now eligible for real tasks!\n\n" \
+                    "Ready to start earning?"
+                )
+        
+
+            
+                await callback.message.answer(success_text)
+
+                # Clear state
+                await state.clear()
+                
+                # Show final completion buttons
+                start_tasks_kb = InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [InlineKeyboardButton(text="Start Real Tasks", callback_data="start_real_tasks")],
+                        [InlineKeyboardButton(text="View Commands", callback_data="view_commands")]
+                    ]
+                )
+                
+                await callback.message.answer(
+                    "🎉 All assessments completed!\n\nClick below to access the task portal:",
+                    reply_markup=start_tasks_kb
+                )
+                
+        else:
+            await callback.message.answer("❌ Incorrect.")
+            await callback.message.answer("Let's try again one more time.")
+            # await state.update_data(num_q=num_q, current_q=q_index)
+            await send_image_question(callback.message, state)
+            
+    except ValueError:
+        await callback.message.answer("❌ Invalid answer format")
         await send_image_question(callback.message, state)
-    else:
-        # Image assessment completed!
-        await callback.message.answer("🎉 Image annotation test completed!")
-
-        await asyncio.sleep(3)
-
-        success_text = (
-            "🎉 (simulation) Congratulations! Test Passed!\n"  
-            "You're now eligible for real tasks!\n\n" \
-            "Ready to start earning?"
-        )
         
-        await callback.message.answer(success_text)
-        
-        # Show final completion buttons
-        start_tasks_kb = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [InlineKeyboardButton(text="Start Real Tasks", callback_data="start_real_tasks")],
-                [InlineKeyboardButton(text="View Commands", callback_data="view_commands")]
-            ]
-        )
-        
-        await callback.message.answer(
-            "🎉 All assessments completed!\n\nClick below to access the task portal:",
-            reply_markup=start_tasks_kb
-        )
-        
-        # Clear state
-        await state.clear()
+    
 
 @router.callback_query(F.data == "start_real_tasks")
 async def handle_start_real_tasks(callback: CallbackQuery, state: FSMContext):
