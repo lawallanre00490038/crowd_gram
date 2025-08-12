@@ -98,7 +98,7 @@ async def handle_take_request(callback_query: CallbackQuery):
 
             requests.append(bot_message)
 
-    await asyncio.gather(**requests)
+    await asyncio.gather(*requests)
 
 
 
