@@ -1,68 +1,26 @@
 [
   {
     "image": "src/data/images/agric.jpg",
-    "question": "What best describes the scene shown in this image?",
-    "options": [
-      "A wheat field ready for harvest",
-      "A maize (corn) farm with green crops",
-      "A sugarcane plantation",
-      "A dry, barren land"
-    ],
-    "answer": "A maize (corn) farm with green crops"
+    "question": "What best describes the scene shown in this image?"
   },
   {
     "image": "src/data/images/blue_bicycle.jpg",
-    "question": "What best describes the activity happening in this image?",
-    "options": [
-      "A boy riding a scooter in a park",
-      "A child learning to ride a bicycle with training wheels",
-      "A teenager doing bicycle tricks",
-      "A child playing with a toy indoors"
-    ],
-    "answer": "A child learning to ride a bicycle with training wheels"
+    "question": "What best describes the activity happening in this image?"
   },
   {
     "image": "src/data/images/health.jpg",
-    "question": "What best describes the action taking place in this image?",
-    "options": [
-      "A doctor taking a patient's blood pressure",
-      "A nurse giving an injection",
-      "A medical student studying an X-ray",
-      "A dentist checking teeth"
-    ],
-    "answer": "A doctor taking a patient's blood pressure"
+    "question": "What best describes the action taking place in this image?"
   },
   {
     "image": "src/data/images/everyday_C.jpg",
-    "question": "What best describes the action taking place in this image?",
-    "options": [
-      "Four friends having a casual outdoor conversation on a sunny day",
-      "Two business partners signing a contract at a meeting table",
-      "A teacher giving a lecture to a classroom",
-      "A group of tourists taking photographs in front of a monument"
-    ],
-    "answer": "Four friends having a casual outdoor conversation on a sunny day"
+    "question": "What best describes the action taking place in this image?"
   },
   {
     "image": "src/data/images/image_1.jpg",
-    "question": "What best describes the action taking place in this image?",
-    "options": [
-      "A group of people enjoying a lively night party with confetti and drinks",
-      "Athletes celebrating after winning a sports competition",
-      "Guests attending a quiet formal dinner",
-      "Performers rehearsing on a theater stage"
-    ],
-    "answer": "A group of people enjoying a lively night party with confetti and drinks"
+    "question": "What best describes the action taking place in this image?"
   },
   {
     "image": "src/data/images/owambe.jpg",
-    "question": "What best describes the action taking place in this image?",
-    "options": [
-      "A man in traditional Nigerian attire dancing energetically at a celebration",
-      "A politician giving a speech at a campaign rally",
-      "A chef preparing food in a busy restaurant kitchen",
-      "A family gathered around a table for a holiday meal"
-    ],
-    "answer": "A man in traditional Nigerian attire dancing energetically at a celebration"
+    "question": "What best describes the action taking place in this image?"
   }
 ]

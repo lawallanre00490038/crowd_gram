@@ -13,4 +13,14 @@ class TestKnowledge(StatesGroup):
     # Image assessment states
     image_instructions = State()
     image_quiz = State()
+    image_quiz_submission = State()
     image_quiz_feedback = State()
+
+    # Image request assessment state
+    image_2_instructions = State()
+    image_2_quiz = State()
+    image_2_quiz_submission = State()
+    image_2_quiz_feedback = State()
+    image_annotation = State()
+    image_annotation_submission = State()
+    image_annotation_feedback = State()

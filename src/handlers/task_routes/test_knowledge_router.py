@@ -1,24 +1,28 @@
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, FSInputFile
+from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, FSInputFile, ContentType
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.filters import StateFilter
 from aiogram.utils.markdown import hbold
 from src.keyboards.inline import quiz_options_kb
 from src.states.test_knowledge import TestKnowledge
-from src.utils.test_knowledge import create_language_selection_keyboard, create_ready_button, create_task_ready_keyboard
+from src.utils.test_knowledge import create_language_selection_keyboard, create_ready_button, create_task_ready_keyboard, load_json_file
 from src.constant.test_knowledge_constant import AVAILABLE_LANGUAGES, SAMPLE_TEXTS
-import json
 import random
 import asyncio
+from pathlib import Path
 
 router = Router()
 
 # Load image quiz data
-with open("src/data/image_quiz.json", 'r') as f:
-    image_quiz_data = json.load(f)
-
+image_quiz_data = load_json_file(Path("src/data/image_quiz.json"))
 # Pick 2 images task @random
 image_tasks = random.sample(image_quiz_data, 2)
+
+image_2_quiz_data = load_json_file(Path("src/data/image_2_quiz.json"))
+# Pick 2 task @random
+image_2_tasks = random.sample(image_2_quiz_data, 2)
+
 
 
 @router.message(F.text == "/start_test_knowledge")
@@ -202,8 +206,8 @@ async def simulate_validation(message: Message, state: FSMContext):
             "Great!\n"
             "Let's move to Image Annotation task!\n\n"
             "📋 Instructions:\n"
-            "• You'll receive an image with description options\n"
-            "• Select the best option that best describes the image\n\n"
+            "• You'll receive an image.\n"
+            "• You would be requested to give a well detail description of the image\n\n"
             "Ready to begin the image test?"
         )
         
@@ -249,6 +253,7 @@ async def send_image_question(message: Message, state: FSMContext):
     """Send an image quiz question"""
     data = await state.get_data()
     q_index = data["current_q"]
+    target_lang = data['target_language']
     
     if not image_quiz_data:
         await message.answer("❌ No quiz data available")
@@ -266,62 +271,287 @@ async def send_image_question(message: Message, state: FSMContext):
         image_file = FSInputFile(selected_question['image'])
         await message.answer_photo(
             photo=image_file,
-            caption=f"❓{hbold(selected_question['question'])}",
-            reply_markup=quiz_options_kb(selected_question['options'])
+            caption=f"❓{hbold(selected_question['question'])}\n\n Make sure to describe in {target_lang}."
         )
         print("✅ Image sent successfully")
-        await state.set_state(TestKnowledge.image_quiz_feedback)
+        await state.set_state(TestKnowledge.image_quiz_submission)
     except Exception as e:
         print(f"❌ Error sending image: {e}")
         await message.answer(f"❌ Error loading image: {e}")
         # Try without image for debugging
         await message.answer(
-            f"❓{hbold(selected_question['question'])}",
-            reply_markup=quiz_options_kb(selected_question['options'])
+            f"❓{hbold(selected_question['question'])}\n\n Make sure to describe in {target_lang}.",
         )
-        await state.set_state(TestKnowledge.image_quiz_feedback)
+        await state.set_state(TestKnowledge.image_quiz_submission)
 
-@router.callback_query(TestKnowledge.image_quiz_feedback)
-async def handle_image_answer(callback: CallbackQuery, state: FSMContext):
-    """Handle image quiz answers"""
-    await callback.answer()
+@router.message(TestKnowledge.image_quiz_submission)
+async def handle_image_submission(message: Message, state: FSMContext):
+    """Handle image quiz submission"""
+
+    if not message.text:
+        message.answer("❌ Please send your descriptions as text.")
+        return
+
+    user_annotation = message.text.strip()
+
+    data = await state.get_data()
+    target_lang = data.get("target_language")
+
+    await state.update_data(user_annotation=user_annotation)
+
+    confirmation_message = (
+        "✅ Description Received!\n\n"  
+        f"Your {target_lang} Description:\n"  
+        f'"{user_annotation}"\n\n'
+        f"⏳ Status: Submitted for validation\n"
+        f"🔔 Next: You'll be notified when reviewed\n\n"
+    )
+
+    await message.answer(confirmation_message)
+
+    await simulate_image_validation(message, state)
+    
+@router.message(TestKnowledge.image_quiz_feedback)
+async def simulate_image_validation(message: Message, state: FSMContext):
+    
+    await asyncio.sleep(3)
 
     data = await state.get_data()
     q_index = data['current_q']
     num_q = data.get('num_q', 0)
+    target_lang = data.get('target_language')
+    user_annotation = data.get('user_annotation')
+    sent_image = image_tasks[q_index]['image']
 
-    # Extract option index from callback data (format: "opt_0", "opt_1", etc.)
-    if not callback.data.startswith("opt_"):
-        await callback.message.answer("❌ Invalid answer format")
+    
+    validation_result = True  # TODO: QA validation
+    
+   
+    if validation_result:
+
+
+        await message.answer(
+            "(simulation) Good job! You have successfully completed the task ✅ " \
+            "Your task has been approved!\n" 
+            "Now, let's continue with the next task...")
+            
+        num_q -= 1
+            
+        if num_q > 0:
+            await state.update_data(num_q=num_q, current_q=1)
+            await send_image_question(message, state)
+        else:
+            # Image assessment completed!
+            await message.answer("🎉 Image annotation test completed!")
+            
+            # Start image request and annotation
+            await asyncio.sleep(3)
+
+            # test instructions
+            image_request_instructions = (
+                "Nice job so far!\n"
+                "Let's move on to next task (image Annotation)!\n\n"
+                "📋 Instructions:\n"
+                "You'll receive a theme and need to send an image that matches it.\n"
+                "You’ll also be asked to provide a short description of the image you send.\n\n"
+                "Ready to begin the test?"
+            )
+                
+            image_2_ready_kb = InlineKeyboardMarkup(
+                inline_keyboard=[
+                        [InlineKeyboardButton(text="🖼️ Start Image Test", callback_data="start_image_2_test")]
+                ]
+            )
+
+            await message.answer(image_request_instructions, reply_markup=image_2_ready_kb)
+            await state.set_state(TestKnowledge.image_2_instructions)
+
+    else:
+        failure_text = (
+            "Feedback: Your descriptions needs some work\n"
+            "Next step: Please try the assessment again\n"
+            "Assessment need improvement\n\n"
+            "Tip: Review description guidelines and try again.\n\n"
+        )
+        await message.answer("❌ Incorrect.")
+        await message.answer(failure_text)
+        await message.answer("Let's try again one more time.")
+
+        await send_image_question(message, state)
+
+
+
+# Image 2 Assessment Handlers
+@router.callback_query(TestKnowledge.image_2_instructions, F.data == 'start_image_2_test')
+async def handle_start_image_2_test(callback: CallbackQuery, state: FSMContext):
+    """Start the image request assessment"""
+    await callback.answer()
+
+    # Initialize image quiz data
+    await state.update_data(
+        current_req_q = 0,
+        num_req_q = 2
+    )
+    await state.set_state(TestKnowledge.image_2_quiz)
+
+    await send_image_2_question(callback.message, state)
+
+
+@router.message(TestKnowledge.image_2_quiz)
+async def send_image_2_question(message: Message, state: FSMContext):
+    data = await state.get_data()
+    q_index = data.get('current_req_q', 0)
+    num_req_q = data.get('num_req_q')
+    target_lang = data.get('target_language')
+
+    if not image_2_quiz_data:
+        await message.answer("❌ No quiz data available")
         return
     
-    try:
-        option_index = int(callback.data.replace("opt_", ""))
-        selected_question = image_tasks[q_index]
+    if q_index >= len(image_2_quiz_data):
+        await message.answer("❌ Question index out of range")
+        return
+    
+    selected_question = image_2_tasks[q_index]
+    print(f"📝 Selected question: {selected_question}")
+
+    await message.answer(
+        f"Awesome! Here's your theme  — share an image and describe it in {target_lang}:\n\n"
+        f"---\n"
+        f"Theme: {selected_question['theme']}\n"
+        f"--\n\n"
+        f"Describe it using: {selected_question['annotation_type']}\n"
+        f"Guide: {selected_question['instruction']}\n"
+        f"Example: {selected_question['example_prompt']}\n\n"
+        f"Your {target_lang} description:\n"
+    )
+
+    await state.set_state(TestKnowledge.image_2_quiz_submission)
+
+@router.message((F.content_type == ContentType.PHOTO) | (F.content_type == ContentType.DOCUMENT), StateFilter(TestKnowledge.image_2_quiz_submission))
+async def receive_image_submission(message: Message, state: FSMContext):
+    """Handle Submission"""
+    if not message.photo:
+        await message.answer(" ❌ Please send an image.")
+        return
+    
+    photo = message.photo[-1]
+    file_id = photo.file_id
+
+    await state.update_data(photo_id=file_id)
+    await message.answer(
+        f"✅ Image received!\n\n"
+        f"⏳ Status: Submitted for validation\n"
+        f"🔔 Next: You'll be notified when reviewed\n\n"
+    )
+
+    await simulate_request_image_validation(message, state)
+
+
+async def simulate_request_image_validation(message: Message, state: FSMContext):
+    """Simulation of the sent image validation"""
+    await asyncio.sleep(3)
+
+    data = await state.get_data()
+    photo_id = data.get('photo_id')
+    index_q = data.get('current_req_q')
+    selected_question = image_2_tasks[index_q]
+
+    # QA check and approval
+    image_validation_check = True # TODO: QA Team
+
+    if image_validation_check:
+        await message.answer(
+            f"(Simulation) Good job! Your uploaded image has been successfully received and approved ✅\n" \
+            "Now, let's continue with describing the uploaded image..."
+        )
+
+        await state.set_state(TestKnowledge.image_annotation)
+        await image_annotation(message, state)
+    
+    else:
+        failure_text = (
+            "Image Quality Check Failed\n\n"
+            "Feedback: The uploaded image does not meet our quality standards\n"
+            "Next step: Please upload a clearer, relevant image\n"
+            "Tip: Ensure the image is well-lit, in focus, and matches the given theme"
+            )
+        await message.answer(failure_text)
+
+@router.message(TestKnowledge.image_annotation)
+async def image_annotation(message: Message, state: FSMContext):
+    """start Image Annotation (Audio / Text)"""
+
+    data = await state.get_data()
+    photo_id = data.get('photo_id')
+    index_q = data.get('current_req_q')
+    selected_question = image_2_tasks[index_q]
+    target_lang = data.get("target_language")
+
+    await message.answer_photo(
+        photo=photo_id,
+        caption=(
+            f"✅ Your image for **{selected_question['theme']}** has been received and approved!\n\n"
+            f"Now, please describe this image in **{target_lang}** using {hbold(selected_question['annotation_type'])}.\n"
+            "Focus on what is happening, the people, objects, and actions you see.\n"
+            "✔ Be detailed and accurate.\n"
+            "✔ Use complete sentences.\n"
+            "❌ Avoid unrelated details."
+        )
+    )
+    
+    await state.set_state(TestKnowledge.image_annotation_submission)
+
+@router.message(TestKnowledge.image_annotation_submission, F.text | F.voice | F.audio)
+async def handle_annotation(message: Message, state: FSMContext):
+    data = await state.get_data()
+    index_q = data.get('current_req_q')
+    selected_question = image_2_tasks[index_q]
+    target_lang = data.get("target_language")
+    annotation_type = selected_question['annotation_type']
+    
+    # Validate that user sent the right type
+    if annotation_type == "text" and message.text:
+        annotation_value = message.text
+    elif annotation_type == "audio" and (message.audio or message.voice):
+        annotation_value = message.audio.file_id if message.audio else message.voice.file_id
+    else:
+        await message.answer(f"❌ Please send a valid {annotation_type} description.")
+        return
+    
+    
+    # Save annotation to state
+    await state.update_data(annotation_value=annotation_value)
+    
+    await message.answer(
+        f"✅ {annotation_type.capitalize()} description received!\n\n"
+        f"⏳ Status: Submitted for validation\n"
+        f"🔔 Next: You'll be notified when reviewed\n\n"
+    )
+    
+    await simulate_image_annotation_validation(message, state)
+
+
+async def simulate_image_annotation_validation(message: Message, state: FSMContext):
+    """Simulation of the sent annotation validation"""
+    await asyncio.sleep(3)
+
+    data = await state.get_data()
+    annotation_value = data.get('annotation_value')
+    index_q = data.get('current_req_q')
+    selected_question = image_2_tasks[index_q]
+    annotation_type = selected_question['annotation_type']
+
+    # QA check and approval
+    annotation_validation_check = True # TODO: QA Team
+
+    if annotation_validation_check:
+        await message.answer(
+            f"(Simulation) Good job! Your uploaded {annotation_type} has been successfully received and approved ✅" \
+            f"Now, let's continue with the next task..."
+        )
         
-        # Get the actual answer text from the option index
-        if option_index >= len(selected_question['options']):
-            await callback.message.answer("❌ Invalid option selected")
-            return
-            
-        user_answer = selected_question['options'][option_index]
-        correct_answer = selected_question['answer']
-
-        if user_answer == correct_answer:
-            await callback.message.answer("✅ Correct!")
-            
-            num_q -= 1
-
-            if num_q > 0:
-                await state.update_data(num_q=num_q, current_q=1)
-                await send_image_question(callback.message, state)
-            else:
-                # Image assessment completed!
-                await callback.message.answer("🎉 Image annotation test completed!")
-
-                await asyncio.sleep(3)
-
-                success_text = (
+        success_text = (
                     "🎉 (simulation) Congratulations! Test Passed!\n"  
                     "You're now eligible for real tasks!\n\n" \
                     "Ready to start earning?"
@@ -329,35 +559,34 @@ async def handle_image_answer(callback: CallbackQuery, state: FSMContext):
         
 
             
-                await callback.message.answer(success_text)
+        await message.answer(success_text)
 
-                # Clear state
-                await state.clear()
+        # Clear state
+        await state.clear()
                 
-                # Show final completion buttons
-                start_tasks_kb = InlineKeyboardMarkup(
-                    inline_keyboard=[
-                        [InlineKeyboardButton(text="Start Real Tasks", callback_data="start_real_tasks")],
-                        [InlineKeyboardButton(text="View Commands", callback_data="view_commands")]
-                    ]
-                )
+        # Show final completion buttons
+        start_tasks_kb = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="Start Real Tasks", callback_data="start_real_tasks")],
+                [InlineKeyboardButton(text="View Commands", callback_data="view_commands")]
+            ]
+        )
                 
-                await callback.message.answer(
-                    "🎉 All assessments completed!\n\nClick below to access the task portal:",
-                    reply_markup=start_tasks_kb
-                )
-                
-        else:
-            await callback.message.answer("❌ Incorrect.")
-            await callback.message.answer("Let's try again one more time.")
-            # await state.update_data(num_q=num_q, current_q=q_index)
-            await send_image_question(callback.message, state)
-            
-    except ValueError:
-        await callback.message.answer("❌ Invalid answer format")
-        await send_image_question(callback.message, state)
-        
+        await message.answer(
+            "🎉 All assessments completed!\n\nClick below to access the task portal:",
+            reply_markup=start_tasks_kb
+        )
     
+    else:
+        failure_text = (
+            f"{annotation_type} Quality Check Failed\n\n"
+            f"Feedback: The uploaded {annotation_type}  does not meet our quality standards\n"
+            f"Next step: Please send a clearer, relevant {annotation_type}\n"
+            f"Tip: Ensure the {annotation_type} is well detailed, focuses, and matches the given theme"
+            )
+        await message.answer(failure_text)
+
+
 
 @router.callback_query(F.data == "start_real_tasks")
 async def handle_start_real_tasks(callback: CallbackQuery, state: FSMContext):

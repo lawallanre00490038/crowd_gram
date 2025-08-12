@@ -1,6 +1,11 @@
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, FSInputFile
 from src.constant.test_knowledge_constant import SAMPLE_TEXTS, AVAILABLE_LANGUAGES
+import json
+from json import JSONDecodeError
+from pathlib import Path
 import random
+import logging
+from typing import List
 
 def create_ready_button():
     """Bouton Ready to start"""
@@ -32,3 +37,22 @@ def get_next_unique_question(used_questions: list, total_questions: int) -> int:
     if not available_questions:
         raise ValueError("No more unique questions available")
     return random.choice(available_questions)
+
+
+def load_json_file(file: Path) -> List:
+    """
+    Loads a json file into list.
+
+    Args:
+        file (Path): path to the json file.
+
+    Returns:
+        List: A list of the information in the json file.
+    """
+    try:
+        with open(Path(file), 'r') as f:
+            data = json.load(f)
+            return data
+    except (FileNotFoundError, JSONDecodeError) as e:
+        logging.error(f"Error loading data: {e}")
+        return []
