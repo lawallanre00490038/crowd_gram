@@ -8,7 +8,9 @@ from aiogram.fsm.context import FSMContext
 from src.states.authentication import Authentication
 from src.states.onboarding import Onboarding
 from src.keyboards.auth import company_kb
-from src.utils.password import hash_password, verify_password  # Nouvelle import
+from src.utils.password import hash_password, verify_password 
+from src.data.country import COUNTRIES  
+from src.utils.keyboard_utils import create_countries_keyboard_reply 
 import re
 
 router = Router()
@@ -278,7 +280,7 @@ async def handle_password_input(message: Message, state: FSMContext):
     )
     await state.set_state(Authentication.confirm_password)
 
-# ✅ FIX PRINCIPAL - Handler: Confirm password
+
 @router.message(Authentication.confirm_password)
 async def handle_confirm_password(message: Message, state: FSMContext):
     print(f"🔍 [DEBUG] Confirm password handler appelé")
@@ -304,18 +306,12 @@ async def handle_confirm_password(message: Message, state: FSMContext):
         "Now let's complete your profile..."
     )
     
-    # ✅ FIX: Changer l'état AVANT d'appeler la sélection de pays
+
     await state.set_state(Onboarding.location)
     print(f"🔍 [DEBUG] État changé vers Onboarding.location")
+
+    from src.handlers.onboarding_routes.onboarding import handle_location_step
+    await handle_location_step(message, state)
+
     
-    # Maintenant appeler la sélection de pays
-    location_text = (
-        "🌍 What's your current location?\n\n"
-        "Please select your country:"
-    )
-    
-    # ✅ Importer la fonction correcte
-    from src.handlers.onboarding_routes.onboarding import create_countries_keyboard
-    
-    await message.answer(location_text, reply_markup=create_countries_keyboard())
-    print(f"🔍 [DEBUG] Clavier des pays envoyé avec le bon état FSM")
+   

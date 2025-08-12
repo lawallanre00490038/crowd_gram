@@ -29,3 +29,55 @@ def accept_support_request(chat_id):
                                   ],
         ]
     )
+
+user_type_kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+
+            [InlineKeyboardButton(text="👤 Sign In", callback_data="registered_yes")],
+            [InlineKeyboardButton(text="🆕 Sign Up", callback_data="new_user")],
+            [InlineKeyboardButton(text="🔙 Back to tutorials", callback_data="back_to_tutorials")]
+        ]
+    )
+
+ready_kb = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="👍Yes, I'm ready", callback_data="quiz_yes")],
+                [InlineKeyboardButton(text="🔁No, show again", callback_data="quiz_no")],
+                [InlineKeyboardButton(text="⏭️Skip Quiz", callback_data="skip_quiz")]
+            ]
+        )
+
+
+def create_ready_button():
+    """Bouton Ready to start"""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Yes I'm ready!", callback_data="ready_start")]
+        ]
+    )
+
+
+def create_task_ready_keyboard():
+    """Bouton pour commencer la tâche de traduction"""
+    return InlineKeyboardMarkup(
+         inline_keyboard=[
+            [InlineKeyboardButton(text="✅ I understand, let's begin!", callback_data="begin_translation")]
+        ]
+    )
+
+
+def create_task_action_keyboard():
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Start Translation", callback_data="start_translate")],
+            [InlineKeyboardButton(text="Get Another Task", callback_data="get_next_task")],
+        ]
+    )
+
+def create_next_task_keyboard():
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Next Task", callback_data="get_next_task")],
+            [InlineKeyboardButton(text="Menu", callback_data="view_commands")],
+        ]
+    )
