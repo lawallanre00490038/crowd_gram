@@ -24,7 +24,6 @@ image_2_quiz_data = load_json_file(Path("src/data/image_2_quiz.json"))
 image_2_tasks = random.sample(image_2_quiz_data, 2)
 
 
-
 @router.message(F.text == "/start_test_knowledge")
 async def start_knowledge_test(message: Message, state: FSMContext):
     """Point d'entrée pour Test Your Knowledge"""
@@ -34,14 +33,13 @@ async def handle_start_knowledge_assessment(message: Message, state: FSMContext)
     """Fonction appelée depuis onboarding pour démarrer l'assessment"""
     
     welcome_text = (
-        " Next Step: Knowledge Assessment\n\n"
+        "🧠 Next Step: Knowledge Assessment\n\n"
         "Before you start earning, we'll test your knowledge with a few practical tasks:\n"
-        "• 📝 Text annotation\n"
-        "• 🎵 Audio transcription\n" 
-        "• 🖼️ Image classification\n"
-        "• 🎥 Video analysis\n\n"
+        "• 📝 Text Annotation\n"
+        "• 🎵 Audio Recording\n" 
+        "• 🖼️ Image Annotation\n"
+        "• 🎥 Video Annotation\n\n"
         "This helps us assign you the right tasks for your skill level!\n\n"
-        "🚀 Ready to take the test?\n"
     )
     await message.answer(welcome_text, reply_markup=create_ready_button())
     await state.set_state(TestKnowledge.ready_to_start)
@@ -56,58 +54,18 @@ async def handle_ready_start(callback: CallbackQuery, state: FSMContext):
         "Let's start with the text translation task!\n\n"  
         " 📋 Instructions:\n"
         "• You'll receive a short text\n"
-        "• Translate it accurately to your chosen target language\n"
+        "• Translate it accurately to Yoruba\n"
         "• Write your translation as a text message\n"
         "• Focus on accuracy and natural flow\n\n"
-        "🌍 Please select the language you would like to do the task:"
     )
-      
-    await callback.message.answer(instructions_text, reply_markup=create_language_selection_keyboard())
-    await state.set_state(TestKnowledge.language_selection)
+        
+    await callback.message.answer(instructions_text)
+    await asyncio.sleep(2)
+    await handle_begin_translation(callback, state)
 
-@router.callback_query(TestKnowledge.language_selection, F.data.startswith("lang_"))
-async def handle_language_selection(callback: CallbackQuery, state: FSMContext):
-    """Gestion de la sélection de langue"""
-    await callback.answer()
-    
-    selected_lang_code = callback.data.replace("lang_", "")
-    
-    # Trouver le nom complet de la langue
-    selected_lang_name = None
-    for lang_name, lang_code in AVAILABLE_LANGUAGES:
-        if lang_code == selected_lang_code:
-            selected_lang_name = lang_name
-            break
-    
-    if not selected_lang_name:
-        await callback.message.answer(" ❌ Language selection error. Please try again.")
-        return
-    
-    # Sauvegarder la langue sélectionnée
-    await state.update_data(target_language=selected_lang_name, target_lang_code=selected_lang_code)
-    
-    # Sélectionner un texte sample approprié
-    sample_key = select_sample_text(selected_lang_code)
-    sample_data = SAMPLE_TEXTS[sample_key]
-    
-    await state.update_data(
-        sample_key=sample_key,
-        source_language=sample_data["source_lang"],
-        sample_text=sample_data["text"]
-    )
-    
-    task_preview_text = (
-        f"Great! You selected: {selected_lang_name}\n\n"
-        f"📝 Your task:\n"
-        f" Translate the following {sample_data['source_lang']} text to {selected_lang_name} and submit it as a message.\n\n"
-        f" Make sure the translation is accurate and natural!\n\n"
-        f"Ready to see the text?"
-    )
-    
-    await callback.message.answer(task_preview_text, reply_markup=create_task_ready_keyboard())
+
 
 def select_sample_text(target_lang_code):
-    """Sélectionne le texte sample approprié selon la langue cible"""
     sample_map = {
         "français": "english_to_french",
         "yoruba": "english_to_yoruba", 
@@ -117,28 +75,25 @@ def select_sample_text(target_lang_code):
         "pidgin": "english_to_pidgin",       
     }
 
-
     
     return sample_map.get(target_lang_code, "english_to_default")  # Par défaut si langue non trouvée
 
 @router.callback_query(TestKnowledge.language_selection, F.data == "begin_translation")
 async def handle_begin_translation(callback: CallbackQuery, state: FSMContext):
-    """Affichage du texte à traduire"""
+    #display text for task
     await callback.answer()
     
-    data = await state.get_data()
-    target_language = data.get("target_language")
-    source_language = data.get("source_language") 
-    sample_text = data.get("sample_text")
+
+    sample_text = SAMPLE_TEXTS["english_to_yoruba"]["text"]
     
     translation_text = (
-        f"Great! Here is the text to translate from {source_language} to {target_language}:\n\n"
+        f"Here is the text to translate from English to Yoruba:\n\n"
         f"---\n"
         f'"{sample_text}"\n'
         f"---\n\n"
-        f"Your {target_language} translation:\n"
+        f" Make sure the translation is accurate and natural!\n"
         f"Type your translation below ⬇️"
-    )
+        )
     
     await callback.message.answer(translation_text)
     await state.set_state(TestKnowledge.translation_task)
@@ -152,21 +107,16 @@ async def handle_translation_submission(message: Message, state: FSMContext):
         return
         
     user_translation = message.text.strip()
-    data = await state.get_data()
-    
-    # Sauvegarder la traduction
     await state.update_data(user_translation=user_translation)
     
-    target_language = data.get("target_language")
-    source_language = data.get("source_language")
-    sample_text = data.get("sample_text")
+    sample_text = SAMPLE_TEXTS["english_to_yoruba"]["text"]
     
-    # Confirmation de soumission
+
     confirmation_text = (
         "✅ Translation Received!\n\n"  
-        f"Original ({source_language}):\n"
+        f"Original (English):\n"
         f'"{sample_text}"\n\n'
-        f"Your {target_language} translation:\n"  
+        f"Your Yoruba translation:\n"  
         f'"{user_translation}"\n\n'
         f"⏳ Status: Submitted for validation\n"
         f"🔔 Next: You'll be notified when reviewed\n\n"
@@ -174,20 +124,19 @@ async def handle_translation_submission(message: Message, state: FSMContext):
     
     await message.answer(confirmation_text)
     
-    # Simulation de validation (2-3 secondes)
+    # Simulation of validation
     await simulate_validation(message, state)
 
 async def simulate_validation(message: Message, state: FSMContext):
     """Simulation du processus de validation"""
 
-    # Attendre 3 secondes pour simuler la validation
     await asyncio.sleep(3)
     
     data = await state.get_data()
     user_data = await state.get_data()
     
-    # Pour l'instant, on approuve automatiquement
-    validation_result = True  # TODO: Logique de validation réelle
+    #to change later
+    validation_result = True  
     
     if validation_result:
 
@@ -220,7 +169,7 @@ async def simulate_validation(message: Message, state: FSMContext):
         await message.answer(image_instructions_text, reply_markup=image_ready_kb)
         await state.set_state(TestKnowledge.image_instructions)
         
-        # Log pour l'admin
+
         print(f"✅ TRANSLATION PASSED - User {message.from_user.id}")
         print(f"Translation: {data.get('user_translation')}")
         
@@ -630,7 +579,3 @@ async def handle_view_commands(callback: CallbackQuery, state: FSMContext):
     
     await callback.message.answer(commands_text, reply_markup=start_kb)
 
-# Fonction pour intégrer dans onboarding
-async def start_knowledge_assessment(message: Message, state: FSMContext):
-    """Fonction appelée depuis onboarding_routes pour démarrer l'assessment"""
-    await handle_start_knowledge_assessment(message, state)
