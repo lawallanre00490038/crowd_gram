@@ -44,7 +44,19 @@ async def send_leaderboard_weekly():
 
         table = format_json_to_table(json_data=json_data)
 
-        text = "🏆 <b>Leaderboard This Week</b>\n<pre>{}</pre>".format(table)
+        code_text = (
+            "- N : Name\n"
+            "- TT: Total Task\n"
+            "- TC: Task Completed\n"
+            "- CE: Coin Earned\n"
+            "- R : Ratings"
+        )
+
+        text = (
+            "🏆 <b>Leaderboard This Week</b>\n\n"
+            "Meaning of Columns\n{}\n"
+            "<pre>{}</pre>"
+            ).format(code_text, table)
 
         await bot.send_message(chat_id=CHANNEL_ID, text=text)
 
