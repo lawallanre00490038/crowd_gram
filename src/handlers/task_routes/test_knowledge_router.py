@@ -192,7 +192,7 @@ async def handle_start_image_test(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     
     # Initialize image quiz data
-    await state.update_data(current_q=0, num_q=2)
+    await state.update_data(current_q=0, num_q=2, target_language='Yoruba')
     await state.set_state(TestKnowledge.image_quiz)
     
     # Send first image question
