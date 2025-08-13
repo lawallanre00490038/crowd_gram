@@ -1,13 +1,17 @@
 import librosa 
+import logging
 import numpy as np
 import noisereduce as nr
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Optional
 
 from src.utils.save_audio import save_librosa_audio_as_mp3
 
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
+
+logger = logging.getLogger(__name__)
+
 
 def reduce_noise(data, sr):
     '''Reduce the amount of noise in the Audio'''
@@ -73,8 +77,9 @@ def analyze_audio(data, sr):
 
 
 def check_audio_quality(
-    data: np.ndarray,
-    sr: int,
+    file_path: Optional[str] = None,
+    data: Optional[np.ndarray] = None,
+    sr: Optional[int] = None,
     try_enhance: int = 2,
     min_snr_value: float = 40,
     min_snr_value_edit: float = 30,
@@ -112,7 +117,11 @@ def check_audio_quality(
         - A dictionary with signal analysis results including:
           'signal_power', 'noise_power', 'snr', and 'message'.
     """
-         
+    if file_path is not None:
+        data, sr = librosa.load(file_path, sr=None)
+        
+    if data is None or sr is None:
+        raise ValueError("Either file_path or data and sr must be provided.")
     analysis = analyze_audio(data, sr)
 
     message = ""
@@ -125,7 +134,8 @@ def check_audio_quality(
     elif analysis['snr'] >= min_snr_value:
         message = "Approved"
     elif (analysis['snr'] >= min_snr_value_edit) and (analysis['snr'] < min_snr_value):
-        for _ in range(try_enhance):
+        for c in range(try_enhance):
+            logger.info(f"Enhancing audio, attempt {c + 1}")
             data = reduce_noise(data, sr)
             analysis = analyze_audio(data, sr)
 
