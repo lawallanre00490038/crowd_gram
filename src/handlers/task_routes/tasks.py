@@ -1,11 +1,13 @@
 import logging
 
+import librosa
 from aiogram import Router, F, Bot
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
 from src.utils.parameters import UserParams
 from src.utils.downloader import download_telegram
+from src.utils.save_audio import save_librosa_audio_as_mp3
 from src.handlers.task_routes.task_formaters import (TEXT_TASK_PROMPT, SELECT_TASK_TO_PERFORM,
     APPROVED_TASK_MESSAGE, ERROR_MESSAGE, SUBMISSION_RECIEVED_MESSAGE)
 from src.states.tasks import TaskState, TextTaskSubmission, ImageTaskSubmission
@@ -13,6 +15,7 @@ from src.states.tasks import TaskState, TextTaskSubmission, ImageTaskSubmission
 from src.services.quality_assurance.text_validation import validate_text_input
 from src.services.quality_assurance.image_validation import validate_image_input
 from src.services.quality_assurance.audio_parameter_check import check_audio_parameter, TaskParameterModel
+from src.services.quality_assurance.audio_quality_check import check_audio_quality
 from src.services.task_distributor import assign_task, get_full_task_detail, TranslationTask
 
 from src.states.tasks import TaskState, TextTaskSubmission, ImageTaskSubmission, AudioTaskSubmission, VideoTaskSubmission
@@ -92,14 +95,27 @@ async def handle_audio_input(message: Message, state: FSMContext, bot: Bot):
                       bit_depth = 32)
         
         response = check_audio_parameter(file_path, parameters)
-        logger.info(f"Audio check result for user {message.from_user.id}: {response.is_valid}, errors: {response.errors}")
 
-        if response.is_valid:
+        data, sr = librosa.load(file_path, sr=None)
+
+        new_audio, quality_response = check_audio_quality(data = data, sr = sr)
+        
+        new_path = file_path.replace(".oga", "_enhanced.oga")
+        save_librosa_audio_as_mp3(new_audio, sr, new_path)
+
+        logger.info(f"New audio saved at {new_path}")
+        logger.info(f"Audio check result for user {message.from_user.id}: {response.is_valid}, errors: {response.errors}, {quality_response}")
+
+        if response.is_valid and (quality_response["message"] == "Approved"):
             await message.answer(APPROVED_TASK_MESSAGE)
             await state.clear()
-
         else:
-            errors = "\n".join(response.errors)
+            errors = ""
+
+            if not response.is_valid:
+               errors = "\n".join(response.errors)
+            if quality_response["message"] != "Approved": 
+                errors += f"\nQuality check message: {quality_response['message']}"
             errors = ERROR_MESSAGE.format(errors=errors)
 
             logger.info(f"Audio submission failed for user {message.from_user.id}: {errors}")
