@@ -1,14 +1,5 @@
 # from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-# onboarding_kb = ReplyKeyboardMarkup(
-#     keyboard=[
-#         [KeyboardButton(text="Start Quiz")],
-#     ],
-#     resize_keyboard=True
-# )
-
-
-   
 
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
@@ -28,62 +19,94 @@ gender_kb = ReplyKeyboardMarkup(
 
 task_type_kb = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="📝Text annotation"), KeyboardButton(text="🎤 Voice recording")],
-        [KeyboardButton(text="🖼️ Image tagging"), KeyboardButton(text="🌐 Translation")]
-    ],
-    resize_keyboard=True
+        [KeyboardButton(text="📝Text")],
+        [KeyboardButton(text="🎤Audio")]
+    ],  
+    resize_keyboard=True,
+    one_time_keyboard=True
 )
 
 industry_kb = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="🌾 Agriculture & Farming")],
-        [KeyboardButton(text="🏥 Healthcare & Medicine")],
-        [KeyboardButton(text="🎓 Education & Training")],
-        [KeyboardButton(text="💻 Technology & IT")],
-        [KeyboardButton(text="💰 Finance & Banking")],
-        [KeyboardButton(text="🛒 Trade & Commerce")],
-        [KeyboardButton(text="🏭 Manufacturing")],
-        [KeyboardButton(text="🏛️ Government & Public Service")],
-        [KeyboardButton(text="🚛 Transportation")],
-        [KeyboardButton(text="🏗️ Construction")],
-        [KeyboardButton(text="📚 Student/No work experience")],
-        [KeyboardButton(text="🔄 Other")]
+        [KeyboardButton(text="Education")],
+        [KeyboardButton(text="Engineering")],
+        [KeyboardButton(text="Farming")],
+        [KeyboardButton(text="Governance")],
+        [KeyboardButton(text="Health")],
+        [KeyboardButton(text="Security")],
+        [KeyboardButton(text="Technology")],
+        [KeyboardButton(text="Telecommunication")]
+
     ],
     resize_keyboard=True,
     one_time_keyboard=True
 )
 
-primary_device_kb = ReplyKeyboardMarkup(
+
+age_kb = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="📱 Smartphone only")],
-        [KeyboardButton(text="💻 Computer/Laptop only")],
-        [KeyboardButton(text="📱💻 Both smartphone and computer")],
-        [KeyboardButton(text="📱 Tablet")]
+        [KeyboardButton(text="18-30")],
+        [KeyboardButton(text="31-40")],
+        [KeyboardButton(text="41-50")],
+        [KeyboardButton(text="51-60")],
+        [KeyboardButton(text="51-70")],
+        [KeyboardButton(text="71-80")],
+        [KeyboardButton(text="81-90")],
+        [KeyboardButton(text="91-100")]
+
     ],
     resize_keyboard=True,
     one_time_keyboard=True
 )
 
-# Keyboard pour la fluency des dialectes
-dialect_fluency_kb = ReplyKeyboardMarkup(
+#language
+language_kb = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="🌟 Native speaker")],
-        [KeyboardButton(text="🔥 Fluent")],
-        [KeyboardButton(text="💬 Conversational")],
-        [KeyboardButton(text="📖 Basic understanding")],
-        [KeyboardButton(text="❌ Not applicable")]
+        [KeyboardButton(text="English"), KeyboardButton(text="French"), KeyboardButton(text="Fulani")],
+        [KeyboardButton(text="Hausa"),KeyboardButton(text="Hindi"), KeyboardButton(text="Igbo")],
+        [KeyboardButton(text="Pidgin"), KeyboardButton(text="Punjabi"),KeyboardButton(text="Shona")],
+        [KeyboardButton(text="Swahili"), KeyboardButton(text="Yoruba")]
+        ],
+    resize_keyboard=True,
+    one_time_keyboard=True
+)
+
+# Éducation
+education_kb = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="High School Diploma"), KeyboardButton(text="Bachelor's Degree")],
+        [KeyboardButton(text="Master's Degree"), KeyboardButton(text="Doctorate Degree")],
+        [KeyboardButton(text="SSCE/WAEC"), KeyboardButton(text="Other")]
     ],
     resize_keyboard=True,
     one_time_keyboard=True
 )
 
-internet_quality_kb = ReplyKeyboardMarkup(
+
+writing_ability_kb = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="🚀 Very good (Fast, reliable)")],
-        [KeyboardButton(text="✅ Good (Mostly stable)")],
-        [KeyboardButton(text="⚠️ Fair (Sometimes slow)")],
-        [KeyboardButton(text="❌ Poor (Often disconnects)")]
+        [KeyboardButton(text="Good")],
+        [KeyboardButton(text="Not so good")], 
+        [KeyboardButton(text="Very good (with all the tonal marks)")]
     ],
     resize_keyboard=True,
     one_time_keyboard=True
-) 
+)
+
+
+phone_quality_kb = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="Fair"), KeyboardButton(text="Good")]
+    ],
+    resize_keyboard=True,
+    one_time_keyboard=True
+)
+
+
+favourite_speaker_kb = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="Alexa"), KeyboardButton(text="DJ")]
+    ],
+    resize_keyboard=True,
+    one_time_keyboard=True
+)
