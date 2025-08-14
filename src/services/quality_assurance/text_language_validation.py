@@ -1,12 +1,13 @@
-
-
-from functools import lru_cache
-import logging
-import pandas as pd
-from transformers import pipeline
+import os
 import langid
-from typing import Dict, Any
+import logging
 import pycountry
+import pandas as pd
+from typing import Dict, Any
+from functools import lru_cache
+from transformers import pipeline
+
+abs_path = os.path.dirname(os.path.abspath(__file__))
 
 # Setup logging
 # logging.basicConfig(level=logging.INFO)
@@ -19,11 +20,10 @@ except Exception as e:
     logger.error(f"Failed to load AfroLID model: {e}")
     raise
 
-
-
 # Load supported languages CSV file 
-def load_iso_mapping(filepath="qa_checks/supported-languages.csv"):
+def load_iso_mapping(filepath="./supported-languages.csv"):
     try:
+        filepath = os.path.join(abs_path, "..","..", "data", "supported-languages.csv")
         df = pd.read_csv(filepath)
         mapping = {
             row["isocode"]: {"name": row["language"], "script": row["script"]}

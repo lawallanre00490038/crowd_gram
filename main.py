@@ -1,7 +1,6 @@
 import asyncio
 import threading
 
-#import uvicorn
 from fastapi import FastAPI
 
 from src.handlers.admin_routes import admin
@@ -37,11 +36,11 @@ async def bot_main():
     dp.include_router(support.router)
     dp.include_router(admin.router)
     dp.include_router(errors.router)
-    dp.include_router(debug_routes.router)
+    # dp.include_router(debug_routes.router)
 
     await bot.delete_webhook(drop_pending_updates=True)
     print("✅ Bot is running... Press Ctrl+C to stop.")
-    asyncio.create_task(coro=community.start_community_background_tasks())
+    # asyncio.create_task(coro=community.start_community_background_tasks())
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 
