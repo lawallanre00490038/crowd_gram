@@ -681,8 +681,8 @@ async def get_referrer(message: Message, state: FSMContext):
         f"Referrer: {user_data.get('referrer', 'N/A')}"
     )
     
-    from src.handlers.task_routes.test_knowledge_router import start_knowledge_assessment
-    await start_knowledge_assessment(message, state)
+    from src.handlers.task_routes.test_knowledge_router import handle_start_knowledge_assessment
+    await handle_start_knowledge_assessment(message, state)
 
     print(message.from_user.id, "has completed onboarding with data:", user_data)
     
