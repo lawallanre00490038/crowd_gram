@@ -27,7 +27,7 @@ async def send_quiz_question(message: Message, state: FSMContext):
         score = data.get("score", 0)
         await message.answer(f"🎉 Quiz complete! You got {score} out of {len(quiz_data)} right.")   
              
-        from src.handlers.onboarding_routes.onboarding import show_user_type_selection  
+        from src.routes.onboarding_routes.onboarding import show_user_type_selection  
         await message.answer("✅ Great! Now let's continue with your setup.")
         await show_user_type_selection(message, state)
         return

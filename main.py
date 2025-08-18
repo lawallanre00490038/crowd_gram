@@ -3,15 +3,15 @@ import threading
 
 from fastapi import FastAPI
 
-from src.handlers.admin_routes import admin
-from src.handlers.auth_routes import auth
-from src.handlers.community_routes import community, support
-from src.handlers.debug import debug_routes
-from src.handlers.errors_routes import errors
-from src.handlers.onboarding_routes import onboarding, quiz
-from src.handlers.payment_routes import payments
-from src.handlers.task_routes import tasks
-from src.handlers.task_routes import test_knowledge_router 
+from src.routes.admin_routes import admin
+from src.routes.auth_routes import auth
+from src.routes.community_routes import community, support
+from src.routes.debug import debug_routes
+from src.routes.errors_routes import errors
+from src.routes.onboarding_routes import onboarding, quiz
+from src.routes.payment_routes import payments
+from src.routes.task_routes import tasks
+from src.routes.task_routes import test_knowledge_router 
 
 from src.loader import create_bot
 

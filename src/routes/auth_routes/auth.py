@@ -310,7 +310,7 @@ async def handle_confirm_password(message: Message, state: FSMContext):
     await state.set_state(Onboarding.location)
     print(f"🔍 [DEBUG] État changé vers Onboarding.location")
 
-    from src.handlers.onboarding_routes.onboarding import handle_location_step
+    from src.routes.onboarding_routes.onboarding import handle_location_step
     await handle_location_step(message, state)
 
     

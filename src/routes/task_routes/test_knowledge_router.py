@@ -937,7 +937,7 @@ async def handle_start_real_tasks(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     
     # Import local pour éviter circular imports
-    from src.handlers.task_routes.tasks import cmd_welcome
+    from src.routes.task_routes.tasks import cmd_welcome
     
     redirect_text = (
         "🎉 Redirecting to Task Portal...\n\n"  
