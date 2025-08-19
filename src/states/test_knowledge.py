@@ -24,3 +24,10 @@ class TestKnowledge(StatesGroup):
     image_annotation = State()
     image_annotation_submission = State()
     image_annotation_feedback = State()
+
+
+    # Audio assessment
+    audio_instructions = State()
+    audio_quiz = State()
+    audio_quiz_submission = State()              
+    

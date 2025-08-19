@@ -13,7 +13,7 @@ from src.keyboards.inline import create_task_action_keyboard, create_next_task_k
 from src.utils.parameters import UserParams
 from src.utils.downloader import download_telegram
 from src.utils.save_audio import save_librosa_audio_as_mp3
-from src.handlers.task_routes.task_formaters import (TEXT_TASK_PROMPT, SELECT_TASK_TO_PERFORM,
+from src.routes.task_routes.task_formaters import (TEXT_TASK_PROMPT, SELECT_TASK_TO_PERFORM,
     APPROVED_TASK_MESSAGE, ERROR_MESSAGE, SUBMISSION_RECIEVED_MESSAGE)
 from src.states.tasks import TaskState, TextTaskSubmission, ImageTaskSubmission
 
@@ -22,6 +22,7 @@ from src.services.quality_assurance.image_validation import validate_image_input
 from src.services.quality_assurance.audio_parameter_check import check_audio_parameter, TaskParameterModel
 from src.services.quality_assurance.audio_quality_check import check_audio_quality
 from src.services.task_distributor import assign_task, get_full_task_detail, TranslationTask
+from src.handlers.audio_assignment import send_audio_question
 
 from src.states.tasks import TaskState, TextTaskSubmission, ImageTaskSubmission, AudioTaskSubmission, VideoTaskSubmission
 
@@ -94,7 +95,7 @@ async def cmd_start_task(message: Message, state: FSMContext):
 
 @router.message(TaskState.waiting_for_task, F.text == "/audio_task")
 async def cmd_start_task(message: Message, state: FSMContext):
-    await message.answer("Sample Audio task")
+    await send_audio_question(message, state)
     assigned_task = await assign_task("aha")
     await state.set_data({UserParams.TASK_INFO.value: assigned_task.model_dump()})
     await state.set_state(AudioTaskSubmission.waiting_for_audio)
@@ -132,7 +133,7 @@ async def handle_audio_input(message: Message, state: FSMContext, bot: Bot):
                       max_duration = task_full_details.max_duration.total_seconds(),
                       language = task_full_details.required_language, 
                       expected_format = "oga",
-                      sample_rate = 48000,
+                      sample_rate = 50000,
                       bit_depth = 32)
         
         response = check_audio_parameter(file_path, parameters)

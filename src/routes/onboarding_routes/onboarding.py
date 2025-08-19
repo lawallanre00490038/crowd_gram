@@ -8,7 +8,7 @@ from src.keyboards.inline import g0_to_tutorials_kb, user_type_kb, ready_kb
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.state import State, StatesGroup
-from src.handlers.onboarding_routes.quiz import start_quiz
+from src.routes.onboarding_routes.quiz import start_quiz
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
  
 from src.data.country import COUNTRIES  
@@ -681,7 +681,7 @@ async def get_referrer(message: Message, state: FSMContext):
         f"Referrer: {user_data.get('referrer', 'N/A')}"
     )
     
-    from src.handlers.task_routes.test_knowledge_router import start_knowledge_assessment
+    from src.routes.task_routes.test_knowledge_router import start_knowledge_assessment
     await start_knowledge_assessment(message, state)
 
     print(message.from_user.id, "has completed onboarding with data:", user_data)
