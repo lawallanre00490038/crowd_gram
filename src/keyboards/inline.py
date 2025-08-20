@@ -81,3 +81,19 @@ def create_next_task_keyboard():
             [InlineKeyboardButton(text="Menu", callback_data="view_commands")],
         ]
     )
+
+def yes_no_inline_keyboard():
+    return InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="✅ Yes", callback_data="org_yes")],
+                [InlineKeyboardButton(text="❌ No", callback_data="org_no")]
+            ]
+        )
+
+def create_account_inline_keyboard():
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="✅ Create Account", callback_data="create_account")],
+            [InlineKeyboardButton(text="🔄 Try Again", callback_data="try_login_again")]
+        ]
+    )
