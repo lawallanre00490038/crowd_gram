@@ -5,32 +5,23 @@ from src.database.models import Agent
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.fsm.context import FSMContext
+
+from src.responses.auth_response import LOGIN_FAILED_MESSAGE, LOGIN_SUCCESS_MESSAGE
+from src.services.server.auth import user_login
+from src.utils.auth_utils import validate_email, validate_phone_format, format_phone
 from src.states.authentication import Authentication
 from src.states.onboarding import Onboarding
 from src.keyboards.auth import company_kb
+from src.keyboards.inline import yes_no_inline_keyboard, create_account_inline_keyboard
 from src.utils.password import hash_password, verify_password 
 from src.data.country import COUNTRIES  
 from src.utils.keyboard_utils import create_countries_keyboard_reply 
 import re
+import logging
 
 router = Router()
 
-async def check_user_exists(identifier: str):
-    """
-    verify is user exist via mail or phone/ if not-> none
-    """
-    # replace w/ database instance 
-    # session = SessionLocal()
-    # try:
-    #     agent = session.query(Agent).filter(
-    #         (Agent.email == identifier) | (Agent.phone == identifier)
-    #     ).first()
-    #     return agent
-    # finally:
-    #     session.close()  
-    
-    # simulation for now
-    return None
+logger = logging.getLogger(__name__)
 
 # Handler: Choix du type d'utilisateur (collector/registered/new)
 @router.callback_query(Authentication.collector_check, F.data.in_(["collector_yes", "registered_yes", "new_user"]))
@@ -48,12 +39,7 @@ async def handle_user_type_choice(callback: CallbackQuery, state: FSMContext):
     elif callback.data == "new_user":
         # Nouveau utilisateur -> Flow normal d'authentication
         # Créer les boutons pour organization check
-        org_kb = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [InlineKeyboardButton(text="✅ Yes", callback_data="org_yes")],
-                [InlineKeyboardButton(text="❌ No", callback_data="org_no")]
-            ]
-        )
+        org_kb = yes_no_inline_keyboard
 
         welcome_text=(    
             "Great! Let's get you set up! 👋 Welcome to Equalyz Crowd!\n\n"
@@ -75,29 +61,6 @@ async def handle_login_identifier(message: Message, state: FSMContext):
     identifier = message.text.strip()
     await state.update_data(login_identifier=identifier)
     
-    # Vérifier si l'utilisateur existe
-    user = await check_user_exists(identifier)
-    
-    if not user:
-        await message.answer(
-            "❌ No account found with this email/phone.\n\n"
-            "Would you like to create a new account instead?"
-        )
-        
-        # Proposer de créer un compte
-        choice_kb = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [InlineKeyboardButton(text="✅ Create Account", callback_data="create_account")],
-                [InlineKeyboardButton(text="🔄 Try Again", callback_data="try_login_again")]
-            ]
-        )
-        await message.answer(
-            "What would you like to do?",
-            reply_markup=choice_kb
-        )
-        return
-    
-    # Utilisateur trouvé -> Demander le mot de passe
     await message.answer(
         "🔒 Please enter your password:"
     )
@@ -110,13 +73,16 @@ async def handle_login_password(message: Message, state: FSMContext):
     user_data = await state.get_data()
     identifier = user_data.get('login_identifier')
     
+    response = user_login(identifier, password)
+
+    if not response:
+        await message.answer(LOGIN_FAILED_MESSAGE)
+
     # for now simulation of successful login
-    await message.answer(
-        "✅ Login successful!\n\n"
-        "🎉 Welcome back to Equalyz Crowd!\n\n"
-        "You can now access your tasks and continue earning."
-    )
-    await state.clear()
+    await message.answer(LOGIN_SUCCESS_MESSAGE.format(name=response.data.name if response else "User"))
+    
+    await state.set_data({"user_data":response.data.model_dump()})
+
 
 # Handler: Gestion des choix après échec de login
 @router.callback_query(Authentication.login_email, F.data.in_(["create_account", "try_login_again"]))
@@ -146,24 +112,6 @@ async def handle_login_failure_choice(callback: CallbackQuery, state: FSMContext
             "🔄 Please enter your email or phone number:"
         )
         await state.set_state(Authentication.login_email)
-
-#validate format 
-def validate_phone_format(phone: str) -> bool:
-    """Validation plus stricte avec codes pays"""
-    phone = phone.strip().replace(" ", "").replace("-", "")
-    
-    # verif pattern
-    pattern = r'^\+\d{1,4}\d{6,12}$'
-    
-    if not re.match(pattern, phone):
-        return False
-    
-    # 10-15 after +
-    phone_digits = phone[1:]
-    return 10 <= len(phone_digits) <= 15
-
-def format_phone(phone: str) -> str:
-    return phone.strip().replace(" ", "").replace("-", "") 
 
 # Handler: Are you part of organization?
 @router.callback_query(Authentication.organization_check, F.data.in_(["org_yes", "org_no"]))
@@ -209,11 +157,6 @@ async def handle_name_input(message: Message, state: FSMContext):
         "We'll use this for account verification and important updates."
     )
     await state.set_state(Authentication.email_input)
-
-#email validation function
-def validate_email(email):
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    return re.match(pattern, email) is not None
 
 # Handler: Email input
 @router.message(Authentication.email_input)
