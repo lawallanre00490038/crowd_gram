@@ -1,31 +1,7 @@
 from pydantic import BaseModel, Field
 from datetime import timedelta
 from typing import Dict
-
-# Define the Pydantic model for your task data.
-# Each field corresponds to a key in your dictionary.
-class TranslationTask(BaseModel):
-    """
-    A Pydantic model representing a translation task.
-    This model provides data validation and type-hinting for task data.
-    """
-    category: str
-    task_id: str
-    deadline: str
-    extend_deadline: str
-    required_language: str
-    required_dialects: str
-    task_type: str
-    rewards: str
-    category_type: str
-    task_description: str
-    task_instructions: str
-
-class TaskDetail(BaseModel):
-    task_id: str
-    required_language: str
-    min_duration: timedelta
-    max_duration: timedelta
+from src.models.task_models import TranslationTask, TaskDetail
 
 sample_translation_text_task = {
     "category": "Text",
@@ -54,5 +30,13 @@ async def assign_task(agent_id):
     # Logic to fetch and assign a task based on agent profile
     return TranslationTask(**sample_translation_text_task)
 
-async def get_full_task_detail(task_id) -> TaskDetail:
+async def get_full_task_detail(task_id, user_id) -> TaskDetail:
+    """
+    Fetches the full details of a task based on its ID.
+
+    Args:
+        task_id (str): The ID of the task to fetch details for.
+    Returns:
+        TaskDetail: A Pydantic model containing the full details of the task.
+    """
     return TaskDetail(**full_task_detail[task_id])
