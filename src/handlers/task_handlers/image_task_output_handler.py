@@ -23,10 +23,7 @@ async def handle_openEnd_task(image_path: str, question: str, target_lang: str):
     image_file = image_path
     caption = f"❓{question}\n\n Make sure to describe in {target_lang}."
     
-    return message.answer_photo(
-        photo=image_file,
-        caption=caption
-    )
+    return image_file, caption
     
 async def handle_closeEnd_task(image_path: str, question: str, options: List):
     """
