@@ -15,7 +15,7 @@ import tempfile
 from pathlib import Path
 from src.services.quality_assurance.audio_validation import validate_audio_input
 from src.services.quality_assurance.audio_parameter_check import TaskParameterModel
-from src.handlers.task_routes.audio_assignment import send_audio_question, run_audio_validation_and_respond
+from src.handlers.audio_assignment import send_audio_question_test_knowledge, run_audio_validation_and_respond
 
 router = Router()
 #to Get the video_id Values
@@ -49,6 +49,11 @@ video_tasks = random.sample(video_quiz_data, 2)
 video_2_quiz_data = load_json_file(Path("src/data/video_2_quiz.json"))
 # Pick 2 task @random
 video_2_tasks = random.sample(video_2_quiz_data, 2)
+
+
+# Load test_your_knowledge audio quiz data
+audio_quiz_data = load_json_file(Path("src/data/audio_quiz.json"))  
+audio_tasks = random.sample(audio_quiz_data, 2)
 
 
 
@@ -944,18 +949,17 @@ async def simulate_video_annotation_validation(message: Message, state: FSMConte
 #For direct testing only (To be removed later)
 @router.message(Command("start_audio_task_test"))
 async def cmd_start_audio_test(message: Message, state: FSMContext):
-    # Initialize audio quiz
     await state.update_data(current_aq=0, num_aq=2, target_language='Yoruba')
     await state.set_state(TestKnowledge.audio_quiz)
-    await send_audio_question(message, state)
+    await send_audio_question_test_knowledge(message, state,audio_quiz_data=audio_quiz_data, audio_tasks=audio_tasks)
 
-# start via callback button 
+# Assignment route
 @router.callback_query(F.data == "start_audio_task_test")
 async def cb_start_audio_test(cb: CallbackQuery, state: FSMContext):
     await cb.answer()
     await state.update_data(current_aq=0, num_aq=2, target_language='Yoruba')
     await state.set_state(TestKnowledge.audio_quiz)
-    await send_audio_question(cb.message, state)
+    await send_audio_question_test_knowledge(cb.message, state, audio_quiz_data=audio_quiz_data, audio_tasks=audio_tasks)
 
 # Submission route (user replies with voice/audio)
 @router.message(TestKnowledge.audio_quiz_submission, F.content_type.in_({"voice", "audio"}))

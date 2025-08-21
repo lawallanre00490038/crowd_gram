@@ -22,7 +22,7 @@ from src.services.quality_assurance.image_validation import validate_image_input
 from src.services.quality_assurance.audio_parameter_check import check_audio_parameter, TaskParameterModel
 from src.services.quality_assurance.audio_quality_check import check_audio_quality
 from src.services.task_distributor import assign_task, get_full_task_detail, TranslationTask
-from src.handlers.task_routes.audio_assignment import send_audio_question
+from src.handlers.audio_assignment import send_audio_question_actual_tasks,run_audio_validation_and_respond
 
 from src.states.tasks import TaskState, TextTaskSubmission, ImageTaskSubmission, AudioTaskSubmission, VideoTaskSubmission
 
@@ -95,8 +95,15 @@ async def cmd_start_task(message: Message, state: FSMContext):
 
 @router.message(TaskState.waiting_for_task, F.text == "/audio_task")
 async def cmd_start_task(message: Message, state: FSMContext):
-    await send_audio_question(message, state)
     assigned_task = await assign_task("aha")
+    if not assigned_task:
+        await message.answer("❌ No available audio task right now.")
+        await state.clear()
+        return
+    await send_audio_question_actual_tasks(
+        message, state, task=assigned_task,
+    )
+
     await state.set_data({UserParams.TASK_INFO.value: assigned_task.model_dump()})
     await state.set_state(AudioTaskSubmission.waiting_for_audio)
 
