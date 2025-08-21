@@ -15,7 +15,7 @@ import tempfile
 from pathlib import Path
 from src.services.quality_assurance.audio_validation import validate_audio_input
 from src.services.quality_assurance.audio_parameter_check import TaskParameterModel
-from src.handlers.audio_assignment import send_audio_question_test_knowledge, run_audio_validation_and_respond
+from src.handlers.task_handlers.audio_task_handler import send_audio_question_test_knowledge, handle_audio_submission
 
 router = Router()
 #to Get the video_id Values
@@ -954,9 +954,16 @@ async def cmd_start_audio_test(message: Message, state: FSMContext):
     await send_audio_question_test_knowledge(message, state,audio_quiz_data=audio_quiz_data, audio_tasks=audio_tasks)
 
 # Assignment route
-@router.callback_query(F.data == "start_audio_task_test")
+@router.callback_query(TestKnowledge.audio_instructions,F.data == "start_audio_task_test")
 async def cb_start_audio_test(cb: CallbackQuery, state: FSMContext):
     await cb.answer()
+
+    #Prevents double-taps
+    try:
+        await cb.message.edit_reply_markup(reply_markup=None)
+    except Exception:
+        pass  # if message not editable (e.g., already edited), ignore
+
     await state.update_data(current_aq=0, num_aq=2, target_language='Yoruba')
     await state.set_state(TestKnowledge.audio_quiz)
     await send_audio_question_test_knowledge(cb.message, state, audio_quiz_data=audio_quiz_data, audio_tasks=audio_tasks)
@@ -971,7 +978,7 @@ async def on_audio_submission(message: Message, state: FSMContext):
         "🔔 Next: You'll be notified when reviewed\n"
     )
     # Run validation flow
-    await run_audio_validation_and_respond(message, state)
+    await handle_audio_submission(message, state)
 
 # Guard route if they send something else
 @router.message(TestKnowledge.audio_quiz_submission)
