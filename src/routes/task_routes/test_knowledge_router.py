@@ -29,13 +29,15 @@ router = Router()
 
 
 # Load image quiz data
-image_quiz_data = load_json_file(Path("src/data/image_quiz.json"))
-# Pick 2 images task @random
-image_tasks = random.sample(image_quiz_data, 2)
+quiz_data = load_json_file(Path("src/data/image_quiz.json"))
 
-image_2_quiz_data = load_json_file(Path("src/data/image_2_quiz.json"))
-# Pick 2 task @random
-image_2_tasks = random.sample(image_2_quiz_data, 2)
+# Image task
+image_quiz_data = quiz_data['image_task']
+image_openEnd = random.sample(image_quiz_data['image_openEnd'], 2)
+image_closeEnd = random.sample(image_quiz_data['image_closeEnd'], 2)
+image_request = random.sample(image_quiz_data['image_request'], 2)
+
+# Video task
 
 # Load video quiz data
 video_quiz_data = load_json_file(Path("src/data/video_quiz.json"))
@@ -215,7 +217,7 @@ async def handle_start_image_test(callback: CallbackQuery, state: FSMContext):
     
     # Initialize image quiz data
     await state.update_data(current_q=0, num_q=2, target_language='Yoruba')
-    await state.set_state(TestKnowledge.image_quiz)
+    await state.set_state(TestKnowledge.image_quiz) 
     
     # Send first image question
     await send_image_question(callback.message, state)
@@ -226,15 +228,15 @@ async def send_image_question(message: Message, state: FSMContext):
     q_index = data["current_q"]
     target_lang = data['target_language']
     
-    if not image_quiz_data:
+    if not image_openEnd:
         await message.answer("❌ No quiz data available")
         return
     
-    if q_index >= len(image_quiz_data):
+    if q_index >= len(image_openEnd):
         await message.answer("❌ Question index out of range")
         return
     
-    selected_question = image_tasks[q_index]
+    selected_question = image_openEnd[q_index]
     print(f"📝 Selected question: {selected_question}")
     
     try:
@@ -292,7 +294,7 @@ async def simulate_image_validation(message: Message, state: FSMContext):
     num_q = data.get('num_q', 0)
     target_lang = data.get('target_language')
     user_annotation = data.get('user_annotation')
-    sent_image = image_tasks[q_index]['image']
+    sent_image = image_openEnd[q_index]['image']
 
     
     validation_result = True  # TODO: QA validation
@@ -375,15 +377,15 @@ async def send_image_2_question(message: Message, state: FSMContext):
     num_req_q = data.get('num_req_q')
     target_lang = data.get('target_language')
 
-    if not image_2_quiz_data:
+    if not image_request:
         await message.answer("❌ No quiz data available")
         return
     
-    if q_index >= len(image_2_quiz_data):
+    if q_index >= len(image_request):
         await message.answer("❌ Question index out of range")
         return
     
-    selected_question = image_2_tasks[q_index]
+    selected_question = image_request[q_index]
     print(f"📝 Selected question: {selected_question}")
 
     await message.answer(
@@ -426,7 +428,7 @@ async def simulate_request_image_validation(message: Message, state: FSMContext)
     data = await state.get_data()
     photo_id = data.get('photo_id')
     index_q = data.get('current_req_q')
-    selected_question = image_2_tasks[index_q]
+    selected_question = image_request[index_q]
 
     # QA check and approval
     image_validation_check = True # TODO: QA Team
@@ -456,7 +458,7 @@ async def image_annotation(message: Message, state: FSMContext):
     data = await state.get_data()
     photo_id = data.get('photo_id')
     index_q = data.get('current_req_q')
-    selected_question = image_2_tasks[index_q]
+    selected_question = image_request[index_q]
     target_lang = data.get("target_language")
 
     await message.answer_photo(
@@ -477,7 +479,7 @@ async def image_annotation(message: Message, state: FSMContext):
 async def handle_annotation(message: Message, state: FSMContext):
     data = await state.get_data()
     index_q = data.get('current_req_q')
-    selected_question = image_2_tasks[index_q]
+    selected_question = image_request[index_q]
     target_lang = data.get("target_language")
     annotation_type = selected_question['annotation_type']
     
@@ -510,7 +512,7 @@ async def simulate_image_annotation_validation(message: Message, state: FSMConte
     data = await state.get_data()
     annotation_value = data.get('annotation_value')
     index_q = data.get('current_req_q')
-    selected_question = image_2_tasks[index_q]
+    selected_question = image_request[index_q]
     annotation_type = selected_question['annotation_type']
 
     # QA check and approval
