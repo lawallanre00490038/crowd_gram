@@ -1,3 +1,5 @@
+from aiogram.types import Message
+from aiogram.fsm.context import FSMContext
 import logging
 import librosa
 from src.utils.parameters import UserParams
@@ -12,9 +14,127 @@ from src.routes.task_routes.task_formaters import (TEXT_TASK_PROMPT, SELECT_TASK
 
 from src.utils.downloader import download_telegram
 from src.constant.auth_constants import TOKEN_LOCATION
+from src.states.tasks import AudioTaskSubmission
+from src.states.test_knowledge import TestKnowledge
+from typing import List
+
+
+
 
 
 logger = logging.getLogger(__name__)
+
+
+# --- TestKnowledge (quiz) ---
+async def send_audio_question_test_knowledge(
+    message: Message,
+    state: FSMContext,
+    audio_quiz_data: List,
+    audio_tasks: list
+):
+    data = await state.get_data()
+    q_index = int(data.get("current_aq", 0))
+    target_lang = data.get("target_language", "Yoruba")
+
+    logger.debug(
+        "send_audio_question_test_knowledge: q_index=%s target_lang=%s total_quiz=%d sampled=%d",
+        q_index, target_lang, len(audio_quiz_data or []), len(audio_tasks or [])
+    )
+
+    if not audio_quiz_data:
+        logger.warning("No audio quiz data available")
+        await message.answer("❌ No audio quiz data available")
+        return
+
+    if q_index >= len(audio_tasks):
+        logger.warning("Audio question index out of range: q_index=%d len=%d", q_index, len(audio_tasks))
+        await message.answer("❌ Audio question index out of range")
+        return
+
+    selected = audio_tasks[q_index]
+    logger.info(
+        "Sending quiz question idx=%d | theme=%s",
+        q_index, selected.get("theme")
+    )
+
+    await message.answer(
+        f"🎧 Theme: {selected['theme']}\n\n"
+        f"📋 Instruction: {selected['instruction']}\n"
+        f"💡 Example guidance: {selected['example_prompt']}\n\n"
+        f"Please send a **voice note or audio file** in **{target_lang}** (10–20 seconds)."
+    )
+
+    logger.debug("Setting state -> TestKnowledge.audio_quiz_submission")
+    await state.set_state(TestKnowledge.audio_quiz_submission)
+
+
+# --- Actual tasks (single assignment ---
+async def send_audio_question_actual_tasks(
+    message: Message,
+    state: FSMContext,
+    *,
+    task: TranslationTask,             # Pydantic model
+    state_key_task_id: str = "current_task_id",
+    state_key_target_lang: str = "target_language",
+    default_duration_text: str = "10–20 seconds",
+    show_meta: bool = True,
+) -> None:
+    """
+    Send a single assigned audio task prompt.
+    Stores minimal FSM state (task id + target language) and moves to waiting_for_audio.
+    """
+    logger.debug(
+        "send_audio_question_actual_tasks: task_id=%s required_language=%s",
+        task.task_id, task.required_language
+    )
+
+    language = (task.required_language or "English").strip()
+
+    # Persist minimal state for the real-task flow
+    await state.update_data(
+        **{
+            state_key_task_id: task.task_id,
+            state_key_target_lang: language,
+        }
+    )
+    logger.info(
+        "FSM updated for actual task | %s=%s, %s=%s",
+        state_key_task_id, task.task_id, state_key_target_lang, language
+    )
+
+    # Build prompt
+    theme = (task.task_type or task.category or "Audio Task").strip()
+    instruction = (task.task_instructions or task.task_description or "Record a short audio sample.").strip()
+    description = (task.task_description or "No description provided.").strip()
+    duration_text = default_duration_text
+
+    meta_line = ""
+    if show_meta:
+        bits = []
+        if task.rewards:
+            bits.append(f"💰 Reward: {task.rewards}")
+        if task.deadline:
+            bits.append(f"🕒 Deadline: {task.deadline}")
+        if task.extend_deadline:
+            bits.append(f"➕ Extend: {task.extend_deadline}")
+        if bits:
+            meta_line = "\n" + " · ".join(bits)
+            logger.debug("Meta line for task %s: %s", task.task_id, meta_line.replace("\n", " "))
+
+    # Send message
+    logger.info("Sending actual-task prompt | task_id=%s theme=%s", task.task_id, theme)
+    await message.answer(
+        f"🎧 Theme: {theme}\n\n"
+        f"📋 Instruction: {instruction}\n"
+        f"💡 Description: {description}\n"
+        f"⏱ Duration: {duration_text}{meta_line}\n\n"
+        f"Please send a **voice note or audio file** in **{language}**."
+    )
+
+    # Advance state
+    logger.debug("Setting state -> AudioTaskSubmission.waiting_for_audio")
+    await state.set_state(AudioTaskSubmission.waiting_for_audio)
+
 
 async def handle_audio_submission(task_info, file_id, user_id, bot):
     """
