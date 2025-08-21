@@ -18,6 +18,20 @@ from src.services.quality_assurance.audio_parameter_check import TaskParameterMo
 from src.handlers.task_routes.audio_assignment import send_audio_question, run_audio_validation_and_respond
 
 router = Router()
+#to Get the video_id Values
+
+# @router.message(F.text == "/preload_videos")
+# async def preload_videos(message: Message):
+#     for v in video_quiz_data:
+#         sent = await message.answer_video(video=FSInputFile(v['video']))
+#         v['video_id'] = sent.video.file_id
+#         print(f"{v['video']} => {sent.video.file_id}")
+
+#     for v in video_2_quiz_data:
+#         sent = await message.answer_video(video=FSInputFile(v['video']))
+#         v['video_id'] = sent.video.file_id
+#         print(f"{v['video']} => {sent.video.file_id}")
+
 
 # Load image quiz data
 image_quiz_data = load_json_file(Path("src/data/image_quiz.json"))
@@ -27,6 +41,14 @@ image_tasks = random.sample(image_quiz_data, 2)
 image_2_quiz_data = load_json_file(Path("src/data/image_2_quiz.json"))
 # Pick 2 task @random
 image_2_tasks = random.sample(image_2_quiz_data, 2)
+
+# Load video quiz data
+video_quiz_data = load_json_file(Path("src/data/video_quiz.json"))
+# Pick a video task @random
+video_tasks = random.sample(video_quiz_data, 2)
+video_2_quiz_data = load_json_file(Path("src/data/video_2_quiz.json"))
+# Pick 2 task @random
+video_2_tasks = random.sample(video_2_quiz_data, 2)
 
 
 
@@ -506,9 +528,390 @@ async def simulate_image_annotation_validation(message: Message, state: FSMConte
             f"(Simulation) Good job! Your uploaded {annotation_type} has been successfully received and approved ✅" \
             f"Now, let's continue with the next task..."
         )
+         # Video image assessment
+        await asyncio.sleep(3)
         
+<<<<<<< HEAD
                 # --- START AUDIO ASSESSMENT ---
         await asyncio.sleep(2)
+=======
+        # Video assessment instructions
+        video_instructions_text = (
+            "Great!\n"
+            "Let's move to Video Annotation task!\n\n"
+            "📋 Instructions:\n"
+            "• You'll receive a video.\n"
+            "• You will be asked to give a well detailed description of the image\n\n"
+            "Ready to begin the video test?"
+        )
+        
+        video_ready_kb = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="🖼️ Start Video Test", callback_data="start_video_test")]
+            ]
+        )
+        
+        await message.answer(video_instructions_text, reply_markup=video_ready_kb)
+        await state.set_state(TestKnowledge.video_instructions)
+        
+
+        print(f"✅ TRANSLATION PASSED - User {message.from_user.id}")
+        print(f"Translation: {data.get('user_translation')}")
+        
+        
+    else:
+        failure_text = (
+            "Assessment needs improvement\n\n"
+            "Feedback: Your translation needs some work\n"
+            "Next step: Please try the assessment again\n"
+            "Tip: Review translation guidelines and try again"
+        )
+        
+        await message.answer(failure_text)
+        await state.clear()
+
+# Video Assessment Handlers
+@router.callback_query(TestKnowledge.video_instructions, F.data == "start_video_test")
+async def handle_start_video_test(callback: CallbackQuery, state: FSMContext):
+    """Start the video assessment"""
+    await callback.answer()
+    
+    # Initialize video quiz data
+    await state.update_data(current_q=0, num_q=2, target_language='Yoruba')
+    await state.set_state(TestKnowledge.video_quiz)
+    
+    # Send first video question
+    await send_video_question(callback.message, state)
+
+async def send_video_question(message: Message, state: FSMContext):
+    """Send a video quiz question"""
+    data = await state.get_data()
+    q_index = data["current_q"]
+    target_lang = data['target_language']
+    
+    if not video_quiz_data:
+        await message.answer("❌ No quiz data available")
+        return
+    
+    if q_index >= len(video_quiz_data):
+        await message.answer("❌ Question index out of range")
+        return
+    
+    selected_question = video_quiz_data[q_index]
+    print(f"📝 Selected question: {selected_question}")
+    
+    try:
+        # Use FSInputFile for local video files
+       # video_file = FSInputFile(selected_question['video'])
+        await message.answer_video(
+            #video=video_file,
+            video=selected_question['video_id'],
+            caption=f"❓{hbold(selected_question['question'])}\n\n Make sure to describe in {target_lang}."
+        )
+        print("✅ Video sent successfully")
+        await state.set_state(TestKnowledge.video_quiz_submission)
+    except Exception as e:
+        print(f"❌ Error sending video: {e}")
+        await message.answer(f"❌ Error loading video: {e}")
+        # Try without video for debugging
+        await message.answer(
+            f"❓{hbold(selected_question['question'])}\n\n Make sure to describe in {target_lang}.",
+        )
+        await state.set_state(TestKnowledge.video_quiz_submission)
+
+@router.message(TestKnowledge.video_quiz_submission)
+async def handle_video_submission(message: Message, state: FSMContext):
+    """Handle video quiz submission with 10 word minimum check"""
+
+    if not message.text:
+        message.answer("❌ Please send your descriptions as text.")
+        return
+
+    user_annotation = message.text.strip()
+
+    # Word count validation
+    if len(user_annotation.split()) < 10:
+        await message.answer(
+            "❌ Your description is too short.\n"
+            "Please provide at least 10 words for your annotation."
+        )
+        return
+
+    data = await state.get_data()
+    target_lang = data.get("target_language")
+
+    await state.update_data(user_annotation=user_annotation)
+
+    confirmation_message = (
+        "✅ Description Received!\n\n"  
+        f"Your {target_lang} Description:\n"  
+        f'"{user_annotation}"\n\n'
+        f"⏳ Status: Submitted for validation\n"
+        f"🔔 Next: You'll be notified when reviewed\n\n"
+    )
+
+    await message.answer(confirmation_message)
+
+    await simulate_video_validation(message, state)
+    
+@router.message(TestKnowledge.video_quiz_feedback)
+async def simulate_video_validation(message: Message, state: FSMContext):
+    
+    await asyncio.sleep(3)
+
+    data = await state.get_data()
+    q_index = data['current_q']
+    num_q = data.get('num_q', 0)
+    target_lang = data.get('target_language')
+    user_annotation = data.get('user_annotation')
+    sent_video = video_tasks[q_index]['video_id']
+
+    
+    validation_result = True  # TODO: QA validation
+    
+   
+    if validation_result:
+
+
+        await message.answer(
+            "(simulation) Good job! You have successfully completed the task ✅ " \
+            "Your task has been approved!\n" 
+            "Now, let's continue with the next task...")
+            
+        num_q -= 1
+            
+        if num_q > 0:
+            await state.update_data(num_q=num_q, current_q=1)
+            await send_video_question(message, state)
+        else:
+            # Video assessment completed!
+            await message.answer("🎉 Video annotation test completed!")
+            
+            # Start Video request and annotation
+            await asyncio.sleep(3)
+
+            # test instructions
+            video_request_instructions = (
+                "Nice job so far!\n"
+                "Let's move on to next task (video Annotation)!\n\n"
+                "📋 Instructions:\n"
+                "You'll receive a theme and need to send a video that matches it.\n"
+                "You’ll also be asked to provide a short description of the video you send using a minimum of 10 words.\n\n"
+                "Ready to begin the test?"
+            )
+                
+            video_2_ready_kb = InlineKeyboardMarkup(
+                inline_keyboard=[
+                        [InlineKeyboardButton(text="🖼️ Start Video Test", callback_data="start_video_2_test")]
+                ]
+            )
+
+            await message.answer(video_request_instructions, reply_markup=video_2_ready_kb)
+            await state.set_state(TestKnowledge.video_2_instructions)
+
+    else:
+        failure_text = (
+            "Feedback: Your descriptions needs some work\n"
+            "Next step: Please try the assessment again\n"
+            "Assessment need improvement\n\n"
+            "Tip: Review description guidelines and try again.\n\n"
+        )
+        await message.answer("❌ Incorrect.")
+        await message.answer(failure_text)
+        await message.answer("Let's try again one more time.")
+
+        await send_video_question(message, state)
+
+
+
+# Video 2 Assessment Handlers
+@router.callback_query(TestKnowledge.video_2_instructions, F.data == 'start_video_2_test')
+async def handle_start_video_2_test(callback: CallbackQuery, state: FSMContext):
+    """Start the video request assessment"""
+    await callback.answer()
+
+    # Initialize video quiz data
+    await state.update_data(
+        current_req_q = 0,
+        num_req_q = 2
+    )
+    await state.set_state(TestKnowledge.video_2_quiz)
+
+    await send_video_2_question(callback.message, state)
+
+
+@router.message(TestKnowledge.video_2_quiz)
+async def send_video_2_question(message: Message, state: FSMContext):
+    data = await state.get_data()
+    q_index = data.get('current_req_q', 0)
+    num_req_q = data.get('num_req_q')
+    target_lang = data.get('target_language')
+
+    if not video_2_quiz_data:
+        await message.answer("❌ No quiz data available")
+        return
+    
+    if q_index >= len(video_2_quiz_data):
+        await message.answer("❌ Question index out of range")
+        return
+    
+    selected_question = video_2_quiz_data[q_index]
+    await state.update_data(selected_question=selected_question)
+    print(f"📝 Selected question: {selected_question}")
+
+    await message.answer(
+        f"Awesome! Here's your theme  — share a video and describe it in {target_lang}:\n\n"
+        f"---\n"
+        f"Theme: {selected_question['theme']}\n"
+        f"--\n\n"
+        f"Describe it using: {selected_question['annotation_type']}\n"
+        f"Guide: {selected_question['instruction']}\n"
+        f"Example: {selected_question['example_prompt']}\n\n"
+        f"Your {target_lang} description:\n"
+    )
+
+    # await receive_video_submission(message, state)
+    await state.set_state(TestKnowledge.video_2_quiz_submission)
+
+@router.message((F.content_type == ContentType.VIDEO) | (F.content_type == ContentType.DOCUMENT), StateFilter(TestKnowledge.video_2_quiz_submission))
+async def receive_video_submission(message: Message, state: FSMContext):
+    """Handle Submission"""
+    if not message.video:
+        await message.answer(" ❌ Please send a video.")
+        return
+    
+    video = message.video
+    file_id = video.file_id
+
+    await state.update_data(video_id=file_id)
+    await message.answer(
+        f"✅ Video received!\n\n"
+        f"⏳ Status: Submitted for validation\n"
+        f"🔔 Next: You'll be notified when reviewed\n\n"
+    )
+
+    await simulate_request_video_validation(message, state)
+
+
+async def simulate_request_video_validation(message: Message, state: FSMContext):
+    """Simulation of the sent video validation"""
+    await asyncio.sleep(3)
+
+    data = await state.get_data()
+    video_id = data.get('video_id')
+    index_q = data.get('current_req_q')
+    selected_question = video_2_tasks[index_q]
+
+    # QA check and approval
+    video_validation_check = True # TODO: QA Team
+
+    if video_validation_check:
+        await message.answer(
+            f"(Simulation) Good job! Your uploaded video has been successfully received and approved ✅\n" \
+            "Now, let's continue with describing the uploaded video..."
+        )
+
+        await state.set_state(TestKnowledge.video_annotation)
+        await video_annotation(message, state)
+    
+    else:
+        failure_text = (
+            "Video Quality Check Failed\n\n"
+            "Feedback: The uploaded video does not meet our quality standards\n"
+            "Next step: Please upload a clearer, relevant video\n"
+            "Tip: Ensure the video is filmed in a well-lit environment, in focus, and matches the given theme"
+            )
+        await message.answer(failure_text)
+
+@router.message(TestKnowledge.video_annotation)
+async def video_annotation(message: Message, state: FSMContext):
+    """start Video Annotation (Audio / Text)"""
+
+    data = await state.get_data()
+    video_id = data.get('video_id')
+    index_q = data.get('current_req_q')
+   # selected_question = video_2_tasks[index_q]
+    selected_question = data.get('selected_question')
+    target_lang = data.get("target_language")
+
+    await message.answer_video(
+        video=video_id,
+        caption=(
+            f"✅ Your video for **{selected_question['theme']}** has been received and approved!\n\n"
+            f"Now, please describe this video in **{target_lang}** using {hbold(selected_question['annotation_type'])}.\n"
+            "Focus on what is happening, the people, objects, and actions you see.\n"
+            "✔ Be detailed and accurate.\n"
+            "✔ Use complete sentences.\n"
+            "❌ Avoid unrelated details."
+        )
+    )
+    
+    await state.set_state(TestKnowledge.video_annotation_submission)
+
+@router.message(TestKnowledge.video_annotation_submission, F.text | F.voice | F.audio)
+async def handle_annotation(message: Message, state: FSMContext):
+    data = await state.get_data()
+    index_q = data.get('current_req_q')
+    #selected_question = video_2_tasks[index_q]
+    selected_question = data.get('selected_question')
+    target_lang = data.get("target_language")
+    annotation_type = selected_question['annotation_type']
+    
+    # Validate that user sent the right type
+    if annotation_type == "text" and message.text:
+        annotation_value = message.text.strip()
+         # Word count validation
+        if len(annotation_value.split()) < 10:
+            await message.answer(
+                "❌ Your description is too short.\n"
+                "Please provide at least 10 words for your annotation."
+            )
+            return
+    elif annotation_type == "audio" and (message.audio or message.voice):
+        annotation_value = message.audio.file_id if message.audio else message.voice.file_id
+    else:
+        await message.answer(f"❌ Please send a valid {annotation_type} description.")
+        return
+    
+    
+    # Save annotation to state
+    await state.update_data(annotation_value=annotation_value)
+    
+    await message.answer(
+        f"✅ {annotation_type.capitalize()} description received!\n\n"
+        f"⏳ Status: Submitted for validation\n"
+        f"🔔 Next: You'll be notified when reviewed\n\n"
+    )
+    
+    await simulate_video_annotation_validation(message, state)
+
+
+async def simulate_video_annotation_validation(message: Message, state: FSMContext):
+    """Simulation of the sent annotation validation"""
+    await asyncio.sleep(3)
+
+    data = await state.get_data()
+    annotation_value = data.get('annotation_value')
+    index_q = data.get('current_req_q')
+    #selected_question = video_2_tasks[index_q]
+    selected_question = data.get('selected_question')
+    annotation_type = selected_question['annotation_type']
+
+    # QA check and approval
+    annotation_validation_check = True # TODO: QA Team
+
+    if annotation_validation_check:
+        await message.answer(
+            f"(Simulation) Good job! Your uploaded {annotation_type} has been successfully received and approved ✅" \
+            f"Now, let's continue with the next task..."
+        )
+        success_text = (
+                    "🎉 (simulation) Congratulations! Test Passed!\n"  
+                    "You're now eligible for real tasks!\n\n" \
+                    "Ready to start earning?"
+                )
+        
+>>>>>>> main
 
 
         audio_instructions_text = (
