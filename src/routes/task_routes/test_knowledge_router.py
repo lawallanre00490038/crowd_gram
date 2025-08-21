@@ -15,7 +15,7 @@ import tempfile
 from pathlib import Path
 from src.services.quality_assurance.audio_validation import validate_audio_input
 from src.services.quality_assurance.audio_parameter_check import TaskParameterModel
-from src.handlers.audio_assignment import send_audio_question, run_audio_validation_and_respond
+from src.handlers.task_routes.audio_assignment import send_audio_question, run_audio_validation_and_respond
 
 router = Router()
 

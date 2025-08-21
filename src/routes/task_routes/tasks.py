@@ -22,7 +22,7 @@ from src.services.quality_assurance.image_validation import validate_image_input
 from src.services.quality_assurance.audio_parameter_check import check_audio_parameter, TaskParameterModel
 from src.services.quality_assurance.audio_quality_check import check_audio_quality
 from src.services.task_distributor import assign_task, get_full_task_detail, TranslationTask
-from src.handlers.audio_assignment import send_audio_question
+from src.handlers.task_routes.audio_assignment import send_audio_question
 
 from src.states.tasks import TaskState, TextTaskSubmission, ImageTaskSubmission, AudioTaskSubmission, VideoTaskSubmission
 
