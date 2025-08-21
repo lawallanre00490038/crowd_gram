@@ -124,47 +124,8 @@ async def handle_audio_input(message: Message, state: FSMContext, bot: Bot):
 
     if message.voice:
         await message.answer(SUBMISSION_RECIEVED_MESSAGE)
-<<<<<<< HEAD
-        file_path = await download_telegram(message.voice.file_id, bot=bot)
-        parameters = TaskParameterModel(min_duration= task_full_details.min_duration.total_seconds(), 
-                      max_duration = task_full_details.max_duration.total_seconds(),
-                      language = task_full_details.required_language, 
-                      expected_format = "oga",
-                      sample_rate = 50000,
-                      bit_depth = 32)
-        
-        response = check_audio_parameter(file_path, parameters)
-
-        data, sr = librosa.load(file_path, sr=None)
-
-        new_audio, quality_response = check_audio_quality(data = data, sr = sr)
-        
-        new_path = file_path.replace(".oga", "_enhanced.oga")
-        save_librosa_audio_as_mp3(new_audio, sr, new_path)
-
-        logger.info(f"New audio saved at {new_path}")
-        logger.info(f"Audio check result for user {message.from_user.id}: {response.is_valid}, errors: {response.errors}, {quality_response}")
-
-        if response.is_valid and (quality_response["message"] == "Approved"):
-            await message.answer(APPROVED_TASK_MESSAGE)
-            await state.clear()
-        else:
-            errors = ""
-
-            if not response.is_valid:
-               errors = "\n".join(response.errors)
-            if quality_response["message"] != "Approved": 
-                errors += f"\nQuality check message: {quality_response['message']}"
-            errors = ERROR_MESSAGE.format(errors=errors)
-
-            logger.info(f"Audio submission failed for user {message.from_user.id}: {errors}")
-
-            await message.answer(errors)
-    
-=======
         out_message = await handle_audio_submission(task_info, message.voice.file_id, message.from_user.id, bot)
         await message.answer(out_message)
->>>>>>> main
     else:
         await message.answer("Please. Record a audio")
 

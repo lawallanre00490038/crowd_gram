@@ -531,10 +531,6 @@ async def simulate_image_annotation_validation(message: Message, state: FSMConte
          # Video image assessment
         await asyncio.sleep(3)
         
-<<<<<<< HEAD
-                # --- START AUDIO ASSESSMENT ---
-        await asyncio.sleep(2)
-=======
         # Video assessment instructions
         video_instructions_text = (
             "Great!\n"
@@ -911,7 +907,6 @@ async def simulate_video_annotation_validation(message: Message, state: FSMConte
                     "Ready to start earning?"
                 )
         
->>>>>>> main
 
 
         audio_instructions_text = (
