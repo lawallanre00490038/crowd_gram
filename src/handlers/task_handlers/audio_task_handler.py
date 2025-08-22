@@ -7,7 +7,7 @@ from src.services.quality_assurance.audio_parameter_check import check_audio_par
 from src.services.quality_assurance.audio_quality_check import check_audio_quality
 from src.utils.save_audio import save_librosa_audio_as_mp3
 
-from src.routes.task_routes.task_formaters import (TEXT_TASK_PROMPT, SELECT_TASK_TO_PERFORM,
+from src.responses.task_formaters import (TEXT_TASK_PROMPT, SELECT_TASK_TO_PERFORM,
     APPROVED_TASK_MESSAGE, ERROR_MESSAGE, SUBMISSION_RECIEVED_MESSAGE)
 
 from src.utils.downloader import download_telegram
