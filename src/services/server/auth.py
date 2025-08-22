@@ -16,7 +16,7 @@ def user_login(email: str, password: str) -> LoginResponse:
     """
     # Here you would typically check the email and password against a database.
     # For demonstration purposes, let's assume the following credentials are valid.
-    url = f"{BASE_URL}user/auth/login"
+    url = f"{BASE_URL}/user/auth/login"
 
     payload = {
         "email": email,
@@ -31,3 +31,5 @@ def user_login(email: str, password: str) -> LoginResponse:
     else:
         logging.error(f"Authentication failed: {response.status_code}, {response.text}")
         return None
+
+
