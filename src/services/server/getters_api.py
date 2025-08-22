@@ -5,31 +5,27 @@ async def get_countries_from_api():
     url = "https://apiauth.datacollect.equalyz.ai/api/v1/user/auth/country"
     
     try:
-        print("🌍 Fetching countries from API...")
-        
+       
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 
                 if response.status == 200:
                     data = await response.json()
-                    
-                    # Extraire juste les noms des pays
+                  
                     countries = []
                     if data.get("data"):
                         for country in data["data"]:
                             country_name = country.get("name")
                             if country_name:
                                 countries.append(country_name)
-                    
-                    print(f"✅ Got {len(countries)} countries from API")
+                
                     return countries
                     
                 else:
-                    print(f"❌ API returned status {response.status}")
+        
                     return get_fallback_countries()
                     
     except Exception as e:
-        print(f"❌ Error fetching countries: {e}")
         return get_fallback_countries()
     
 
@@ -41,9 +37,7 @@ async def get_states_from_api(country_name: str):
     country_code = None
     
     try:
-        print(f"🏛️ Fetching states for {country_name}...")
         
-        # Étape 1: Trouver le code du pays
         async with aiohttp.ClientSession() as session:
             async with session.get(countries_url) as response:
                 if response.status == 200:
@@ -56,7 +50,6 @@ async def get_states_from_api(country_name: str):
                                 break
                 
                 if not country_code:
-                    print(f"❌ Country code not found for: {country_name}")
                     return get_fallback_states(country_name)
                 
                 states_url = f"https://apiauth.datacollect.equalyz.ai/api/v1/user/auth/state?countryCode={country_code}"
@@ -71,18 +64,17 @@ async def get_states_from_api(country_name: str):
                                 state_name = state.get("name")
                                 if state_name:
                                     states.append(state_name)
-                            
-                            print(f"✅ Got {len(states)} states for {country_name}")
+                    
                             return states if states else ["Other"]
                         else:
-                            print(f"📋 No states found for {country_name}")
+                        
                             return ["Other"]
                     else:
-                        print(f"❌ States API returned status {states_response.status}")
+                    
                         return get_fallback_states(country_name)
                         
     except Exception as e:
-        print(f"❌ Error fetching states: {e}")
+    
         return get_fallback_states(country_name)
     
 
@@ -92,7 +84,6 @@ async def get_languages_from_api():
     url = f"https://apiauth.datacollect.equalyz.ai/api/v1/user/auth/language?company_id={company_id}"
     
     try:
-        print("🗣️ Fetching languages from API...")
         
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
@@ -111,14 +102,11 @@ async def get_languages_from_api():
                                     "id": lang_id
                                 })
                         
-                        print(f"✅ Got {len(languages)} languages from API")
                         return languages
                     else:
-                        print("📋 No languages data in API response")
                         return get_fallback_languages()
                         
                 else:
-                    print(f"❌ Languages API returned status {response.status}")
                     return get_fallback_languages()
                     
     except Exception as e:
@@ -129,9 +117,8 @@ async def get_languages_from_api():
 
 async def get_dialects_from_api(language_name: str):
     try:
-        print(f"🗣️ Fetching dialects for {language_name}...")
-        
-        # Step 1: Get language ID from name (same logic as get_states_from_api)
+        print(f" Fetching dialects for {language_name}...")
+
         languages = await get_languages_from_api()
         language_id = None
         
@@ -141,10 +128,8 @@ async def get_dialects_from_api(language_name: str):
                 break
         
         if not language_id:
-            print(f"❌ No ID found for language: {language_name}")
             return ["Not listed here"]
         
-        # Step 2: Call dialect API with the ID
         url = "https://apiauth.datacollect.equalyz.ai/api/v1/user/auth/dialect_list"
         payload = {"language_ids": [language_id]}  # Pass as list
         
@@ -165,19 +150,15 @@ async def get_dialects_from_api(language_name: str):
                                 else:
                                     if "Not listed here" not in dialects:
                                         dialects.append("Not listed here")
-                                
-                                print(f"✅ Got {len(dialects)} dialects for {language_name}")
+                               
                                 return dialects
                         
-                        # If we get here, language not found in response
-                        print(f"❌ Language {language_name} not found in API response")
+                    
                         return ["Not listed here"]
                     else:
-                        print("📋 No dialects data in API response")
                         return ["Not listed here"]
                 else:
                     error_text = await response.text()
-                    print(f"❌ Error {response.status}: {error_text}")
                     return ["Not listed here"]
                     
     except Exception as e:
