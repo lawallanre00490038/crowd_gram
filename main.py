@@ -24,7 +24,7 @@ def root():
 async def bot_main():
     bot, dp = create_bot()
 
-    # Register routers
+    # Register routes
     #add router for login
     dp.include_router(auth.router)
     dp.include_router(onboarding.router)
@@ -34,7 +34,7 @@ async def bot_main():
     dp.include_router(payments.router)
     dp.include_router(community.router)
     dp.include_router(support.router)
-    dp.include_router(admin.router)
+    # dp.include_router(admin.router)
     dp.include_router(errors.router)
     # dp.include_router(debug_routes.router)
 

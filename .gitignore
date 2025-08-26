@@ -20,3 +20,6 @@ video/
 .vscode/
 env/
 .pytest_cache/
+
+.venv/
+ENV/

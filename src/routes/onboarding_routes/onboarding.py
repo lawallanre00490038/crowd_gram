@@ -296,6 +296,16 @@ async def get_referrer(message: Message, state: FSMContext):
         f"Data Type: {user_data.get('task_type', 'N/A')}\n"
         f"Referrer: {user_data.get('referrer', 'N/A')}"
     
+
+    from src.routes.task_routes.test_knowledge_router import start_knowledge_assessment
+    await start_knowledge_assessment(message, state)
+
+    from src.routes.task_routes.test_knowledge_router import handle_start_knowledge_assessment
+    await handle_start_knowledge_assessment(message, state)
+
+
+    print(message.from_user.id, "has completed onboarding with data:", user_data)
+
     else:
         await message.answer(f"❌ Failed: {result['error']}")
         await message.answer("Try again?", reply_markup=retry_keyboard())
@@ -315,5 +325,6 @@ async def retry_registration(callback: CallbackQuery, state: FSMContext):
     else:
         await callback.message.answer(f"❌ Still failed: {result['error']}")
         await callback.message.answer("Try again?", reply_markup=retry_keyboard())
+
     
   

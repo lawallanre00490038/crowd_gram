@@ -17,6 +17,7 @@ class TaskParameterModel(BaseModel):
     expected_format: str = "oga"
     sample_rate: int = 42000
     bit_depth: int = 32
+    try_enhance: Optional[int] = None  # Optional, default to None if not provided
 
 def check_audio_file_format(
     file_path: str, 

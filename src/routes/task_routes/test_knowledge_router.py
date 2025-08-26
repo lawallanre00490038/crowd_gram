@@ -1,8 +1,8 @@
-from aiogram import Router, F
+from aiogram import Router,F,Bot
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, FSInputFile, ContentType
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.filters import StateFilter
+from aiogram.filters import StateFilter, Command
 from aiogram.utils.markdown import hbold
 from src.keyboards.inline import quiz_options_kb
 from src.states.test_knowledge import TestKnowledge
@@ -10,7 +10,12 @@ from src.utils.test_knowledge import create_language_selection_keyboard, create_
 from src.constant.test_knowledge_constant import AVAILABLE_LANGUAGES, SAMPLE_TEXTS
 import random
 import asyncio
+import os
+import tempfile
 from pathlib import Path
+from src.services.quality_assurance.audio_validation import validate_audio_input
+from src.services.quality_assurance.audio_parameter_check import TaskParameterModel
+from src.handlers.task_handlers.audio_task_handler import send_audio_question_test_knowledge, handle_audio_submission
 
 router = Router()
 #to Get the video_id Values
@@ -46,6 +51,13 @@ video_tasks = random.sample(video_quiz_data, 2)
 video_2_quiz_data = load_json_file(Path("src/data/video_2_quiz.json"))
 # Pick 2 task @random
 video_2_tasks = random.sample(video_2_quiz_data, 2)
+
+
+# Load test_your_knowledge audio quiz data
+audio_quiz_data = load_json_file(Path("src/data/audio_quiz.json"))  
+audio_tasks = random.sample(audio_quiz_data, 2)
+
+
 
 
 @router.message(F.text == "/start_test_knowledge")
@@ -903,25 +915,26 @@ async def simulate_video_annotation_validation(message: Message, state: FSMConte
                 )
         
 
-            
-        await message.answer(success_text)
 
-        # Clear state
-        await state.clear()
-                
-        # Show final completion buttons
-        start_tasks_kb = InlineKeyboardMarkup(
+        audio_instructions_text = (
+            "🎙️ Great work on the images!\n"
+            "Now, let’s do a short Audio Recording task.\n\n"
+            "📋 Instructions:\n"
+            "• You’ll receive a theme\n"
+            "• Record a short Yoruba audio (10–20s) about the theme\n"
+            "• Speak clearly and naturally\n"
+        )
+
+        audio_ready_kb = InlineKeyboardMarkup(
             inline_keyboard=[
-                [InlineKeyboardButton(text="Start Real Tasks", callback_data="start_real_tasks")],
-                [InlineKeyboardButton(text="View Commands", callback_data="view_commands")]
+                [InlineKeyboardButton(text="🎙️ Start Audio Test", callback_data="start_audio_task_test")]
             ]
         )
+
+        await message.answer(audio_instructions_text, reply_markup=audio_ready_kb)
+        await state.set_state(TestKnowledge.audio_instructions)
+
                 
-        await message.answer(
-            "🎉 All assessments completed!\n\nClick below to access the task portal:",
-            reply_markup=start_tasks_kb
-        )
-    
     else:
         failure_text = (
             f"{annotation_type} Quality Check Failed\n\n"
@@ -930,6 +943,49 @@ async def simulate_video_annotation_validation(message: Message, state: FSMConte
             f"Tip: Ensure the {annotation_type} is well detailed, focuses, and matches the given theme"
             )
         await message.answer(failure_text)
+
+
+
+#========== AUDIO ROUTERS ============
+
+#For direct testing only (To be removed later)
+@router.message(Command("start_audio_task_test"))
+async def cmd_start_audio_test(message: Message, state: FSMContext):
+    await state.update_data(current_aq=0, num_aq=2, target_language='Yoruba')
+    await state.set_state(TestKnowledge.audio_quiz)
+    await send_audio_question_test_knowledge(message, state,audio_quiz_data=audio_quiz_data, audio_tasks=audio_tasks)
+
+# Assignment route
+@router.callback_query(TestKnowledge.audio_instructions,F.data == "start_audio_task_test")
+async def cb_start_audio_test(cb: CallbackQuery, state: FSMContext):
+    await cb.answer()
+
+    #Prevents double-taps
+    try:
+        await cb.message.edit_reply_markup(reply_markup=None)
+    except Exception:
+        pass  # if message not editable (e.g., already edited), ignore
+
+    await state.update_data(current_aq=0, num_aq=2, target_language='Yoruba')
+    await state.set_state(TestKnowledge.audio_quiz)
+    await send_audio_question_test_knowledge(cb.message, state, audio_quiz_data=audio_quiz_data, audio_tasks=audio_tasks)
+
+# Submission route (user replies with voice/audio)
+@router.message(TestKnowledge.audio_quiz_submission, F.content_type.in_({"voice", "audio"}))
+async def on_audio_submission(message: Message, state: FSMContext):
+    # Let the user know we got it
+    await message.answer(
+        "✅ Audio received!\n\n"
+        "⏳ Status: Submitted for validation\n"
+        "🔔 Next: You'll be notified when reviewed\n"
+    )
+    # Run validation flow
+    await handle_audio_submission(message, state)
+
+# Guard route if they send something else
+@router.message(TestKnowledge.audio_quiz_submission)
+async def on_bad_submission(message: Message):
+    await message.answer("❌ Please send a **voice note** or **audio file** for this task.")
 
 
 

@@ -72,7 +72,7 @@ def create_task_ready_keyboard():
     
     return InlineKeyboardMarkup(
          inline_keyboard=[
-            [InlineKeyboardButton(text="✅ I understand, let's begin!", callback_data="begin_translation")]
+            [InlineKeyboardButton(text="✅ I understand, let's begin!", callback_data="start_real_tasks")]
         ]
     )
 

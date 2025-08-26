@@ -37,6 +37,12 @@ class TestKnowledge(StatesGroup):
     image_annotation_submission = State()
     image_annotation_feedback = State()
 
+
+    # Audio assessment
+    audio_instructions = State()
+    audio_quiz = State()
+    audio_quiz_submission = State()              
+    
     # Video assessment states
     video_instructions = State()
     video_quiz = State()
@@ -51,5 +57,6 @@ class TestKnowledge(StatesGroup):
     video_annotation = State()
     video_annotation_submission = State()
     video_annotation_feedback = State()
+
     image_annotation_feedback = State()
     
