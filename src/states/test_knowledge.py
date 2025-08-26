@@ -10,17 +10,29 @@ class TestKnowledge(StatesGroup):
     validation_pending = State()      # En attente de validation
     # ajotuer etat validee? simulee
     
-    # Image assessment states
+    # # Image assessment states
+    # image_instructions = State()
+    # image_quiz = State()
+    # image_quiz_submission = State()
+    # image_quiz_feedback = State()
+
+    # # Image request assessment state
+    # image_2_instructions = State()
+    # image_2_quiz = State()
+    # image_2_quiz_submission = State()
+    # image_2_quiz_feedback = State()
+    # image_annotation = State()
+    # image_annotation_submission = State()
+    # image_annotation_feedback = State()
+    
+    
+    # Image Assessment states
     image_instructions = State()
-    image_quiz = State()
+    image_quiz_openEnd = State()
+    image_quiz_closeEnd = State()
+    image_quiz_request = State()
     image_quiz_submission = State()
     image_quiz_feedback = State()
-
-    # Image request assessment state
-    image_2_instructions = State()
-    image_2_quiz = State()
-    image_2_quiz_submission = State()
-    image_2_quiz_feedback = State()
     image_annotation = State()
     image_annotation_submission = State()
     image_annotation_feedback = State()
@@ -45,3 +57,6 @@ class TestKnowledge(StatesGroup):
     video_annotation = State()
     video_annotation_submission = State()
     video_annotation_feedback = State()
+
+    image_annotation_feedback = State()
+    

@@ -25,3 +25,8 @@ class Onboarding(StatesGroup):
     phone_quality = State()         
     favourite_speaker = State()
     referrer = State()
+    registration_retry = State()
+
+class Tutorial(StatesGroup):
+    ready_to_start = State()
+    watching = State()

@@ -14,7 +14,7 @@ from src.handlers.task_handlers.audio_task_handler import handle_audio_submissio
 from src.utils.parameters import UserParams
 from src.utils.downloader import download_telegram
 from src.utils.save_audio import save_librosa_audio_as_mp3
-from src.routes.task_routes.task_formaters import (TEXT_TASK_PROMPT, SELECT_TASK_TO_PERFORM,
+from src.responses.task_formaters import (TEXT_TASK_PROMPT, SELECT_TASK_TO_PERFORM,
     APPROVED_TASK_MESSAGE, ERROR_MESSAGE, SUBMISSION_RECIEVED_MESSAGE)
 from src.states.tasks import TaskState, TextTaskSubmission, ImageTaskSubmission
 

@@ -17,9 +17,10 @@ def create_ready_button():
 
 def create_language_selection_keyboard():
     """Clavier pour sélection de langue"""
-    buttons = []
-    for lang_name, lang_code in AVAILABLE_LANGUAGES:
-        buttons.append([InlineKeyboardButton(text=f"🌍 {lang_name}", callback_data=f"lang_{lang_code}")])
+    buttons = [
+        [InlineKeyboardButton(text=f"🌍 {lang_name}", callback_data=f"lang_{lang_code}")]
+        for lang_name, lang_code in AVAILABLE_LANGUAGES
+    ]
     
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
@@ -31,14 +32,6 @@ def create_task_ready_keyboard():
         ]
     )
 
-def get_next_unique_question(used_questions: list, total_questions: int) -> int:
-    """Get a random question index that hasn't been used yet"""
-    available_questions = [i for i in range(total_questions) if i not in used_questions]
-    if not available_questions:
-        raise ValueError("No more unique questions available")
-    return random.choice(available_questions)
-
-
 def load_json_file(file: Path) -> List:
     """
     Loads a json file into list.
@@ -47,12 +40,11 @@ def load_json_file(file: Path) -> List:
         file (Path): path to the json file.
 
     Returns:
-        List: A list of the information in the json file.
+        List: A List of the information in the json file.
     """
     try:
-        with open(Path(file), 'r') as f:
-            data = json.load(f)
-            return data
+        with open(Path(file), 'r', encoding="utf-8") as f:
+            return json.load(f)
     except (FileNotFoundError, JSONDecodeError) as e:
         logging.error(f"Error loading data: {e}")
         return []
