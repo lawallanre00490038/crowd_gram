@@ -1,6 +1,3 @@
-# from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-
-
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 onboarding_kb = ReplyKeyboardMarkup(
@@ -59,17 +56,6 @@ age_kb = ReplyKeyboardMarkup(
     one_time_keyboard=True
 )
 
-#language
-language_kb = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text="English"), KeyboardButton(text="French"), KeyboardButton(text="Fulani")],
-        [KeyboardButton(text="Hausa"),KeyboardButton(text="Hindi"), KeyboardButton(text="Igbo")],
-        [KeyboardButton(text="Pidgin"), KeyboardButton(text="Punjabi"),KeyboardButton(text="Shona")],
-        [KeyboardButton(text="Swahili"), KeyboardButton(text="Yoruba")]
-        ],
-    resize_keyboard=True,
-    one_time_keyboard=True
-)
 
 # Éducation
 education_kb = ReplyKeyboardMarkup(
@@ -110,3 +96,6 @@ favourite_speaker_kb = ReplyKeyboardMarkup(
     resize_keyboard=True,
     one_time_keyboard=True
 )
+
+ 
+

@@ -1,106 +1,47 @@
-# Remplacer les imports en haut du fichier authentication_routes
-from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 from sqlalchemy.orm import sessionmaker
 from src.database.models import Agent 
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.fsm.context import FSMContext
+
+from src.responses.auth_response import LOGIN_MSG, ONBOARDING_MSG, EMAIL_MSG, PHONE_MSG, PASSWORD_MSG
+from src.responses.onboarding_response import TUTORIAL_MSG, USER_TYPE_MSG
+from src.services.server.auth import user_login
+from src.utils.auth_utils import validate_email, validate_phone_format, format_phone
 from src.states.authentication import Authentication
-from src.states.onboarding import Onboarding
+from src.states.onboarding import Onboarding, Tutorial
 from src.keyboards.auth import company_kb
+from src.keyboards.inline import yes_no_inline_keyboard, create_account_inline_keyboard, tutorial_choice_kb
 from src.utils.password import hash_password, verify_password 
-from src.data.country import COUNTRIES  
-from src.utils.keyboard_utils import create_countries_keyboard_reply 
 import re
+import logging
 
 router = Router()
 
-async def check_user_exists(identifier: str):
-    """
-    verify is user exist via mail or phone/ if not-> none
-    """
-    # replace w/ database instance 
-    # session = SessionLocal()
-    # try:
-    #     agent = session.query(Agent).filter(
-    #         (Agent.email == identifier) | (Agent.phone == identifier)
-    #     ).first()
-    #     return agent
-    # finally:
-    #     session.close()  
-    
-    # simulation for now
-    return None
+logger = logging.getLogger(__name__)
 
-# Handler: Choix du type d'utilisateur (collector/registered/new)
-@router.callback_query(Authentication.collector_check, F.data.in_(["collector_yes", "registered_yes", "new_user"]))
+#chose user type
+@router.callback_query(Authentication.collector_check, F.data.in_(["registered_yes", "new_user"]))
 async def handle_user_type_choice(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
     if callback.data == "registered_yes":
-        # Utilisateur existant -> Login
-        await callback.message.answer(
-            "🎉 Welcome back!\n\n"
-            "Please enter your email or phone number to login:"
-        )
+        # existing user --> login
+        await callback.message.answer(LOGIN_MSG["welcome_back"])
         await state.set_state(Authentication.login_email)
         
     elif callback.data == "new_user":
-        # Nouveau utilisateur -> Flow normal d'authentication
-        # Créer les boutons pour organization check
-        org_kb = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [InlineKeyboardButton(text="✅ Yes", callback_data="org_yes")],
-                [InlineKeyboardButton(text="❌ No", callback_data="org_no")]
-            ]
-        )
+        await callback.message.answer(ONBOARDING_MSG["welcome"])
+        await callback.message.answer(TUTORIAL_MSG["intro"], reply_markup=tutorial_choice_kb())
+        await state.set_state(Tutorial.ready_to_start)
 
-        welcome_text=(    
-            "Great! Let's get you set up! 👋 Welcome to Equalyz Crowd!\n\n"
-            "As a contributor/agent, you'll help train AI models and earn money for quality work.\n\n"
-            "This quick onboarding sets up your profile so we can match you with the best tasks.\n\n"
-            "Let's begin! 🚀"
-        )
-        await callback.message.answer(welcome_text)
-        await callback.message.answer(
-            "Are you part of an organization?",
-            reply_markup=org_kb
-        )
-        
-        await state.set_state(Authentication.organization_check)
 
 # Handler: Login - Email/Phone input
 @router.message(Authentication.login_email)
 async def handle_login_identifier(message: Message, state: FSMContext):
     identifier = message.text.strip()
     await state.update_data(login_identifier=identifier)
-    
-    # Vérifier si l'utilisateur existe
-    user = await check_user_exists(identifier)
-    
-    if not user:
-        await message.answer(
-            "❌ No account found with this email/phone.\n\n"
-            "Would you like to create a new account instead?"
-        )
-        
-        # Proposer de créer un compte
-        choice_kb = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [InlineKeyboardButton(text="✅ Create Account", callback_data="create_account")],
-                [InlineKeyboardButton(text="🔄 Try Again", callback_data="try_login_again")]
-            ]
-        )
-        await message.answer(
-            "What would you like to do?",
-            reply_markup=choice_kb
-        )
-        return
-    
-    # Utilisateur trouvé -> Demander le mot de passe
-    await message.answer(
-        "🔒 Please enter your password:"
-    )
+    await message.answer("🔒 Please enter your password:")
     await state.set_state(Authentication.login_password)
 
 # Handler: Login - Password input
@@ -110,80 +51,43 @@ async def handle_login_password(message: Message, state: FSMContext):
     user_data = await state.get_data()
     identifier = user_data.get('login_identifier')
     
-    # for now simulation of successful login
-    await message.answer(
-        "✅ Login successful!\n\n"
-        "🎉 Welcome back to Equalyz Crowd!\n\n"
-        "You can now access your tasks and continue earning."
-    )
-    await state.clear()
+    response = user_login(identifier, password)
 
-# Handler: Gestion des choix après échec de login
+    if not response:
+        await message.answer(LOGIN_MSG["fail"])
+
+    await message.answer(LOGIN_MSG["success"].format(name=response.data.name if response else "User"))
+    await state.set_data({"user_data":response.data.model_dump()})
+    
+
+# Failed login
 @router.callback_query(Authentication.login_email, F.data.in_(["create_account", "try_login_again"]))
 async def handle_login_failure_choice(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     
     if callback.data == "create_account":
-        # Rediriger vers le flow de création de compte
-        await callback.message.answer(
-            "🌟 Let's create your account!\n\n"
-        )
-        
-        org_kb = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [InlineKeyboardButton(text="✅ Yes", callback_data="org_yes")],
-                [InlineKeyboardButton(text="❌ No", callback_data="org_no")]
-            ]
-        )
-        await callback.message.answer(
-            "Are you part of an organization?",
-            reply_markup=org_kb
-        )
+        #redirect to create an account
+        await callback.message.answer( "🌟 Let's create your account!\n\n")
+        org_kb = yes_no_inline_keyboard
+        await callback.message.answer(LOGIN_MSG["organization"],reply_markup=org_kb)
         await state.set_state(Authentication.organization_check)
         
     elif callback.data == "try_login_again":
-        await callback.message.answer(
-            "🔄 Please enter your email or phone number:"
-        )
+        await callback.message.answer(LOGIN_MSG["enter_email/phone"])
         await state.set_state(Authentication.login_email)
-
-#validate format 
-def validate_phone_format(phone: str) -> bool:
-    """Validation plus stricte avec codes pays"""
-    phone = phone.strip().replace(" ", "").replace("-", "")
-    
-    # verif pattern
-    pattern = r'^\+\d{1,4}\d{6,12}$'
-    
-    if not re.match(pattern, phone):
-        return False
-    
-    # 10-15 after +
-    phone_digits = phone[1:]
-    return 10 <= len(phone_digits) <= 15
-
-def format_phone(phone: str) -> str:
-    return phone.strip().replace(" ", "").replace("-", "") 
 
 # Handler: Are you part of organization?
 @router.callback_query(Authentication.organization_check, F.data.in_(["org_yes", "org_no"]))
 async def handle_organization_callback(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
-    
+       
     if callback.data == "org_yes":
         await state.update_data(has_organization="Yes")
-        await callback.message.answer(
-            "🏢 Please select your organization:\n\n"
-            "Choose from the list below:",
-            reply_markup=company_kb()
-        )
+        await callback.message.answer(ONBOARDING_MSG["org_selection"],reply_markup=company_kb())
         await state.set_state(Authentication.company_selection)
     else:
         await state.update_data(has_organization="No", company="Individual")
-        await callback.message.answer(
-            "👤 What's your full name?\n\n"
-            "This will be used for your account registration."
-        )
+        await callback.message.answer(ONBOARDING_MSG["name_input"])
         await state.set_state(Authentication.name_input)
 
 # Handler: Company selection
@@ -191,11 +95,7 @@ async def handle_organization_callback(callback: CallbackQuery, state: FSMContex
 async def handle_company_selection(message: Message, state: FSMContext):
     company = message.text.strip()
     await state.update_data(company=company)
-    
-    await message.answer(
-        "👤 What's your full name?\n\n"
-        "This will be used for your account registration."
-    )
+    await message.answer(ONBOARDING_MSG["name_input"])
     await state.set_state(Authentication.name_input)
 
 # Handler: Name input
@@ -203,17 +103,8 @@ async def handle_company_selection(message: Message, state: FSMContext):
 async def handle_name_input(message: Message, state: FSMContext):
     name = message.text.strip()
     await state.update_data(auth_name=name)
-    
-    await message.answer(
-        "📧 What's your email address?\n\n"
-        "We'll use this for account verification and important updates."
-    )
+    await message.answer(EMAIL_MSG["prompt"])
     await state.set_state(Authentication.email_input)
-
-#email validation function
-def validate_email(email):
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    return re.match(pattern, email) is not None
 
 # Handler: Email input
 @router.message(Authentication.email_input)
@@ -221,17 +112,11 @@ async def handle_email_input(message: Message, state: FSMContext):
     email = message.text.strip()
 
     if not validate_email(email):
-        await message.answer(
-            "❌ Please enter a valid email address.\n"
-            "Example: user@example.com"
-        )
+        await message.answer(EMAIL_MSG["invalid"])
         return 
     await state.update_data(email=email)
     
-    await message.answer(
-        "📱 What's your phone number?\n\n"
-        "Format: +234XXXXXXXXX (include country code)"
-    )
+    await message.answer(PHONE_MSG["prompt"])
     await state.set_state(Authentication.phone_input)
 
 # Handler: Phone input
@@ -240,21 +125,13 @@ async def handle_phone_input(message: Message, state: FSMContext):
     phone = message.text.strip()
 
     if not validate_phone_format(phone):
-        await message.answer(
-            "❌ Invalid phone number format.\n\n"
-            "Please use international format: +CountryCodeNumber\n"
-            "Examples: +234803123456, +1555123456, +33123456789\n\n"
-            "Try again:"
-        )
+        await message.answer(PHONE_MSG["invalid"])
         return
+    
     formatted_phone = format_phone(phone)
-
     await state.update_data(auth_phone=formatted_phone)
     
-    await message.answer(
-        "🔒 Create a secure password:\n\n"
-        "Password should be at least 8 characters long."
-    )
+    await message.answer(PASSWORD_MSG["prompt"])
     await state.set_state(Authentication.password_input)
 
 # Handler: Password input
@@ -262,22 +139,12 @@ async def handle_phone_input(message: Message, state: FSMContext):
 async def handle_password_input(message: Message, state: FSMContext):
     password = message.text.strip()
 
-    # verif
     if len(password) < 8 or not re.search(r"[A-Za-z]", password) or not re.search(r"\d", password):
-        await message.answer(
-            "❌ Password too weak.\n\n"
-            "It must be at least 8 characters long and include both letters and numbers.\n"
-            "Please try again:"
-        )
-        return  # on ne passe pas à l'étape suivante
-
-    # validated
+        await message.answer(PASSWORD_MSG["weak"])
+        return  
+    
     await state.update_data(password=password)
-
-    await message.answer(
-        "🔒 Please confirm your password:\n\n"
-        "Re-enter the password you created."
-    )
+    await message.answer(PASSWORD_MSG["confirm"])
     await state.set_state(Authentication.confirm_password)
 
 
@@ -287,31 +154,19 @@ async def handle_confirm_password(message: Message, state: FSMContext):
     
     confirm_password = message.text.strip()
     user_data = await state.get_data()
-    
     if confirm_password != user_data.get('password'):
-        await message.answer(
-            "❌ Passwords don't match! Please try again:\n\n"
-            "Re-enter your password:"
-        )
+        await message.answer(PASSWORD_MSG["mismatch"])
         return
-    
-    # Hash le mot de passe avant de le sauvegarder
     hashed_password = hash_password(confirm_password)
     await state.update_data(password_hash=hashed_password)
     
     # Passwords match - create account
-    await message.answer(
-        "✅ Account created successfully!\n\n"
-        "🎉 Welcome to Equalyz Crowd!\n\n"
-        "Now let's complete your profile..."
-    )
-    
-
+    await message.answer(ONBOARDING_MSG["account_created"])
     await state.set_state(Onboarding.location)
     print(f"🔍 [DEBUG] État changé vers Onboarding.location")
 
-    from src.routes.onboarding_routes.onboarding import handle_location_step
-    await handle_location_step(message, state)
+    from src.routes.onboarding_routes.onboarding import get_country
+    await get_country(message, state)
 
     
    

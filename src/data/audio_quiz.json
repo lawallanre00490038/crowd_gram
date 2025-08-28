@@ -1,0 +1,20 @@
+[
+  {
+    "id": "aq_1",
+    "theme": "Describe your morning routine",
+    "instruction": "Record a short Yoruba audio (10–20 seconds) describing your morning routine.",
+    "example_prompt": "E.g., greet, mention waking up, brushing, breakfast."
+  },
+  {
+    "id": "aq_2",
+    "theme": "Talk about your favorite local meal",
+    "instruction": "Record a short Yoruba audio (10–20 seconds) describing your favorite meal and why.",
+    "example_prompt": "E.g., ingredients, taste, when you eat it."
+  },
+  {
+    "id": "aq_3",
+    "theme": "Describe your neighborhood",
+    "instruction": "Record a short Yoruba audio (10–20 seconds) describing what your neighborhood looks and feels like.",
+    "example_prompt": "E.g., quiet or busy, markets, transport, parks."
+  }
+]
