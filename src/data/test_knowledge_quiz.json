@@ -87,7 +87,7 @@
     "id": 9,
     "theme": "Lagos street market",
     "annotation_type": "text",
-    "instruction": "Describe what is happening in the market scene.",
+    "question": "Describe what is happening in the market scene.",
     "example_prompt": "What items are being sold and how busy is the market?",
     "category_type": "image",
     "mine_type": "request"
@@ -96,7 +96,7 @@
     "id": 10,
     "theme": "Nigerian wedding ceremony",
     "annotation_type": "audio",
-    "instruction": "Describe the cultural elements seen in the ceremony.",
+    "question": "Describe the cultural elements seen in the ceremony.",
     "example_prompt": "Explain the clothing styles and activities.",
     "category_type": "image",
     "mine_type": "request"
@@ -105,7 +105,7 @@
     "id": 11,
     "theme": "Yoruba drummers",
     "annotation_type": "text",
-    "instruction": "Identify the instruments and the activity.",
+    "question": "Identify the instruments and the activity.",
     "example_prompt": "What traditional drums are being played?",
     "category_type": "image",
     "mine_type": "request"
@@ -114,7 +114,7 @@
     "id": 12,
     "theme": "Nollywood film set",
     "annotation_type": "audio",
-    "instruction": "Describe the filming activity in detail.",
+    "question": "Describe the filming activity in detail.",
     "example_prompt": "Explain the scene being acted out.",
     "category_type": "image",
     "mine_type": "request"
@@ -123,7 +123,7 @@
     "id": 13,
     "theme": "Farming in Northern Nigeria",
     "annotation_type": "text",
-    "instruction": "Describe the farming methods visible.",
+    "question": "Describe the farming methods visible.",
     "example_prompt": "What crops are being grown?",
     "category_type": "image",
     "mine_type": "request"
@@ -132,7 +132,7 @@
     "id": 14,
     "theme": "Street food vendor in Abuja",
     "annotation_type": "audio",
-    "instruction": "Describe the type of food and how it is prepared.",
+    "question": "Describe the type of food and how it is prepared.",
     "example_prompt": "Explain what is being cooked and served.",
     "category_type": "image",
     "mine_type": "request"
@@ -141,7 +141,7 @@
     "id": 15,
     "theme": "Nigerian football match",
     "annotation_type": "text",
-    "instruction": "Describe the players and the game action.",
+    "question": "Describe the players and the game action.",
     "example_prompt": "Who appears to be leading in the match?",
     "category_type": "image",
     "mine_type": "request"
@@ -150,7 +150,7 @@
     "id": 16,
     "theme": "Village water fetching",
     "annotation_type": "audio",
-    "instruction": "Explain the process shown in the picture.",
+    "question": "Explain the process shown in the picture.",
     "example_prompt": "Describe how water is being fetched.",
     "category_type": "image",
     "mine_type": "request"
@@ -159,7 +159,7 @@
     "id": 17,
     "theme": "Niger Delta fishing scene",
     "annotation_type": "text",
-    "instruction": "Describe the fishing method in use.",
+    "question": "Describe the fishing method in use.",
     "example_prompt": "What tools are used for fishing?",
     "category_type": "image",
     "mine_type": "request"
@@ -168,7 +168,7 @@
     "id": 18,
     "theme": "Hausa cultural dance",
     "annotation_type": "audio",
-    "instruction": "Describe the dance style and attire.",
+    "question": "Describe the dance style and attire.",
     "example_prompt": "Explain the significance of the clothing.",
     "category_type": "image",
     "mine_type": "request"
@@ -177,7 +177,7 @@
     "id": 19,
     "theme": "Okada riders in traffic",
     "annotation_type": "text",
-    "instruction": "Describe the road and traffic situation.",
+    "question": "Describe the road and traffic situation.",
     "example_prompt": "What type of vehicles are visible?",
     "category_type": "image",
     "mine_type": "request"
@@ -186,7 +186,7 @@
     "id": 20,
     "theme": "Nigerian school classroom",
     "annotation_type": "audio",
-    "instruction": "Describe the learning activities happening.",
+    "question": "Describe the learning activities happening.",
     "example_prompt": "Explain the seating arrangement and activities.",
     "category_type": "image",
     "mine_type": "request"
@@ -195,7 +195,7 @@
     "id": 21,
     "theme": "Palm oil processing",
     "annotation_type": "text",
-    "instruction": "Describe the steps being taken to process palm oil.",
+    "question": "Describe the steps being taken to process palm oil.",
     "example_prompt": "What tools are visible?",
     "category_type": "image",
     "mine_type": "request"
@@ -204,7 +204,7 @@
     "id": 22,
     "theme": "Eyo festival in Lagos",
     "annotation_type": "audio",
-    "instruction": "Describe the costumes and procession.",
+    "question": "Describe the costumes and procession.",
     "example_prompt": "Explain the cultural significance.",
     "category_type": "image",
     "mine_type": "request"
@@ -213,7 +213,7 @@
     "id": 23,
     "theme": "Tailoring shop in Ibadan",
     "annotation_type": "text",
-    "instruction": "Describe what is being sewn.",
+    "question": "Describe what is being sewn.",
     "example_prompt": "What tools and fabrics are visible?",
     "category_type": "image",
     "mine_type": "request"
@@ -222,7 +222,7 @@
     "id": 24,
     "theme": "Kano dye pits",
     "annotation_type": "audio",
-    "instruction": "Describe how the fabric is dyed.",
+    "question": "Describe how the fabric is dyed.",
     "example_prompt": "Explain the process shown.",
     "category_type": "image",
     "mine_type": "request"
@@ -231,7 +231,7 @@
     "id": 25,
     "theme": "Beach fishing boats in Ghana",
     "annotation_type": "text",
-    "instruction": "Describe the boats and fishing gear.",
+    "question": "Describe the boats and fishing gear.",
     "example_prompt": "How many people are involved?",
     "category_type": "image",
     "mine_type": "request"
@@ -240,7 +240,7 @@
     "id": 26,
     "theme": "Open-air barber shop in Kenya",
     "annotation_type": "audio",
-    "instruction": "Describe the hair cutting process.",
+    "question": "Describe the hair cutting process.",
     "example_prompt": "What tools are being used?",
     "category_type": "image",
     "mine_type": "request"
@@ -249,7 +249,7 @@
     "id": 27,
     "theme": "Cape Town street art",
     "annotation_type": "text",
-    "instruction": "Describe the colors, patterns, and meaning of the murals.",
+    "question": "Describe the colors, patterns, and meaning of the murals.",
     "example_prompt": "What does the artwork depict?",
     "category_type": "image",
     "mine_type": "request"
@@ -258,7 +258,7 @@
     "id": 28,
     "theme": "Maasai village ceremony in Tanzania",
     "annotation_type": "audio",
-    "instruction": "Describe the attire, chants, and dances.",
+    "question": "Describe the attire, chants, and dances.",
     "example_prompt": "What is the purpose of the gathering?",
     "category_type": "image",
     "mine_type": "request"
@@ -267,7 +267,7 @@
     "id": 29,
     "theme": "Moroccan spice market",
     "annotation_type": "text",
-    "instruction": "Describe the variety of spices and their arrangement.",
+    "question": "Describe the variety of spices and their arrangement.",
     "example_prompt": "What colors and textures are visible?",
     "category_type": "image",
     "mine_type": "request"
@@ -276,7 +276,7 @@
     "id": 30,
     "theme": "Safari jeep in Botswana",
     "annotation_type": "audio",
-    "instruction": "Describe the animals seen and the safari activity.",
+    "question": "Describe the animals seen and the safari activity.",
     "example_prompt": "What is the driver pointing towards?",
     "category_type": "image",
     "mine_type": "request"
@@ -285,7 +285,7 @@
     "id": 31,
     "theme": "Ethiopian coffee ceremony",
     "annotation_type": "text",
-    "instruction": "Describe the traditional preparation steps.",
+    "question": "Describe the traditional preparation steps.",
     "example_prompt": "What tools are used for brewing?",
     "category_type": "image",
     "mine_type": "request"
@@ -294,7 +294,7 @@
     "id": 32,
     "theme": "Zanzibar beach sunset",
     "annotation_type": "audio",
-    "instruction": "Describe the scenery and activities on the beach.",
+    "question": "Describe the scenery and activities on the beach.",
     "example_prompt": "What are the people doing?",
     "category_type": "image",
     "mine_type": "request"
@@ -303,7 +303,7 @@
     "id": 33,
     "theme": "Rwandan basket weaving",
     "annotation_type": "text",
-    "instruction": "Describe the weaving technique and materials.",
+    "question": "Describe the weaving technique and materials.",
     "example_prompt": "What patterns are being made?",
     "category_type": "image",
     "mine_type": "request"
@@ -312,7 +312,7 @@
     "id": 34,
     "theme": "Sudanese camel caravan",
     "annotation_type": "audio",
-    "instruction": "Describe the movement of the camels and the travelers.",
+    "question": "Describe the movement of the camels and the travelers.",
     "example_prompt": "Where might they be heading?",
     "category_type": "image",
     "mine_type": "request"
@@ -321,7 +321,7 @@
     "id": 35,
     "theme": "Egyptian street café",
     "annotation_type": "text",
-    "instruction": "Describe the setting, drinks, and people.",
+    "question": "Describe the setting, drinks, and people.",
     "example_prompt": "What are customers doing at the tables?",
     "category_type": "image",
     "mine_type": "request"
@@ -330,7 +330,7 @@
     "id": 36,
     "theme": "Senegalese drum circle",
     "annotation_type": "audio",
-    "instruction": "Describe the rhythm, instruments, and crowd.",
+    "question": "Describe the rhythm, instruments, and crowd.",
     "example_prompt": "How are the drummers positioned?",
     "category_type": "image",
     "mine_type": "request"
@@ -339,7 +339,7 @@
     "id": 37,
     "theme": "Ugandan matoke harvest",
     "annotation_type": "text",
-    "instruction": "Describe the process of harvesting plantains.",
+    "question": "Describe the process of harvesting plantains.",
     "example_prompt": "What tools are used?",
     "category_type": "image",
     "mine_type": "request"
@@ -348,7 +348,7 @@
     "id": 38,
     "theme": "Namib Desert sand dunes",
     "annotation_type": "audio",
-    "instruction": "Describe the colors, patterns, and movements of the sand.",
+    "question": "Describe the colors, patterns, and movements of the sand.",
     "example_prompt": "What time of day is it likely?",
     "category_type": "image",
     "mine_type": "request"
@@ -423,7 +423,7 @@
     "id": 45,
     "theme": "Lagos street market",
     "annotation_type": "audio",
-    "instruction": "Describe what is happening in the market scene.",
+    "question": "Describe what is happening in the market scene.",
     "example_prompt": "What items are being sold and how busy is the market?",
     "category_type": "video",
     "mine_type": "request"
@@ -432,7 +432,7 @@
     "id": 46,
     "theme": "Nigerian wedding ceremony",
     "annotation_type": "text",
-    "instruction": "Describe the cultural elements seen in the ceremony.",
+    "question": "Describe the cultural elements seen in the ceremony.",
     "example_prompt": "Explain the clothing styles and activities.",
     "category_type": "video",
     "mine_type": "request"
@@ -441,7 +441,7 @@
     "id": 47,
     "theme": "Yoruba drummers",
     "annotation_type": "audio",
-    "instruction": "Identify the instruments and the activity.",
+    "question": "Identify the instruments and the activity.",
     "example_prompt": "What traditional drums are being played?",
     "category_type": "video",
     "mine_type": "request"
@@ -450,7 +450,7 @@
     "id": 48,
     "theme": "Nollywood film set",
     "annotation_type": "text",
-    "instruction": "Describe the filming activity in detail.",
+    "question": "Describe the filming activity in detail.",
     "example_prompt": "Explain the scene being acted out.",
     "category_type": "video",
     "mine_type": "request"
@@ -459,7 +459,7 @@
     "id": 49,
     "theme": "Farming in Northern Nigeria",
     "annotation_type": "audio",
-    "instruction": "Describe the farming methods visible.",
+    "question": "Describe the farming methods visible.",
     "example_prompt": "What crops are being grown?",
     "category_type": "video",
     "mine_type": "request"
@@ -468,7 +468,7 @@
     "id": 50,
     "theme": "Street food vendor in Abuja",
     "annotation_type": "text",
-    "instruction": "Describe the type of food and how it is prepared.",
+    "question": "Describe the type of food and how it is prepared.",
     "example_prompt": "Explain what is being cooked and served.",
     "category_type": "video",
     "mine_type": "request"
@@ -477,7 +477,7 @@
     "id": 51,
     "theme": "Nigerian football match",
     "annotation_type": "audio",
-    "instruction": "Describe the players and the game action.",
+    "question": "Describe the players and the game action.",
     "example_prompt": "Who appears to be leading in the match?",
     "category_type": "video",
     "mine_type": "request"
@@ -486,7 +486,7 @@
     "id": 52,
     "theme": "Village water fetching",
     "annotation_type": "text",
-    "instruction": "Explain the process shown in the picture.",
+    "question": "Explain the process shown in the picture.",
     "example_prompt": "Describe how water is being fetched.",
     "category_type": "video",
     "mine_type": "request"
@@ -495,7 +495,7 @@
     "id": 53,
     "theme": "Niger Delta fishing scene",
     "annotation_type": "audio",
-    "instruction": "Describe the fishing method in use.",
+    "question": "Describe the fishing method in use.",
     "example_prompt": "What tools are used for fishing?",
     "category_type": "video",
     "mine_type": "request"
@@ -504,7 +504,7 @@
     "id": 54,
     "theme": "Hausa cultural dance",
     "annotation_type": "text",
-    "instruction": "Describe the dance style and attire.",
+    "question": "Describe the dance style and attire.",
     "example_prompt": "Explain the significance of the clothing.",
     "category_type": "video",
     "mine_type": "request"
@@ -513,7 +513,7 @@
     "id": 55,
     "theme": "Okada riders in traffic",
     "annotation_type": "audio",
-    "instruction": "Describe the road and traffic situation.",
+    "question": "Describe the road and traffic situation.",
     "example_prompt": "What type of vehicles are visible?",
     "category_type": "video",
     "mine_type": "request"
@@ -522,7 +522,7 @@
     "id": 56,
     "theme": "Nigerian school classroom",
     "annotation_type": "text",
-    "instruction": "Describe the learning activities happening.",
+    "question": "Describe the learning activities happening.",
     "example_prompt": "Explain the seating arrangement and activities.",
     "category_type": "video",
     "mine_type": "request"
@@ -531,7 +531,7 @@
     "id": 57,
     "theme": "Palm oil processing",
     "annotation_type": "audio",
-    "instruction": "Describe the steps being taken to process palm oil.",
+    "question": "Describe the steps being taken to process palm oil.",
     "example_prompt": "What tools are visible?",
     "category_type": "video",
     "mine_type": "request"
@@ -540,7 +540,7 @@
     "id": 58,
     "theme": "Eyo festival in Lagos",
     "annotation_type": "text",
-    "instruction": "Describe the costumes and procession.",
+    "question": "Describe the costumes and procession.",
     "example_prompt": "Explain the cultural significance.",
     "category_type": "video",
     "mine_type": "request"
@@ -549,7 +549,7 @@
     "id": 59,
     "theme": "Tailoring shop in Ibadan",
     "annotation_type": "audio",
-    "instruction": "Describe what is being sewn.",
+    "question": "Describe what is being sewn.",
     "example_prompt": "What tools and fabrics are visible?",
     "category_type": "video",
     "mine_type": "request"
@@ -558,7 +558,7 @@
     "id": 60,
     "theme": "Kano dye pits",
     "annotation_type": "text",
-    "instruction": "Describe how the fabric is dyed.",
+    "question": "Describe how the fabric is dyed.",
     "example_prompt": "Explain the process shown.",
     "category_type": "video",
     "mine_type": "request"
@@ -567,7 +567,7 @@
     "id": 61,
     "theme": "Beach fishing boats in Ghana",
     "annotation_type": "audio",
-    "instruction": "Describe the boats and fishing gear.",
+    "question": "Describe the boats and fishing gear.",
     "example_prompt": "How many people are involved?",
     "category_type": "video",
     "mine_type": "request"
@@ -576,7 +576,7 @@
     "id": 62,
     "theme": "Open-air barber shop in Kenya",
     "annotation_type": "text",
-    "instruction": "Describe the hair cutting process.",
+    "question": "Describe the hair cutting process.",
     "example_prompt": "What tools are being used?",
     "category_type": "video",
     "mine_type": "request"
@@ -585,7 +585,7 @@
     "id": 63,
     "theme": "Cape Town street art",
     "annotation_type": "audio",
-    "instruction": "Describe the colors, patterns, and meaning of the murals.",
+    "question": "Describe the colors, patterns, and meaning of the murals.",
     "example_prompt": "What does the artwork depict?",
     "category_type": "video",
     "mine_type": "request"
@@ -594,7 +594,7 @@
     "id": 64,
     "theme": "Maasai village ceremony in Tanzania",
     "annotation_type": "text",
-    "instruction": "Describe the attire, chants, and dances.",
+    "question": "Describe the attire, chants, and dances.",
     "example_prompt": "What is the purpose of the gathering?",
     "category_type": "video",
     "mine_type": "request"
@@ -603,7 +603,7 @@
     "id": 65,
     "theme": "Moroccan spice market",
     "annotation_type": "audio",
-    "instruction": "Describe the variety of spices and their arrangement.",
+    "question": "Describe the variety of spices and their arrangement.",
     "example_prompt": "What colors and textures are visible?",
     "category_type": "video",
     "mine_type": "request"
@@ -612,7 +612,7 @@
     "id": 66,
     "theme": "Safari jeep in Botswana",
     "annotation_type": "text",
-    "instruction": "Describe the animals seen and the safari activity.",
+    "question": "Describe the animals seen and the safari activity.",
     "example_prompt": "What is the driver pointing towards?",
     "category_type": "video",
     "mine_type": "request"
@@ -621,7 +621,7 @@
     "id": 67,
     "theme": "Ethiopian coffee ceremony",
     "annotation_type": "audio",
-    "instruction": "Describe the traditional preparation steps.",
+    "question": "Describe the traditional preparation steps.",
     "example_prompt": "What tools are used for brewing?",
     "category_type": "video",
     "mine_type": "request"
@@ -630,7 +630,7 @@
     "id": 68,
     "theme": "Zanzibar beach sunset",
     "annotation_type": "text",
-    "instruction": "Describe the scenery and activities on the beach.",
+    "question": "Describe the scenery and activities on the beach.",
     "example_prompt": "What are the people doing?",
     "category_type": "video",
     "mine_type": "request"
@@ -639,7 +639,7 @@
     "id": 69,
     "theme": "Rwandan basket weaving",
     "annotation_type": "audio",
-    "instruction": "Describe the weaving technique and materials.",
+    "question": "Describe the weaving technique and materials.",
     "example_prompt": "What patterns are being made?",
     "category_type": "video",
     "mine_type": "request"
@@ -648,7 +648,7 @@
     "id": 70,
     "theme": "Sudanese camel caravan",
     "annotation_type": "text",
-    "instruction": "Describe the movement of the camels and the travelers.",
+    "question": "Describe the movement of the camels and the travelers.",
     "example_prompt": "Where might they be heading?",
     "category_type": "video",
     "mine_type": "request"
@@ -657,7 +657,7 @@
     "id": 71,
     "theme": "Egyptian street café",
     "annotation_type": "audio",
-    "instruction": "Describe the setting, drinks, and people.",
+    "question": "Describe the setting, drinks, and people.",
     "example_prompt": "What are customers doing at the tables?",
     "category_type": "video",
     "mine_type": "request"
@@ -666,7 +666,7 @@
     "id": 72,
     "theme": "Senegalese drum circle",
     "annotation_type": "text",
-    "instruction": "Describe the rhythm, instruments, and crowd.",
+    "question": "Describe the rhythm, instruments, and crowd.",
     "example_prompt": "How are the drummers positioned?",
     "category_type": "video",
     "mine_type": "request"
@@ -675,7 +675,7 @@
     "id": 73,
     "theme": "Ugandan matoke harvest",
     "annotation_type": "audio",
-    "instruction": "Describe the process of harvesting plantains.",
+    "question": "Describe the process of harvesting plantains.",
     "example_prompt": "What tools are used?",
     "category_type": "video",
     "mine_type": "request"
@@ -684,7 +684,7 @@
     "id": 74,
     "theme": "Namib Desert sand dunes",
     "annotation_type": "text",
-    "instruction": "Describe the colors, patterns, and movements of the sand.",
+    "question": "Describe the colors, patterns, and movements of the sand.",
     "example_prompt": "What time of day is it likely?",
     "category_type": "video",
     "mine_type": "request"

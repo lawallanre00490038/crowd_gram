@@ -39,3 +39,30 @@ Please review and correct them, then try again.
 SUBMISSION_RECIEVED_MESSAGE = """Your submission has been received! 📥
 We will review it shortly and notify you of the outcome.
 """
+
+IMAGE_REQUEST_MESSAGE = """
+Awesome! Here's your theme  — share an image and describe it in {target_lang}:\n
+---
+Theme: {theme}
+--\n\n
+Describe it using: {annotation_type}
+Guide: {question}
+Example: {example}\n
+Your {target_lang} description:
+"""
+        
+
+IMAGE_SUBMISSION_RECEIVED_MESSAGE = """
+✅ Image received!
+⏳ Status: Submitted for validation
+🔔 Next: You'll be notified when reviewed\n\n
+"""
+
+IMAGE_REQUEST_ANNOTATION_MESSAGE = """
+✅ Your image for **{theme}** has been received and approved!
+Now, please describe this image in **{target_lang}** using {annotation_type}.
+Focus on what is happening, the people, objects, and actions you see.
+✔ Be detailed and accurate.
+✔ Use complete sentences.
+❌ Avoid unrelated details.
+"""
