@@ -5,7 +5,7 @@ def extract_option(callback_data: str, options: list) -> str:
     """
     if callback_data.startswith('opt_'):
         try:
-            idx = int(callback_data.split('_')[1]) - 1
+            idx = int(callback_data.split('_')[1])
             return options[idx]
         except (IndexError, ValueError):
             return ''

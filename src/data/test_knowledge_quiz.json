@@ -309,51 +309,6 @@
     "mine_type": "request"
   },
   {
-    "id": 34,
-    "theme": "Sudanese camel caravan",
-    "annotation_type": "audio",
-    "question": "Describe the movement of the camels and the travelers.",
-    "example_prompt": "Where might they be heading?",
-    "category_type": "image",
-    "mine_type": "request"
-  },
-  {
-    "id": 35,
-    "theme": "Egyptian street café",
-    "annotation_type": "text",
-    "question": "Describe the setting, drinks, and people.",
-    "example_prompt": "What are customers doing at the tables?",
-    "category_type": "image",
-    "mine_type": "request"
-  },
-  {
-    "id": 36,
-    "theme": "Senegalese drum circle",
-    "annotation_type": "audio",
-    "question": "Describe the rhythm, instruments, and crowd.",
-    "example_prompt": "How are the drummers positioned?",
-    "category_type": "image",
-    "mine_type": "request"
-  },
-  {
-    "id": 37,
-    "theme": "Ugandan matoke harvest",
-    "annotation_type": "text",
-    "question": "Describe the process of harvesting plantains.",
-    "example_prompt": "What tools are used?",
-    "category_type": "image",
-    "mine_type": "request"
-  },
-  {
-    "id": 38,
-    "theme": "Namib Desert sand dunes",
-    "annotation_type": "audio",
-    "question": "Describe the colors, patterns, and movements of the sand.",
-    "example_prompt": "What time of day is it likely?",
-    "category_type": "image",
-    "mine_type": "request"
-  },
-  {
     "id": 39,
     "video_id": "BAACAgQAAxkDAAIImmieS5NRooRh7RX135DCmOB7wJjVAAJBHQACn-nwUDWr7_ofmouVNgQ",
     "question": "Describe what you see in this video.",

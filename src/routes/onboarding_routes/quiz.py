@@ -7,6 +7,7 @@ from src.keyboards.inline import quiz_options_kb
 from src.states.onboarding import Onboarding
 from src.states.authentication import Authentication
 from src.keyboards.auth import organization_kb
+from src.utils.extract_option import extract_option
 
 quiz_router = Router()
 
@@ -50,6 +51,7 @@ async def handle_answer(callback: CallbackQuery, state: FSMContext):
     retry = data.get("retry_count", 0)
     score = data.get("score", 0)
 
+    user_answer = extract_option(user_answer, quiz_data[q_index]['options'])
     correct_answer = quiz_data[q_index]["answer"]
 
     if user_answer == correct_answer:

@@ -20,7 +20,7 @@ async def handle_image_submission(task_info, file_id, user_id, bot):
         task (Task): The task object containing details about the image task.
     """
     task_info = TranslationTask(**task_info)
-    task_full_details = await get_full_task_detail(task_info.task_id)
+    task_full_details = await get_full_task_detail(task_info.task_id, user_id)
     
     file_path = await download_telegram(file_id, bot=bot)
     

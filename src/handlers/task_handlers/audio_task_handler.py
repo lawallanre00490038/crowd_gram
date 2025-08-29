@@ -146,7 +146,7 @@ async def handle_audio_submission(task_info, file_id, user_id, bot):
     """
 
     task_info = TranslationTask(**task_info) 
-    task_full_details = await get_full_task_detail(task_info.task_id)
+    task_full_details = await get_full_task_detail(task_info.task_id, user_id)
 
     file_path = await download_telegram(file_id, bot=bot)
     parameters = TaskParameterModel(min_duration= task_full_details.min_duration.total_seconds(), 

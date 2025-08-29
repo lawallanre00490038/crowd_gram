@@ -22,6 +22,7 @@ async def handle_description_review(message: Message, state: FSMContext, annotat
     if annotation_type == 'text':
         if message.text:
             await message.answer("📝 Text description received. Reviewing...")
+            await asyncio.sleep(3)
             # ...text review logic...
             await message.answer("✅ Text review complete.")
         else:
@@ -30,8 +31,10 @@ async def handle_description_review(message: Message, state: FSMContext, annotat
         if message.voice or message.audio:
             await message.answer("🔊 Audio description received. Reviewing...")
             # ...audio review logic...
-            out_message = await handle_audio_submission(data.get('task_info', {}), (message.voice or message.audio).file_id, message.from_user.id, message.bot)
-            await message.answer(out_message)
+            # out_message = await handle_audio_submission(data.get('task_info', {}), (message.voice or message.audio).file_id, message.from_user.id, message.bot)
+            # await message.answer(out_message)
+            await asyncio.sleep(3)
+            await message.answer("✅ Audio review complete.")
         else:
             await message.answer("❌ Please send an audio description as required by the task.")
     else:
@@ -60,12 +63,17 @@ async def handle_request_submission(message: Message, state: FSMContext, bot, qu
 
     if message.photo:
         await message.answer(IMAGE_SUBMISSION_RECEIVED_MESSAGE)
-        out_message = await handle_image_submission(data, message.photo[-1].file_id, message.from_user.id, bot)
-        await message.answer(str(out_message))
-        # Set state to expect description next
-        await state.update_data(image_submitted=True)
+        
+        # out_message = await handle_image_submission(data, message.photo[-1].file_id, message.from_user.id, bot)
+        # await message.answer(str(out_message))
         await asyncio.sleep(3)
-        await message.answer(IMAGE_REQUEST_ANNOTATION_MESSAGE.format(theme, target_lang, annotation_type))
+        await state.update_data(image_submitted=True)
+        
+        image_validation_check = True # TODO: QA Team
+
+        if image_validation_check:
+            # Set state to expect description next
+            await message.answer(IMAGE_REQUEST_ANNOTATION_MESSAGE.format(theme=theme, target_lang=target_lang, annotation_type=annotation_type))
     elif message.text or message.voice or message.audio:
         # Only allow description if image has been submitted
         if data.get('image_submitted'):
@@ -87,13 +95,13 @@ async def handle_image_task_review(message_or_callback, state: FSMContext, quiz)
     """
     task_type = quiz['mine_type']
     
-    if task_type == 'openEnd':
+    if task_type == 'OpenEnd':
         # Only allow text or audio as specified in task_info
         if state is not None:
             await handle_description_review(message_or_callback, state, quiz['annotation_type'])
         else:
             raise ValueError('FSMContext (state) required for openEnd task review.')
-    elif task_type == 'closeEnd':
+    elif task_type == 'CloseEnd':
         # message_or_callback is expected to be CallbackQuery
         options = quiz['options']
         answer = quiz['answer']

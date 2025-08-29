@@ -9,21 +9,20 @@ from src.routes.task_routes.task_formaters import IMAGE_REQUEST_MESSAGE
 logger = logging.getLogger(__name__)
 
 # --- Utility Functions ---
-def format_caption(question: str, target_lang: str) -> str:
+def format_caption(question: str, target_lang: str, annotation_type: str) -> str:
     """
     Formats the caption for open-ended image tasks.
     """
-    return f"❓{hbold(question)}\n\n Make sure to describe in {target_lang}."
+    return f"❓{hbold(question)}\n\n Make sure to describe in {target_lang} using {annotation_type}."
 
 
 # --- Handlers ---
-async def handle_open_end_task(message: Message, image_path: str, question: str, target_lang: str):
+async def handle_open_end_task(message: Message, quiz, target_lang: str):
     """
     Handles open-ended image task.
     """
-    print("open")
-    image_file = FSInputFile(image_path)
-    caption = format_caption(question, target_lang)
+    image_file = FSInputFile(quiz['image'])
+    caption = format_caption(quiz['question'], target_lang, quiz['annotation_type'])
     return await message.answer_photo(photo=image_file, caption=caption)
 
 # --- Handlers ---
@@ -43,7 +42,6 @@ async def handle_request_task(message: Message, quiz, target_lang: str):
     """
     Handles image request task.
     """
-    print("request")
     theme = quiz['theme']
     annotation_type = quiz['annotation_type']
     question = quiz['question']
@@ -64,14 +62,13 @@ async def handle_image_task(message: Message, quiz_data, target_lang: str):
     print("image task")
     image_task_type = quiz_data.get('mine_type')
     print(image_task_type)
-    if image_task_type == "openEnd":
+    if image_task_type == "OpenEnd":
         return await handle_open_end_task(
             message,
-            image_path=quiz_data['image'],
-            question=quiz_data['question'],
+            quiz=quiz_data,
             target_lang=target_lang
         )
-    elif image_task_type == "closeEnd":
+    elif image_task_type == "CloseEnd":
         # Modular: import and call close_end_task_handler here if needed
         from . import close_end_review_handler
         await handle_close_end_task(

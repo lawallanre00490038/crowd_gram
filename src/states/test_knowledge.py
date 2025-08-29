@@ -16,6 +16,13 @@ class TestKnowledge(StatesGroup):
     image_task = State()
     image_submission = State()
     image_feedback = State()
+    
+    
+    # Video Assessment state
+    video_task = State()
+    video_submission = State()
+    video_submission = State()
+    
 
 
     # Audio assessment
@@ -23,20 +30,5 @@ class TestKnowledge(StatesGroup):
     audio_quiz = State()
     audio_quiz_submission = State()              
     
-    # Video assessment states
-    video_instructions = State()
-    video_quiz = State()
-    video_quiz_submission = State()
-    video_quiz_feedback = State()
-
-    # Video request assessment state
-    video_2_instructions = State()
-    video_2_quiz = State()
-    video_2_quiz_submission = State()
-    video_2_quiz_feedback = State()
-    video_annotation = State()
-    video_annotation_submission = State()
-    video_annotation_feedback = State()
-
-    image_annotation_feedback = State()
+    
     

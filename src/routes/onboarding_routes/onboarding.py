@@ -297,14 +297,14 @@ async def get_referrer(message: Message, state: FSMContext):
         f"Referrer: {user_data.get('referrer', 'N/A')}"
     
 
-    from src.routes.task_routes.test_knowledge_router import start_knowledge_assessment
-    await start_knowledge_assessment(message, state)
+        # from src.routes.task_routes.test_knowledge_router import start_knowledge_assessment
+        # await start_knowledge_assessment(message, state)
 
-    from src.routes.task_routes.test_knowledge_router import handle_start_knowledge_assessment
-    await handle_start_knowledge_assessment(message, state)
+        from src.routes.task_routes.test_knowledge_router import handle_start_knowledge_assessment
+        await handle_start_knowledge_assessment(message, state)
 
 
-    print(message.from_user.id, "has completed onboarding with data:", user_data)
+        print(message.from_user.id, "has completed onboarding with data:", user_data)
 
     else:
         await message.answer(f"❌ Failed: {result['error']}")
