@@ -21,7 +21,7 @@ class TestKnowledge(StatesGroup):
     # Video Assessment state
     video_task = State()
     video_submission = State()
-    video_submission = State()
+    video_feedback = State()
     
 
 

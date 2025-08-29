@@ -4,14 +4,14 @@ from typing import List
 from aiogram.utils.markdown import hbold
 from src.keyboards.inline import quiz_options_kb
 from aiogram.types import Message, FSInputFile
-from src.routes.task_routes.task_formaters import IMAGE_REQUEST_MESSAGE
+from src.routes.task_routes.task_formaters import VIDEO_REQUEST_MESSAGE  # You should define this similar to IMAGE_REQUEST_MESSAGE
 
 logger = logging.getLogger(__name__)
 
 # --- Utility Functions ---
 def format_caption(question: str, target_lang: str, annotation_type: str) -> str:
     """
-    Formats the caption for open-ended image tasks.
+    Formats the caption for open-ended video tasks.
     """
     return f"❓{hbold(question)}\n\n Make sure to describe in {target_lang} using {annotation_type}."
 
@@ -19,34 +19,32 @@ def format_caption(question: str, target_lang: str, annotation_type: str) -> str
 # --- Handlers ---
 async def handle_open_end_task(message: Message, quiz, target_lang: str):
     """
-    Handles open-ended image task.
+    Handles open-ended video task.
     """
-    image_file = FSInputFile(quiz['image'])
+    video_file = FSInputFile(quiz['video_id'])
     caption = format_caption(quiz['question'], target_lang, quiz['annotation_type'])
-    return await message.answer_photo(photo=image_file, caption=caption)
+    return await message.answer_video(video=video_file, caption=caption)
 
-# --- Handlers ---
-async def handle_close_end_task(message: Message, image_path: str, question: str, options: list):
+async def handle_close_end_task(message: Message, video_path: str, question: str, options: list):
     """
-    Handles close-ended image task: sends image, question, and options as inline keyboard.
+    Handles close-ended video task: sends video, question, and options as inline keyboard.
     """
-    print("close")
-    image_file = FSInputFile(image_path)
+    video_file = FSInputFile(video_path)
     caption = f"❓{hbold(question)}\n\nChoose the correct option."
     # Build inline keyboard for options
-    await message.answer_photo(photo=image_file, caption=caption, reply_markup=quiz_options_kb(options))
-    logger.info("Sent close-ended image task with options.")
+    await message.answer_video(video=video_file, caption=caption, reply_markup=quiz_options_kb(options))
+    logger.info("Sent close-ended video task with options.")
     
 
 async def handle_request_task(message: Message, quiz, target_lang: str):
     """
-    Handles image request task.
+    Handles video request task.
     """
     theme = quiz['theme']
     annotation_type = quiz['annotation_type']
     question = quiz['question']
     example = quiz['example_prompt']
-    msg = IMAGE_REQUEST_MESSAGE.format(
+    msg = VIDEO_REQUEST_MESSAGE.format(
             target_lang=target_lang,
             theme=theme,
             annotation_type=annotation_type,
@@ -55,27 +53,26 @@ async def handle_request_task(message: Message, quiz, target_lang: str):
         )    
     return await message.answer(msg)
 
-async def handle_image_task(message: Message, quiz_data, target_lang: str):
+async def handle_video_task(message: Message, quiz_data, target_lang: str):
     """
-    Handles images task for all types.
+    Handles video task for all types.
     """
-    print("image task")
-    image_task_type = quiz_data.get('mine_type')
-    print(image_task_type)
-    if image_task_type == "OpenEnd":
+    video_task_type = quiz_data.get('mine_type')
+    print(video_task_type)
+    if video_task_type == "OpenEnd":
         return await handle_open_end_task(
             message,
             quiz=quiz_data,
             target_lang=target_lang
         )
-    elif image_task_type == "CloseEnd":
+    elif video_task_type == "CloseEnd":
         await handle_close_end_task(
             message,
-            image_path=quiz_data['image'],
+            video_path=quiz_data['video_id'],
             question=quiz_data['question'],
             options=quiz_data['options']
         )
-    elif image_task_type == "request":
+    elif video_task_type == "request":
         return await handle_request_task(message, quiz_data, target_lang=target_lang)
     else:
-        return "❌ Invalid image task type"
+        return "❌ Invalid video task type"

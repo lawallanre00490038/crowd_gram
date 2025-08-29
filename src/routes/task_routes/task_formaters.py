@@ -66,3 +66,29 @@ Focus on what is happening, the people, objects, and actions you see.
 ✔ Use complete sentences.
 ❌ Avoid unrelated details.
 """
+
+VIDEO_REQUEST_MESSAGE = """
+Awesome! Here's your theme  — share a video and describe it in {target_lang}:\n
+---
+Theme: {theme}
+--\n\n
+Describe it using: {annotation_type}
+Guide: {question}
+Example: {example}\n
+Your {target_lang} description:
+"""
+
+VIDEO_SUBMISSION_RECEIVED_MESSAGE = """
+✅ Video received!
+⏳ Status: Submitted for validation
+🔔 Next: You'll be notified when reviewed\n\n
+"""
+
+VIDEO_REQUEST_ANNOTATION_MESSAGE = """
+✅ Your video for **{theme}** has been received and approved!
+Now, please describe this video in **{target_lang}** using {annotation_type}.
+Focus on what is happening, the people, objects, and actions you see.
+✔ Be detailed and accurate.
+✔ Use complete sentences.
+❌ Avoid unrelated details.
+"""

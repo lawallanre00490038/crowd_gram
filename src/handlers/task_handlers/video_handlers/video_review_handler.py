@@ -1,13 +1,12 @@
-# --- Combined Image Task Review Handler ---
 import logging
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from typing import List
 from src.utils.parameters import UserParams
-from src.handlers.task_handlers.image_handlers.image_task_submission_handler import handle_image_submission
+from src.handlers.task_handlers.video_handlers.video_task_submission_handler import handle_video_submission
 from src.handlers.task_handlers.audio_task_handler import handle_audio_submission
 from src.utils.extract_option import extract_option
-from src.routes.task_routes.task_formaters import IMAGE_SUBMISSION_RECEIVED_MESSAGE, IMAGE_REQUEST_ANNOTATION_MESSAGE
+from src.routes.task_routes.task_formaters import VIDEO_SUBMISSION_RECEIVED_MESSAGE, VIDEO_REQUEST_ANNOTATION_MESSAGE
 import asyncio
 
 logger = logging.getLogger(__name__)
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 # --- Description Review Handler ---
 async def handle_description_review(message: Message, state: FSMContext, annotation_type: str):
     """
-    Review user input for image description based on required type from task_info.
+    Review user input for video description based on required type from task_info.
     """
     data = await state.get_data()
 
@@ -54,44 +53,40 @@ async def handle_closeEnd_submission(callback: CallbackQuery, options: List, ans
 # --- Request Task Submission Handler ---
 async def handle_request_submission(message: Message, state: FSMContext, bot, quiz):
     """
-    Handles user submission for request tasks: expects an image, then a description (text or audio).
+    Handles user submission for request tasks: expects a video, then a description (text or audio).
     """
     data = await state.get_data()
     theme = quiz['theme']
     annotation_type = quiz['annotation_type']
     target_lang = data.get('target_lang', 'Yoruba')
 
-    # 1. If user sends an image
-    if message.photo:
-        await message.answer(IMAGE_SUBMISSION_RECEIVED_MESSAGE)
-        await asyncio.sleep(1)
-        await state.update_data(image_submitted=True)
-        await message.answer(
-            IMAGE_REQUEST_ANNOTATION_MESSAGE.format(
-                theme=theme, target_lang=target_lang, annotation_type=annotation_type
-            )
-        )
-        return
+    if message.video:
+        await message.answer(VIDEO_SUBMISSION_RECEIVED_MESSAGE)
+        
+        # out_message = await handle_video_submission(data, message.video.file_id, message.from_user.id, bot)
+        # await message.answer(str(out_message))
+        await asyncio.sleep(3)
+        await state.update_data(video_submitted=True)
+        
+        video_validation_check = True # TODO: QA Team
 
-    # 2. If user sends a description (text/audio) after image
-    if data.get('image_submitted'):
-        if message.text or message.voice or message.audio:
-            await handle_description_review(message, state, annotation_type)
-            # Give feedback after review
-            await message.answer("✅ Description received and reviewed. Thank you!")
-            # Optionally, reset image_submitted for next task
-            await state.update_data(image_submitted=False)
-        else:
-            await message.answer("❌ Please send a text or audio description as required.")
-        return
-
-    # 3. If user sends description before image
-    await message.answer("Please send an image first, then describe it with the required type.")
+        if video_validation_check:
+            # Set state to expect description next
+            await message.answer(VIDEO_REQUEST_ANNOTATION_MESSAGE.format(theme=theme, target_lang=target_lang, annotation_type=annotation_type))
+            
+            if message.text or message.voice or message.audio:
+                # Only allow description if video has been submitted
+                if data.get('video_submitted'):
+                    await handle_description_review(message, state, annotation_type)
+                else:
+                    await message.answer("❌ Please send a video first before describing it.")
+    else:
+        await message.answer("Please send a video, then describe it with the required type.")
 
 
-async def handle_image_task_review(message_or_callback, state: FSMContext, quiz):
+async def handle_video_task_review(message_or_callback, state: FSMContext, quiz):
     """
-    Combined handler for all image task types (open-ended, close-ended, request).
+    Combined handler for all video task types (open-ended, close-ended, request).
     Dispatches to the correct review/handling function based on task type and input.
     Args:
         message_or_callback: Message or CallbackQuery object from aiogram
@@ -121,4 +116,4 @@ async def handle_image_task_review(message_or_callback, state: FSMContext, quiz)
         else:
             raise ValueError('FSMContext (state) and bot required for request task review.')
     else:
-        raise ValueError('Invalid or missing task_type for image task review.')
+        raise ValueError('Invalid or missing task_type for video task review.')
