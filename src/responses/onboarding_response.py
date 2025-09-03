@@ -20,7 +20,7 @@ TUTORIAL_MSG = {
     "skip_ready": ("Have you finished watching all the videos?\\nStart quiz now?"),
     
     
-    "video_not_found": ("⚠️ Video file not found.")
+    "video_not_found": ("⚠️ Video file not found."),
 }
 
 # ---------------- USER TYPE ----------------
@@ -49,7 +49,11 @@ LOCATION_MSG = {
     
     "state_unavailable": ("State of residence: {country} (No states available)"),
     
-    "pagination": ("...")
+    "pagination": ("..."),
+
+    "select_country": ("Please select a valid country from the list."),
+
+    "select_state": ("Please select a valid state for {selected_country}:"),
 }
 
 # ---------------- PERSONAL INFO ----------------
@@ -65,7 +69,11 @@ PERSONAL_MSG = {
     
     "education_invalid": ("Please select a valid education level from the options provided."),
     
-    "industry": ("💼 What field do you work in?")
+    "industry": ("💼 What field do you work in?"),
+
+    "education_level_selected": ("✅ Education level selected: {level}"),
+
+    
 }
 
 # ---------------- LANGUAGES ----------------
@@ -157,3 +165,8 @@ COMPLETION_MSG = {
     
    
 }
+
+QUIZ_MSG = {
+    "quiz_skip": ("⏭️ Quiz skipped!"),
+    
+    "begin_quiz": ("✅ Great! Let's begin the short quiz.")}
