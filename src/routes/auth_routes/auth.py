@@ -217,6 +217,9 @@ async def handle_confirm_password(message: Message, state: FSMContext):
     output = await user_verify_otp(user_data=user_data, inputed_otp=otp)
 
     if output['success']:
+        await state.clear()
+        await state.set_data({"user_data":output["base_info"].model_dump()})
+        
         await message.answer(ONBOARDING_MSG["right_otp"])
         await state.set_state(Onboarding.location)
         await get_country(message, state)
