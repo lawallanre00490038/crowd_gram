@@ -1,5 +1,8 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
+from src.models.company_models import CompanyInfo
+from src.services.server.getters_api import get_companies_from_api, get_countries_from_api
+
 def organization_kb():
     return ReplyKeyboardMarkup(
         keyboard=[
@@ -10,21 +13,12 @@ def organization_kb():
         one_time_keyboard=True
     )
 
-def company_kb():
+async def company_kb():
+    parsed_users = await get_companies_from_api()
+    
     return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="OpenAI")],
-            [KeyboardButton(text="EqualyzAI")],
-
-            [KeyboardButton(text="Google")],
-            [KeyboardButton(text="Meta")],
-            [KeyboardButton(text="Anthropic")],
-
-            [KeyboardButton(text="African Voices")],
-
-            [KeyboardButton(text="Microsoft")],
-            [KeyboardButton(text="HausaNLP")]
-        ],
+        keyboard=[[KeyboardButton(text=info.name)] 
+                  for info in parsed_users],
         resize_keyboard=True,
         one_time_keyboard=True
     )
