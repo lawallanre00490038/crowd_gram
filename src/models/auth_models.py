@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from typing import List, Optional, Any
+from pydantic import BaseModel, Field, EmailStr
+from typing import List, Optional, Any, TypedDict
 from datetime import datetime
 
 
@@ -13,8 +13,38 @@ class Beneficiary(BaseModel):
     account_name: str
     currency: str
 
+class BaseUserData(BaseModel):
+    _id: str
+    account_source: str
+    beneficiaries: List[Beneficiary]
+    coins: int
+    company_id: str
+    country_code: Optional[str]
+    createdAt: datetime
+    deactivate_message: Optional[str]
+    deactivated_by: Optional[str]
+    email: str
+    fcm_token: List[str]
+    is_onboarding: bool
+    is_test_submit: bool
+    is_tyk_reattempt: bool
+    is_verified: bool
+    name: str
+    os_type: str
+    otp: int
+    phone_number: Optional[str]
+    profile_pic: Optional[str]
+    reattempt_count: int
+    referal_code: str
+    reject_reason: Optional[str]
+    social_account: List[Any]
+    status: int
+    sub_admin_review: bool
+    updatedAt: datetime
+    user_type: int
+    version: str
 
-class UserData(BaseModel):
+class UserData(BaseUserData):
     _id: str
     account_source: str
     beneficiaries: List[Beneficiary]
@@ -52,3 +82,28 @@ class UserData(BaseModel):
 class LoginResponse(BaseModel):
     message: str
     data: UserData
+
+class UserRegisterRequest(BaseModel):
+    country_code: str
+    phone_number: str
+    email: Optional[EmailStr] = None
+    os_type: str
+    company_id: str
+    password: str
+    name: str
+
+class SignupResponseDict(TypedDict):
+    success: bool
+    error: str
+    base_info: BaseUserData
+
+class LoginResponseDict(TypedDict):
+    success: bool
+    error: str
+    base_info: BaseUserData
+
+class VerifyPasswordInput(BaseModel):
+    password: str
+    otp: str
+    email: EmailStr
+    phone_number: str
