@@ -20,8 +20,6 @@ import logging
 import re
 from better_profanity import profanity
 
-# Setup logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

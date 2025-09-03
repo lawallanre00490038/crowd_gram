@@ -1,22 +1,21 @@
 import logging
+import random
 
-from aiogram.filters import Command #For direct testing, to be removed later
+from aiogram.filters import Command 
 from aiogram import Router, F, Bot
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
-from src.states.tasks import TaskState
-import random
+
 from src.data.sample_text import TASK_SAMPLES
 from src.keyboards.inline import create_task_action_keyboard, create_next_task_keyboard, create_task_ready_keyboard, create_ready_button
-
 from src.handlers.task_handlers.audio_task_handler import handle_audio_submission
+from src.states.tasks import TaskState, TextTaskSubmission, ImageTaskSubmission, AudioTaskSubmission, VideoTaskSubmission
+
 from src.utils.parameters import UserParams
 from src.utils.downloader import download_telegram
 from src.utils.save_audio import save_librosa_audio_as_mp3
 from src.responses.task_formaters import (TEXT_TASK_PROMPT, SELECT_TASK_TO_PERFORM,
     APPROVED_TASK_MESSAGE, ERROR_MESSAGE, SUBMISSION_RECIEVED_MESSAGE)
-from src.states.tasks import TaskState, TextTaskSubmission, ImageTaskSubmission
 
 from src.services.quality_assurance.text_validation import validate_text_input
 from src.services.quality_assurance.image_validation import validate_image_input
@@ -24,8 +23,6 @@ from src.services.quality_assurance.audio_parameter_check import check_audio_par
 from src.services.quality_assurance.audio_quality_check import check_audio_quality
 from src.services.task_distributor import assign_task, get_full_task_detail, TranslationTask
 from src.handlers.task_handlers.audio_task_handler import send_audio_question_actual_tasks, handle_audio_submission
-
-from src.states.tasks import TaskState, TextTaskSubmission, ImageTaskSubmission, AudioTaskSubmission, VideoTaskSubmission
 
 logger = logging.getLogger(__name__)
 
