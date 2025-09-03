@@ -102,10 +102,9 @@ async def verify_otp(user_info: VerifyPasswordInput ) -> Optional[LoginResponse]
                     logging.error(f"Invalid JSON response: {response_text}")
                     return {"success": False, "error": e, "base_info": {}}
 
-
                 if response.status == 200:
                     logging.info("User authenticated successfully.")
-                    return {"success": True, "error": "", "base_info": LoginResponse.model_validate(response_data)}
+                    return {"success": True, "error": "", "base_info": UserData.model_validate(response_data['data'])}
                 else:
                     logging.error(f"Authentication failed: {response.status}, {response_text}")
                     return {"success": False, "error": f"Authentication failed: {response.status}, {response_text}", "base_info": {}}

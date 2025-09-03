@@ -15,7 +15,7 @@ LOGIN_MSG = {
     "fail": (
         "❌ Login failed! Please check your credentials and try again.\n\n"
     ),
-    "login": {"Please enter your email or phone number to login:"}
+    "login": "Please enter your email or phone number to login:"
 
 
 }
@@ -25,6 +25,13 @@ LOGOUT = {
         "You have been logged out. To log in again, use /login"
     ),
 }
+
+EXIT = {
+    "exit":(
+        "You have been Exited the platform. To Start again, use /start"
+    ),
+}
+
 # ---------------- ONBOARDING / WELCOME ----------------
 ONBOARDING_MSG = {
     "welcome": (
@@ -57,13 +64,13 @@ ONBOARDING_MSG = {
         "Please enter the right OTP"
     },
 
-    "right_otp": {
+    "right_otp": (
         "🎉 Welcome to Equalyz Crowd!\n\n"
         "Now let's complete your profile..."
-    },
+    ),
 
     "error_occured": (
-        "An Error Occured"
+        "An Error Occured: {error}"
     )
 }
 

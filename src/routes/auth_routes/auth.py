@@ -9,7 +9,7 @@ from src.handlers.auth_handlers.auth_handlers import user_signup, user_verify_ot
 from src.handlers.onboarding_handlers.onboarding import get_company_id
 from src.models.auth_models import UserRegisterRequest
 from src.routes.onboarding_routes.onboarding import get_country
-from src.responses.auth_response import LOGIN_MSG, LOGOUT, ONBOARDING_MSG, EMAIL_MSG, PHONE_MSG, PASSWORD_MSG
+from src.responses.auth_response import EXIT, LOGIN_MSG, LOGOUT, ONBOARDING_MSG, EMAIL_MSG, PHONE_MSG, PASSWORD_MSG
 from src.responses.onboarding_response import TUTORIAL_MSG, USER_TYPE_MSG
 from src.services.server.auth import register_user, user_login
 from src.utils.auth_utils import validate_email, validate_password, validate_phone_format, format_phone
@@ -35,12 +35,16 @@ async def handle_login_identifier(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(LOGOUT['logout'])
 
+@router.message(Command("exit"))
+async def handle_login_identifier(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer(EXIT['exit'])
+
 @router.message(Command("signup"))
 async def handle_login_identifier(message: Message, state: FSMContext):
-    identifier = message.text.strip()
-    await state.update_data(login_identifier=identifier)
-    await message.answer("🔒 Please enter your password:")
-    await state.set_state(Authentication.login_password)
+    await message.answer("Ok, Let's beggin your onboarding !")
+    await message.answer(ONBOARDING_MSG["organization"],reply_markup=yes_no_inline_keyboard())
+    await state.set_state(Authentication.organization_check)
 
 #chose user type
 @router.callback_query(Authentication.collector_check, F.data.in_(["registered_yes", "new_user"]))
@@ -128,17 +132,8 @@ async def handle_company_selection(message: Message, state: FSMContext):
 async def handle_name_input(message: Message, state: FSMContext):
     name = message.text.strip()
     await state.update_data(auth_name=name)
-    await message.answer(EMAIL_MSG["prompt"])
-    await state.set_state(Authentication.set_signup_type)
-
-# Handler: Signup type
-@router.message(Authentication.set_signup_type)
-async def handle_name_input(message: Message, state: FSMContext):
-    name = message.text.strip()
-    await state.update_data(auth_name=name)
-    print("Here")
     await message.answer(ONBOARDING_MSG["set_signup_type"], reply_markup=set_signup_type_inline)
-    # await state.set_state(Authentication.email_input)
+    await state.set_state(Authentication.set_signup_type)
 
 # Handler: Are you part of organization?
 @router.callback_query(Authentication.set_signup_type, F.data.in_(["email", "phone_number"]))
@@ -212,7 +207,7 @@ async def handle_confirm_password(message: Message, state: FSMContext):
         await message.answer(ONBOARDING_MSG["account_created"])
         await state.set_state(Authentication.otp_step)
     elif not response['success']:
-        await message.answer(ONBOARDING_MSG['error_occured'])
+        await message.answer(ONBOARDING_MSG['error_occured'].format(error=response['error']))
 
 @router.message(Authentication.otp_step)
 async def handle_confirm_password(message: Message, state: FSMContext):
