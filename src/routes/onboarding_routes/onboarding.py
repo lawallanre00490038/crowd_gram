@@ -1,13 +1,16 @@
 from aiogram import Router, F
 from aiogram.types import Message
+from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from src.states.onboarding import Onboarding, Tutorial
-from src.states.authentication import Authentication
+
+
 from src.keyboards.reply import industry_kb, education_kb, age_kb, writing_ability_kb, phone_quality_kb, favourite_speaker_kb, task_type_kb 
 from src.keyboards.dynamic import (create_countries_keyboard_reply_api, create_states_keyboard_api, create_language_keyboard_api)
 from src.keyboards.inline import retry_keyboard, g0_to_tutorials_kb, user_type_kb, ready_kb, tutorial_choice_kb, yes_no_inline_keyboard,tutorial_nav_kb
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
-from aiogram.types import Message, CallbackQuery
+
+from src.states.onboarding import Onboarding, Tutorial
+from src.states.authentication import Authentication
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup, Message, CallbackQuery
 from aiogram.fsm.state import State, StatesGroup
 from src.routes.onboarding_routes.quiz import start_quiz
  
