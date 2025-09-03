@@ -5,8 +5,7 @@ LOGIN_MSG = {
             "Please enter your email or phone number to login:"
     ),
 
-   
-    
+
     "enter_email/phone": ("🔄 Please enter your email or phone number:"),
 
     "success": (
@@ -16,8 +15,16 @@ LOGIN_MSG = {
     "fail": (
         "❌ Login failed! Please check your credentials and try again.\n\n"
     ),
+    "login": {"Please enter your email or phone number to login:"}
+
+
 }
 
+LOGOUT = {
+    "logout":(
+        "You have been logged out. To log in again, use /login"
+    ),
+}
 # ---------------- ONBOARDING / WELCOME ----------------
 ONBOARDING_MSG = {
     "welcome": (
@@ -28,8 +35,7 @@ ONBOARDING_MSG = {
 
     "account_created": (
         "✅ Account created successfully!\n\n"
-        "🎉 Welcome to Equalyz Crowd!\n\n"
-        "Now let's complete your profile..."
+        "Please Input OTP sent to you"
     ),
      "organization": ("Are you part of an organization?"),
 
@@ -40,7 +46,25 @@ ONBOARDING_MSG = {
     "name_input": (
             "👤 What's your full name?\n\n"
             "This will be used for your account registration."
-        )
+        ),
+
+    "set_signup_type": (
+        "Please set your signup type \n\n"
+    ),
+
+    "wrong_otp": {
+        "❌ Please enter the right OTP\n"
+        "Please enter the right OTP"
+    },
+
+    "right_otp": {
+        "🎉 Welcome to Equalyz Crowd!\n\n"
+        "Now let's complete your profile..."
+    },
+
+    "error_occured": (
+        "An Error Occured"
+    )
 }
 
 # ---------------- EMAIL ----------------
@@ -76,9 +100,13 @@ PASSWORD_MSG= {
         "🔒 Create a secure password:\n\n"
         "Password should be at least 8 characters long."
     ),
+    "uppercase": "It must include at least one uppercase letter.",
+    "special_character": "It must include at least one special character.",
+    "password": "It must include at least one number.",
+    "long_characters": "It must be at least 8 characters long.",
     "weak": (
         "❌ Password too weak.\n\n"
-        "It must be at least 8 characters long and include both letters and numbers.\n"
+        "{problems}\n\n"
         "Please try again:"
     ),
     "confirm": (
@@ -89,4 +117,5 @@ PASSWORD_MSG= {
         "❌ Passwords don't match! Please try again:\n\n"
         "Re-enter your password:"
     ),
+    "enter_password": ("🔒 Please enter your password:"),
 }
