@@ -13,8 +13,7 @@ from src.services.server.getters_api import get_companies_from_api
 
 async def show_user_type_selection(message: Message):
     # await message.answer(USER_TYPE_MSG["selection"])
-    await message.answer(USER_TYPE_MSG["option"], reply_markup=user_type_kb
-    )
+    await message.answer(USER_TYPE_MSG["option"], reply_markup=user_type_kb)
 
 
 async def send_tutorial(message: Message, state: FSMContext, index: int = 0):

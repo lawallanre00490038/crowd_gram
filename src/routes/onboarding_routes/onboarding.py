@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 async def cmd_start(message: Message, state: FSMContext):
     logger.info(f"🔍 [DEBUG] /start command received from user {message.from_user.id}")
     await message.answer(WELCOME_MESSAGE)
-    await show_user_type_selection(message, state)
+    await message.answer(USER_TYPE_MSG["option"], reply_markup=user_type_kb)
     await state.set_state(Authentication.collector_check)
 
 @router.callback_query(Tutorial.ready_to_start, F.data.in_(["tutorial_yes", "skip_tutorials"]))
@@ -74,7 +74,7 @@ async def tutorial_navigation(callback: CallbackQuery, state: FSMContext):
 async def handle_skip_quiz(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await callback.message.answer()
-    await show_user_type_selection(callback.message, state)
+    await show_user_type_selection(callback.message)
 
 @router.callback_query(Tutorial.watching, F.data.in_(["quiz_yes", "quiz_no"]))
 async def quiz_ready_response(callback: CallbackQuery, state: FSMContext):

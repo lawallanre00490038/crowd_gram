@@ -1,5 +1,5 @@
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
-from click import Command
+from aiogram.filters import Command
 from sqlalchemy.orm import sessionmaker
 from src.database.models import Agent 
 from aiogram import Router, F
