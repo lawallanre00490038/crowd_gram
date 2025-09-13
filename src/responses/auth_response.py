@@ -2,11 +2,12 @@
 LOGIN_MSG = {
     "welcome_back":(
             "🎉 Welcome back!\n\n"
-            "Please enter your email or phone number to login:"
+            "Please select your login type"
     ),
 
 
-    "enter_email/phone": ("🔄 Please enter your email or phone number:"),
+    "enter_email": ("🔄 Please enter your email"),
+    "enter_phone": "🔄 Please enter your phone number",
 
     "success": (
         "✅ Login successful!\n\n🎉 Welcome back to {name}\n\n"

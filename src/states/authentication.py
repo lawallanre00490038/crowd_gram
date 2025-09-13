@@ -20,6 +20,7 @@ class Authentication(StatesGroup):
     registration_complete = State()   # Done
 
     set_signup_type = State()
+    set_login_type = State()
     otp_step = State()
 
     #login_password = State()

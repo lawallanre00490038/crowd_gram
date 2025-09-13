@@ -42,3 +42,6 @@ def validate_password(password: str) -> tuple[bool, list[str]]:
 
     is_valid = len(errors) == 0
     return is_valid, errors
+
+def split_callback_response(response: str) -> str:
+    return response.split(":")

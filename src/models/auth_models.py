@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class Beneficiary(BaseModel):
-    _id: str
+    id: str = Field(..., alias="_id")
     beneficiary_id: Any  # Replace with str or int if the actual type is known
     account_bank: str
     account_number: str
@@ -13,8 +13,13 @@ class Beneficiary(BaseModel):
     account_name: str
     currency: str
 
+    model_config = {
+        "populate_by_name": True,
+        "validate_by_name": True
+    }
+
 class BaseUserData(BaseModel):
-    _id: str
+    id: str = Field(..., alias="_id")
     account_source: str
     beneficiaries: List[Beneficiary]
     coins: int
@@ -31,7 +36,6 @@ class BaseUserData(BaseModel):
     is_verified: bool
     name: str
     os_type: str
-    otp: int
     phone_number: Optional[str]
     profile_pic: Optional[str]
     reattempt_count: int
@@ -43,6 +47,11 @@ class BaseUserData(BaseModel):
     updatedAt: datetime
     user_type: int
     version: str
+
+    model_config = {
+        "populate_by_name": True,
+        "validate_by_name": True
+    }
 
 class UserData(BaseUserData):
     token: str
@@ -70,7 +79,7 @@ class SignupResponseDict(TypedDict):
 class LoginResponseDict(TypedDict):
     success: bool
     error: str
-    base_info: BaseUserData
+    base_info: UserData
 
 class VerifyPasswordInput(BaseModel):
     password: str

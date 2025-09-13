@@ -5,9 +5,9 @@ from src.database.models import Agent
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 
-from src.handlers.auth_handlers.auth_handlers import user_signup, user_verify_otp
-from src.handlers.onboarding_handlers.onboarding import get_company_id
-from src.models.auth_models import UserRegisterRequest
+from src.handlers.auth_handlers.auth_handlers import route_user, user_signup, user_verify_otp
+from src.handlers.onboarding_handlers.onboarding import get_company_id, get_full_user_data
+from src.models.auth_models import UserData, UserRegisterRequest
 from src.routes.onboarding_routes.onboarding import get_country
 from src.responses.auth_response import EXIT, LOGIN_MSG, LOGOUT, ONBOARDING_MSG, EMAIL_MSG, PHONE_MSG, PASSWORD_MSG
 from src.responses.onboarding_response import TUTORIAL_MSG, USER_TYPE_MSG
@@ -15,7 +15,7 @@ from src.services.server.auth import register_user, user_login
 from src.utils.auth_utils import validate_email, validate_password, validate_phone_format, format_phone
 from src.states.authentication import Authentication
 from src.states.onboarding import Onboarding, Tutorial
-from src.keyboards.auth import company_kb
+from src.keyboards.auth_keyboard import company_kb
 from src.keyboards.inline import yes_no_inline_keyboard, set_signup_type_inline, tutorial_choice_kb
 from src.utils.password import hash_password, verify_password 
 import re
@@ -27,8 +27,26 @@ logger = logging.getLogger(__name__)
 
 @router.message(Command("login"))
 async def handle_login_identifier(message: Message, state: FSMContext):
-    await message.answer(LOGIN_MSG["login"])
-    await state.set_state(Authentication.login_email)
+    full_user_data = await get_full_user_data(state)
+    if full_user_data:
+        await route_user(full_user_data = full_user_data, message=message,
+                         state=state)
+        return
+    
+    await message.answer(LOGIN_MSG["welcome_back"], reply_markup=set_signup_type_inline)
+    await state.set_state(Authentication.set_login_type)
+
+# Handler: Are you part of organization?
+@router.callback_query(Authentication.set_login_type, F.data.in_(["email", "phone_number"]))
+async def handle_organization_callback(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    
+    if callback.data == "email":
+        await callback.message.answer(LOGIN_MSG["enter_email"])
+        await state.set_state(Authentication.login_email)
+    elif callback.data == "phone_number":
+        await callback.message.answer(LOGIN_MSG["enter_phone"])
+        await state.set_state(Authentication.login_phone)
 
 @router.message(Command("logout"))
 async def handle_login_identifier(message: Message, state: FSMContext):
@@ -76,16 +94,18 @@ async def handle_login_password(message: Message, state: FSMContext):
     user_data = await state.get_data()
     identifier = user_data.get('login_identifier')
     
-    response = user_login(identifier, password)
+    response = await user_login(identifier, password)
 
-    if not response:
+    if not response['success']:
         await message.answer(LOGIN_MSG["fail"])
         await state.clear()
         return
 
-    await message.answer(LOGIN_MSG["success"].format(name=response.data.name if response else "User"))
+    await message.answer(LOGIN_MSG["success"].format(name=response['base_info'].name if response else "User"))
     await state.clear()
-    await state.set_data({"user_data":response.data.model_dump()})
+    await state.set_data({"user_data":response['base_info'].model_dump()})
+    await route_user(full_user_data = UserData.model_validate(response['base_info']), 
+                     message = message, state = state)
     
 
 # Failed login
@@ -112,7 +132,7 @@ async def handle_organization_callback(callback: CallbackQuery, state: FSMContex
     if callback.data == "org_yes":
         await state.update_data(has_organization="Yes")
         keyboard = await company_kb()
-        await callback.message.answer(ONBOARDING_MSG["org_selection"],reply_markup=keyboard)
+        await callback.message.answer(ONBOARDING_MSG["org_selection"], reply_markup=keyboard)
         await state.set_state(Authentication.company_selection)
     else:
         await state.update_data(has_organization="No", company="Individual")

@@ -42,6 +42,11 @@ LOCATION_MSG = {
         "🏘️ What state/region do you live in within {country}?\n\n"
         "Please select your state of residence:"
     ),
+
+    "lga_prompt": (
+        "🏘️ What lga do you live in within {state}?\n\n"
+        "Please select your Local Goverment:"
+    ),
     
     "state_selected": ("State of residence: {state}"),
     
@@ -72,7 +77,8 @@ PERSONAL_MSG = {
     "industry": ("💼 What field do you work in?"),
 
     "education_level_selected": ("✅ Education level selected: {level}"),
-
+    
+    "Field": "💼 What field do you work in?"
     
 }
 
@@ -81,9 +87,16 @@ LANGUAGE_MSG = {
     "selection_prompt": (
         "🗣️ Which languages do you speak fluently?\n\n"
         "Select up to 2 languages. Click each language to select/deselect."
+    ), 
+
+    "selection_another": (
+        "🗣️ Select another language you speak fluently\n\n"
+        "Click another language to select/deselect it \n\n"
+        "Click ✅ Done to continue"
     ),  
-    
-    "max_reached": ("❌ You can only select up to 2 languages."),
+
+    "max_reached": ("❌ You can only select up to 2 languages.\n\n"
+                    "Click ✅ Done to continue or Deselect a previously selected language"),
     
     "added": ("Added: {language}"),
     
@@ -98,12 +111,12 @@ LANGUAGE_MSG = {
         "✅ Two languages selected: {languages}. Proceeding to the next step!"
     ),
     
-    "selection_confirmed": ("✅ Selection confirmed!")
+    "selection_confirmed": ("✅ Language Selection Complete")
 }
 
 # ---------------- DIALECTS ----------------
 DIALECT_MSG = {
-    "selection_prompt": ("🗣️ Select the type of **{language}** you speak in your hometown:"),
+    "selection_prompt": ("🗣️ Select the type of <b>{language}</b> you speak in your hometown:"),
     
     "manual_entry": ("Write your hometown language below:"),
     
