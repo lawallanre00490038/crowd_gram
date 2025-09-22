@@ -19,7 +19,7 @@ sample_translation_text_task = {
 
 sample_audio_task = {
     "category": "Audio",
-    "task_id": "#125704",
+    "task_id": "#125702",
     "deadline": "3h",
     "extend_deadline": "2h",
     "required_language": "English",
@@ -86,7 +86,7 @@ async def assign_task(agent_id, task_type: TaskType):
     elif task_type == TaskType.Audio:
         # Logic to fetch and assign a task based on agent profile
         return Task(**sample_audio_task)
-    elif task_type == "Image":
+    elif task_type == TaskType.Image:
         return Task(**sample_image_task)
     elif task_type == TaskType.Video:
         return Task(**sample_video_task)
