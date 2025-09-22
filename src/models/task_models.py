@@ -1,3 +1,4 @@
+from enum import Enum
 from pydantic import BaseModel, Field
 from datetime import timedelta
 from typing import List, Optional
@@ -5,7 +6,7 @@ from datetime import datetime
 
 # Define the Pydantic model for your task data.
 # Each field corresponds to a key in your dictionary.
-class TranslationTask(BaseModel):
+class Task(BaseModel):
     """
     A Pydantic model representing a translation task.
     This model provides data validation and type-hinting for task data.
@@ -21,6 +22,12 @@ class TranslationTask(BaseModel):
     category_type: str
     task_description: str
     task_instructions: str
+
+class TaskType(Enum):
+    Text = "Text"
+    Audio = "Audio"
+    Video = "Video"
+    Image = "Image"
 
 
 class Category(BaseModel):
