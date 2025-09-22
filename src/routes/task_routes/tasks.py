@@ -9,6 +9,7 @@ from aiogram.fsm.context import FSMContext
 from src.data.sample_text import TASK_SAMPLES
 from src.keyboards.inline import create_task_action_keyboard, create_next_task_keyboard, create_task_ready_keyboard, create_ready_button
 from src.handlers.task_handlers.audio_task_handler import handle_audio_submission
+from src.models.task_models import TaskType
 from src.states.tasks import TaskState, TextTaskSubmission, ImageTaskSubmission, AudioTaskSubmission, VideoTaskSubmission
 
 from src.utils.parameters import UserParams
@@ -79,11 +80,11 @@ async def cmd_start_task(message: Message, state: FSMContext):
     await message.answer(SELECT_TASK_TO_PERFORM)
     await state.set_state(TaskState.waiting_for_task)
 
-@router.message(TaskState.waiting_for_task, F.text == "/text_task")
+@router.message(TaskState.waiting_for_task, Command("text_task"))
 async def cmd_start_task(message: Message, state: FSMContext):
     # Start a new task
     login_identifier = await state.get_value(UserParams.LOGIN_IDENTIFIER.value)
-    assigned_task = await assign_task(login_identifier)
+    assigned_task = await assign_task(login_identifier, TaskType.Text)
 
     user_message = TEXT_TASK_PROMPT.format(**assigned_task.model_dump())
     await message.answer(user_message)
@@ -109,7 +110,7 @@ async def cmd_start_audio_task(message: Message, state: FSMContext):
     await state.set_state(AudioTaskSubmission.waiting_for_audio)
 
 
-@router.message(TaskState.waiting_for_task, F.text == "/audio_task")
+@router.message(TaskState.waiting_for_task, Command("audio_task"))
 async def cmd_start_task(message: Message, state: FSMContext):
     assigned_task = await assign_task("aha")
     if not assigned_task:
@@ -123,12 +124,12 @@ async def cmd_start_task(message: Message, state: FSMContext):
     await state.set_data({UserParams.TASK_INFO.value: assigned_task.model_dump()})
     await state.set_state(AudioTaskSubmission.waiting_for_audio)
 
-@router.message(TaskState.waiting_for_task, F.text == "/image_task")
+@router.message(TaskState.waiting_for_task, Command("image_task"))
 async def cmd_start_task(message: Message, state: FSMContext):
     await message.answer("Sample Image task")
     await state.set_state(ImageTaskSubmission.waiting_for_image)
 
-@router.message(TaskState.waiting_for_task, F.text == "/video_task")
+@router.message(TaskState.waiting_for_task, Command("video_task"))
 async def cmd_start_task(message: Message, state: FSMContext):
     await message.answer("Sample Video task")
     await state.set_state(VideoTaskSubmission.waiting_for_video)
