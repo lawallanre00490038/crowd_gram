@@ -68,13 +68,14 @@ async def cmd_welcome(message: Message):
     
     await message.answer(welcome_text, reply_markup=start_kb)
 
-@router.message(F.text == "/status")
+@router.message(Command("status"))
 async def cmd_status(message: Message):
     # Fetch and display agent's status
     await message.answer("Your task status: ...")
 
-@router.message(F.text == "/start_task")
+@router.message(Command("start_task"))
 async def cmd_start_task(message: Message, state: FSMContext):
+    print("Here")
     await message.answer(SELECT_TASK_TO_PERFORM)
     await state.set_state(TaskState.waiting_for_task)
 
@@ -148,6 +149,7 @@ async def handle_audio_input(message: Message, state: FSMContext, bot: Bot):
         await message.answer(SUBMISSION_RECIEVED_MESSAGE)
         out_message = await handle_audio_submission(task_info, message.voice.file_id, message.from_user.id, bot)
         await message.answer(out_message)
+        await state.set_state()
     else:
         await message.answer("Please. Record a audio")
 
@@ -165,13 +167,12 @@ async def handle_text_input(message: Message, state: FSMContext):
 
     if result["success"]:
         await message.answer(APPROVED_TASK_MESSAGE)        
-       
-        await state.clear()
+        await state.set_state()
+        
     else:
         errors = "\n".join(result["fail_reasons"])
         errors = ERROR_MESSAGE.format(errors=errors)
         await message.answer(errors)
-
 
 @router.message(ImageTaskSubmission.waiting_for_image)
 async def handle_image_input(message: Message, state: FSMContext):
@@ -198,7 +199,39 @@ async def handle_image_input(message: Message, state: FSMContext):
     if result["success"]:
         await message.answer(APPROVED_TASK_MESSAGE)
         
-        await state.clear()
+        await state.set_state()
+    else:
+        await message.answer(
+            "Image failed the quality check:\n\n" +
+            "\n".join(f"• {reason}" for reason in result["fail_reasons"])
+        )
+
+@router.message(VideoTaskSubmission.waiting_for_video)
+async def handle_video_input(message: Message, state: FSMContext):
+    image_file = None
+
+    # If sent as a photo (Telegram auto-compressed image)
+    if message.video:
+        image_file = message.video[-1]  # Highest resolution
+
+    # If sent as a document with mime type = image/*
+    elif message.document and message.document.mime_type.startswith("video/"):
+        image_file = message.document
+
+    # Not a supported image
+    else:
+        await message.answer("⚠️ Please upload a valid image (JPG, PNG, or WEBP).")
+        return
+    
+    # Download the image to a temporary file
+    local_path = await download_telegram(image_file.file_id, bot=message.bot)
+    # Continue with validation
+    result = validate_image_input(local_path)
+
+    if result["success"]:
+        await message.answer(APPROVED_TASK_MESSAGE)
+        
+        await state.set_state()
     else:
         await message.answer(
             "Image failed the quality check:\n\n" +
@@ -238,7 +271,6 @@ async def handle_language_selection_start(callback: CallbackQuery, state: FSMCon
     )
     
     await callback.message.answer(confirmation_text, reply_markup=create_task_action_keyboard())
-
 
 @router.callback_query(F.data == "start_translate")
 async def handle_start_task(callback: CallbackQuery, state: FSMContext):
