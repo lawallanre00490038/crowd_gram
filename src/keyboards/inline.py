@@ -58,6 +58,13 @@ ready_kb = InlineKeyboardMarkup(
             ]
         )
 
+set_signup_type_inline = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="Email", callback_data="email")],
+                [InlineKeyboardButton(text="Phone Number", callback_data="phone_number")]
+            ]
+        )
+
 
 def create_ready_button():
    
@@ -128,8 +135,6 @@ def tutorial_nav_kb(index: int):
         buttons.append([InlineKeyboardButton(text="⏭️ Skip videos", callback_data="skip_videos")])  
     else:
         buttons.append([InlineKeyboardButton(text="⏭️ Skip quiz", callback_data="skip_quiz")])  
-    
-
 
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 

@@ -4,7 +4,7 @@ import logging
 import librosa
 from src.utils.parameters import UserParams
 
-from src.services.task_distributor import assign_task, get_full_task_detail, TranslationTask
+from src.services.task_distributor import assign_task, get_full_task_detail, Task
 from src.services.quality_assurance.audio_parameter_check import check_audio_parameter, TaskParameterModel
 from src.services.quality_assurance.audio_quality_check import check_audio_quality
 from src.utils.save_audio import save_librosa_audio_as_mp3
@@ -73,7 +73,7 @@ async def send_audio_question_actual_tasks(
     message: Message,
     state: FSMContext,
     *,
-    task: TranslationTask,             # Pydantic model
+    task: Task,             # Pydantic model
     state_key_task_id: str = "current_task_id",
     state_key_target_lang: str = "target_language",
     default_duration_text: str = "10–20 seconds",
@@ -145,7 +145,7 @@ async def handle_audio_submission(task_info, file_id, user_id, bot):
         submission (Submission): The submission object containing the audio data.
     """
 
-    task_info = TranslationTask(**task_info) 
+    task_info = Task(**task_info) 
     task_full_details = await get_full_task_detail(task_info.task_id, user_id)
 
     file_path = await download_telegram(file_id, bot=bot)
@@ -170,7 +170,7 @@ async def handle_audio_submission(task_info, file_id, user_id, bot):
     logger.info(f"Audio check result for user {user_id}: {response.is_valid}, errors: {response.errors}, {quality_response}")
 
     if response.is_valid and (quality_response["message"] == "Approved"):
-        return APPROVED_TASK_MESSAGE
+        return True, APPROVED_TASK_MESSAGE
     else:
         errors = ""
 
@@ -182,5 +182,5 @@ async def handle_audio_submission(task_info, file_id, user_id, bot):
 
         logger.info(f"Audio submission failed for user {user_id}: {errors}")
 
-        return errors
+        return False, errors
     

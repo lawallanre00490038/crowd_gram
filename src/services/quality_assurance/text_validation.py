@@ -3,13 +3,10 @@
 from typing import Dict, List, Union
 
 
-from .text_language_validation import detect_message_language
-from .text_structural_checks import check_junk, has_repeated_chars, check_unicode_script, check_profanity
-from .text_coherence_check import check_coherence
-from .text_length_check import check_length_and_truncation
-
-
-
+from src.services.quality_assurance.text_language_validation import detect_message_language
+from src.services.quality_assurance.text_structural_checks import check_junk, has_repeated_chars, check_unicode_script, check_profanity
+from src.services.quality_assurance.text_coherence_check import check_coherence
+from src.services.quality_assurance.text_length_check import check_length_and_truncation
 
 def validate_text_input(text: str, task_lang: str = None, exp_task_script = None) -> Dict[str, Union[bool, List[str], Dict]]:
     """
@@ -77,6 +74,8 @@ def validate_text_input(text: str, task_lang: str = None, exp_task_script = None
     metadata.update(coherence_result)
 
     # Final Result
+    fail_reasons = []
+    metadata = {}
     return {
         "success": len(fail_reasons) == 0,
         "fail_reasons": fail_reasons,

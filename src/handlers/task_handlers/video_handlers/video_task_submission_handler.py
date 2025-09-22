@@ -10,7 +10,7 @@ from src.services.quality_assurance.video_quality_check import (
     check_video_image_quality,
     check_video_audio_quality,
 )
-from src.services.task_distributor import assign_task, get_full_task_detail, TranslationTask
+from src.services.task_distributor import assign_task, get_full_task_detail, Task
 from src.utils.downloader import download_telegram
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ async def handle_video_submission(task_info, file_id, user_id, bot):
         user_id (int): ID of the user submitting the video.
         bot (Bot): The bot instance for downloading the video.
     """
-    task_info = TranslationTask(**task_info)
+    task_info = Task(**task_info)
     task_full_details = await get_full_task_detail(task_info.task_id)
 
     # Download video from Telegram

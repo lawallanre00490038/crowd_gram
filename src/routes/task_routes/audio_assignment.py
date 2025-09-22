@@ -8,7 +8,7 @@ from src.utils.downloader import download_telegram
 from src.services.quality_assurance.audio_validation import validate_audio_input
 from src.services.quality_assurance.audio_parameter_check import TaskParameterModel
 from src.utils.test_knowledge import load_json_file
-from src.services.task_distributor import TranslationTask
+from src.services.task_distributor import Task
 from src.states.tasks import AudioTaskSubmission
 import os
 from pathlib import Path
@@ -48,7 +48,7 @@ async def send_audio_question_actual_tasks(
     message: Message,
     state: FSMContext,
     *,
-    task: TranslationTask,                 # <-- Pydantic model for actual tasks
+    task: Task,                 # <-- Pydantic model for actual tasks
     state_key_task_id: str = "current_task_id",
     state_key_target_lang: str = "target_language",
     default_duration_text: str = "10–20 second",
@@ -65,7 +65,7 @@ async def send_audio_question_actual_tasks(
         }
     )
 
-    # --- 2) Build the prompt from TranslationTask fields ---
+    # --- 2) Build the prompt from Task fields ---
     theme = (task.task_type or task.category or "Audio Task").strip()
     instruction = (task.task_instructions or task.task_description or "Record a short audio sample.").strip()
     description = task.task_description or "No description provided."

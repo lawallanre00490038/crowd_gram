@@ -3,7 +3,7 @@ from PIL import Image, ImageEnhance
 from src.services.quality_assurance.image_validation import validate_image_input
 from src.services.quality_assurance.img_quality_checks import run_image_quality_checks
 from src.services.quality_assurance.img_size_check import check_image_file_size_and_resolution
-from src.services.task_distributor import assign_task, get_full_task_detail, TranslationTask
+from src.services.task_distributor import assign_task, get_full_task_detail, Task
 from src.utils.downloader import download_telegram
 from src.utils.image_processing import process_image
 from src.constant.auth_constants import TOKEN_LOCATION
@@ -19,7 +19,7 @@ async def handle_image_submission(task_info, file_id, user_id, bot):
     Args:
         task (Task): The task object containing details about the image task.
     """
-    task_info = TranslationTask(**task_info)
+    task_info = Task(**task_info)
     task_full_details = await get_full_task_detail(task_info.task_id, user_id)
     
     file_path = await download_telegram(file_id, bot=bot)

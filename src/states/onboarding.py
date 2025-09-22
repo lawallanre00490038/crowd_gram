@@ -8,7 +8,7 @@ class Onboarding(StatesGroup):
     quiz_answer = State()
     quiz_retry = State()
     profile_name = State()
-
+    local_goverment = State()
     
     name = State()
     location = State()
@@ -21,9 +21,8 @@ class Onboarding(StatesGroup):
     dialect_selection = State()
     task_type = State()
 
-    text_writing_ability = State() 
-    phone_quality = State()         
-    favourite_speaker = State()
+    category_question = State() 
+
     referrer = State()
     registration_retry = State()
 

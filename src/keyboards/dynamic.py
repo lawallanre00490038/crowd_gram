@@ -1,5 +1,6 @@
+from typing import List
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-from src.services.server.getters_api import get_countries_from_api, get_states_from_api, get_language_names, get_dialects_from_api
+from src.services.server.getters_api import get_countries_from_api, get_region_from_api, get_states_from_api
 from src.keyboards.reply import task_type_kb 
 
 
@@ -7,7 +8,7 @@ from src.keyboards.reply import task_type_kb
 async def create_countries_keyboard_reply_api(page: int = 0, columns: int = 3, rows: int = 5) -> ReplyKeyboardMarkup:
     
     countries = await get_countries_from_api()
-    
+    countries = [i.country for i in countries]
     # Pagination (3x5 = 15 )
     items_per_page = columns * rows
     start_idx = page * items_per_page
@@ -45,9 +46,8 @@ async def create_countries_keyboard_reply_api(page: int = 0, columns: int = 3, r
     )
 
 
-async def create_states_keyboard_api(country: str, columns: int = 2):
-    states= await get_states_from_api(country) #built this in util 
-
+async def create_states_keyboard_api(states, columns: int = 2):
+    states = [state.state for state in states]
     keyboard=[]
     for i in range (0, len(states), columns):
         row = states[i:i + columns]
@@ -60,39 +60,11 @@ async def create_states_keyboard_api(country: str, columns: int = 2):
         one_time_keyboard=True
     ) 
 
-async def create_language_keyboard_api(columns: int = 3) -> ReplyKeyboardMarkup:
-   
-    # Get languages from API
-    languages = await get_language_names()
-    
-    # Create keyboard grid 
-    keyboard = []
-    for i in range(0, len(languages), columns):
-        row = languages[i:i + columns]
-        keyboard.append([KeyboardButton(text=lang) for lang in row])
-    
-    return ReplyKeyboardMarkup(
-        keyboard=keyboard,
-        resize_keyboard=True,
-        one_time_keyboard=True
-    )    
-    
-async def create_language_keyboard_with_done():
-            dynamic_kb=await create_language_keyboard_api()
-            kb_buttons = dynamic_kb.keyboard
-            kb_buttons_with_done = [row[:] for row in kb_buttons]
-            kb_buttons_with_done.append([KeyboardButton(text="✅ Done")])
-            return ReplyKeyboardMarkup(keyboard=kb_buttons_with_done, resize_keyboard=True, one_time_keyboard=True)
-        
-
-
-async def create_dialect_keyboard_api(language_name: str, columns: int = 2):
-    dialects= await get_dialects_from_api(language_name)
-
+async def create_region_keyboard_api(regions: List[str], columns: int = 2):
     keyboard=[]
-    for i in range (0, len(dialects), columns):
-        row = dialects[i:i + columns]
-        keyboard.append([KeyboardButton(text=dialect) for dialect in row])
+    for i in range (0, len(regions), columns):
+        row = regions[i:i + columns]
+        keyboard.append([KeyboardButton(text=state) for state in row])
 
     
     return ReplyKeyboardMarkup(
@@ -100,8 +72,6 @@ async def create_dialect_keyboard_api(language_name: str, columns: int = 2):
         resize_keyboard=True,
         one_time_keyboard=True
     ) 
-
-
 
 def create_data_type_keyboard_with_done():
             kb_buttons = task_type_kb.keyboard

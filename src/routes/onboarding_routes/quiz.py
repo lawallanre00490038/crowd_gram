@@ -6,7 +6,7 @@ from aiogram.utils.markdown import hbold
 from src.keyboards.inline import quiz_options_kb
 from src.states.onboarding import Onboarding
 from src.states.authentication import Authentication
-from src.keyboards.auth import organization_kb
+from src.keyboards.auth_keyboard import organization_kb
 from src.utils.extract_option import extract_option
 
 quiz_router = Router()

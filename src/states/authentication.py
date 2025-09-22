@@ -19,5 +19,9 @@ class Authentication(StatesGroup):
     confirm_password = State()       # Confirm password
     registration_complete = State()   # Done
 
+    set_signup_type = State()
+    set_login_type = State()
+    otp_step = State()
+
     #login_password = State()
     #login_success = State()

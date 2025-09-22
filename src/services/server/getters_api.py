@@ -1,8 +1,69 @@
+from typing import List
 import aiohttp
-import asyncio
+from src.config import BASE_URL
+import logging
+
+from src.models.onboarding_models import Category, CompanyInfo, CountryModel, LanguageResponseModel, SignUpResponseModel, StateModel
+
+logger = logging.getLogger(__name__)
+
+async def get_signup_list(company_id) -> SignUpResponseModel:
+    url = f"{BASE_URL}/user/auth/signup_list"
+    params = {"company_id":company_id, "field":"All"}
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params) as response:
+                
+                if response.status == 200:
+                    data = await response.json()
+                    return SignUpResponseModel.model_validate(data) 
+                else:
+                    logging.error(f"Something is wrong {response.json()}")
+                    return get_fallback_countries()
+                    
+    except Exception as e:
+        logging.error(f"Exception occured {e}")
+
+async def get_category_list(company_id: str) -> List[Category]:
+    url = f"{BASE_URL}/user/auth/category_list"
+    cat_list = list()
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params={"company_id": company_id}) as response:
+                
+                if response.status == 200:
+                    data = await response.json()
+                    for i in data['data']:
+                        cat_list.append(Category.model_validate(i))
+                else:
+                    logging.error(f"Something is wrong {response.json()}")
+    except Exception as e:
+        logging.error(f"Exception occured {e}")
+    return cat_list
+
+
+async def get_companies_from_api() -> List[CompanyInfo]:
+    url = f"{BASE_URL}/user/auth/company_list"
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                data = await response.json()
+                if response.status == 200:
+                    return [CompanyInfo(**item) for item in data['data']['result']] 
+                else:
+                    print(response)
+                    logging.error(f"Something is wrong {data}")
+                    return get_fallback_countries()
+                    
+    except Exception as e:
+        logging.error(f"Exception occured {e}")
+        return get_fallback_countries()
 
 async def get_countries_from_api():
-    url = "https://apiauth.datacollect.equalyz.ai/api/v1/user/auth/country"
+    url = f"{BASE_URL}/user/auth/country"
     
     try:
        
@@ -14,10 +75,7 @@ async def get_countries_from_api():
                   
                     countries = []
                     if data.get("data"):
-                        for country in data["data"]:
-                            country_name = country.get("name")
-                            if country_name:
-                                countries.append(country_name)
+                        return [CountryModel.model_validate(i) for i in data.get("data")]
                 
                     return countries
                     
@@ -28,12 +86,10 @@ async def get_countries_from_api():
     except Exception as e:
         return get_fallback_countries()
     
-
-
 async def get_states_from_api(country_name: str):
     
     # fetch isoCode --> country code   
-    countries_url = "https://apiauth.datacollect.equalyz.ai/api/v1/user/auth/country"
+    countries_url = f"{BASE_URL}/user/auth/country"
     country_code = None
     
     try:
@@ -52,37 +108,45 @@ async def get_states_from_api(country_name: str):
                 if not country_code:
                     return get_fallback_states(country_name)
                 
-                states_url = f"https://apiauth.datacollect.equalyz.ai/api/v1/user/auth/state?countryCode={country_code}"
+                states_url = f"{BASE_URL}/user/auth/state?countryCode={country_code}"
                 
                 async with session.get(states_url) as states_response:
                     if states_response.status == 200:
                         states_data = await states_response.json()
                         
                         if states_data.get("data"):
-                            states = []
-                            for state in states_data["data"]:
-                                state_name = state.get("name")
-                                if state_name:
-                                    states.append(state_name)
-                    
-                            return states if states else ["Other"]
+                            states = [StateModel.model_validate(i) for i in states_data.get("data")]
+                            return states
                         else:
-                        
-                            return ["Other"]
+                            return []
                     else:
                     
                         return get_fallback_states(country_name)
                         
     except Exception as e:
     
-        return get_fallback_states(country_name)
+        return get_fallback_states(country_name) 
     
 
-async def get_languages_from_api():
+async def get_region_from_api(country_code: str, state_code: str):
+    async with aiohttp.ClientSession() as session:
 
-    company_id = "67ffa9f7247f6d8ea50939c9"  # default on EqualyzCrowd -- change later 
-    url = f"https://apiauth.datacollect.equalyz.ai/api/v1/user/auth/language?company_id={company_id}"
-    
+        states_url = f"{BASE_URL}/user/auth/city?countryCode={country_code}&stateCode={state_code}"
+        
+        async with session.get(states_url) as states_response:
+            if states_response.status == 200:
+                states_data = await states_response.json()
+                
+                if states_data.get("data"):
+                    return [i['name'] for i in states_data["data"]]
+                else:
+                
+                    return ["Other"]
+                
+async def get_languages_from_api(company_id):
+
+    url = f"{BASE_URL}/user/auth/language?company_id={company_id}"
+    empty = {}
     try:
         
         async with aiohttp.ClientSession() as session:
@@ -90,21 +154,9 @@ async def get_languages_from_api():
                 
                 if response.status == 200:
                     data = await response.json()
-                    
-                    if data.get("data"):
-                        languages = []
-                        for lang in data["data"]:
-                            lang_name = lang.get("name")
-                            lang_id = lang.get("_id") or lang.get("id")
-                            if lang_name:
-                                languages.append({
-                                    "name": lang_name,
-                                    "id": lang_id
-                                })
-                        
-                        return languages
-                    else:
-                        return get_fallback_languages()
+                    return LanguageResponseModel(message=data['message'],
+                                          data = data['data'])
+                    # return LanguageResponseModel.model_validate(data)
                         
                 else:
                     return get_fallback_languages()
@@ -113,65 +165,7 @@ async def get_languages_from_api():
         print(f"❌ Error fetching languages: {e}")
         return get_fallback_languages()
 
-
-
-async def get_dialects_from_api(language_name: str):
-    try:
-        print(f" Fetching dialects for {language_name}...")
-
-        languages = await get_languages_from_api()
-        language_id = None
-        
-        for lang in languages:
-            if lang["name"].lower() == language_name.lower():
-                language_id = lang["id"]
-                break
-        
-        if not language_id:
-            return ["Not listed here"]
-        
-        url = "https://apiauth.datacollect.equalyz.ai/api/v1/user/auth/dialect_list"
-        payload = {"language_ids": [language_id]}  # Pass as list
-        
-        async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=payload) as response:
-                print(f"📊 API Response Status: {response.status}")
-                
-                if response.status == 200:
-                    data = await response.json()
-                    
-                    if data.get("data"):
-                        # Find dialects for our specific language
-                        for lang in data["data"]:
-                            if lang.get("name") == language_name:
-                                dialects = lang.get("dialects", [])
-                                if not dialects:
-                                    dialects = ["Not listed here"]
-                                else:
-                                    if "Not listed here" not in dialects:
-                                        dialects.append("Not listed here")
-                               
-                                return dialects
-                        
-                    
-                        return ["Not listed here"]
-                    else:
-                        return ["Not listed here"]
-                else:
-                    error_text = await response.text()
-                    return ["Not listed here"]
-                    
-    except Exception as e:
-        print(f"❌ Error fetching dialects for {language_name}: {e}")
-        return ["Not listed here"]
-
-#Helper
-async def get_language_names():
-    languages_data = await get_languages_from_api()
-    return [lang["name"] for lang in languages_data]
-
-
-def get_fallback_languages():
+def get_fallback_languages():   
 
     print("📋 Using fallback languages list")
     return [
@@ -187,7 +181,6 @@ def get_fallback_languages():
         {"name": "Swahili", "id": "swahili"},
         {"name": "Yoruba", "id": "yoruba"}
     ]
-
 
 
 def get_fallback_states(country_name: str):

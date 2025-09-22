@@ -1,17 +1,22 @@
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.filters import Command
 from sqlalchemy.orm import sessionmaker
 from src.database.models import Agent 
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 
-from src.responses.auth_response import LOGIN_MSG, ONBOARDING_MSG, EMAIL_MSG, PHONE_MSG, PASSWORD_MSG
+from src.handlers.auth_handlers.auth_handlers import route_user, user_signup, user_verify_otp
+from src.handlers.onboarding_handlers.onboarding import get_company_id, get_full_user_data
+from src.models.auth_models import UserData, UserRegisterRequest
+from src.routes.onboarding_routes.onboarding import get_country
+from src.responses.auth_response import EXIT, LOGIN_MSG, LOGOUT, ONBOARDING_MSG, EMAIL_MSG, PHONE_MSG, PASSWORD_MSG
 from src.responses.onboarding_response import TUTORIAL_MSG, USER_TYPE_MSG
-from src.services.server.auth import user_login
-from src.utils.auth_utils import validate_email, validate_phone_format, format_phone
+from src.services.server.auth import register_user, user_login
+from src.utils.auth_utils import validate_email, validate_password, validate_phone_format, format_phone
 from src.states.authentication import Authentication
 from src.states.onboarding import Onboarding, Tutorial
-from src.keyboards.auth import company_kb
-from src.keyboards.inline import yes_no_inline_keyboard, create_account_inline_keyboard, tutorial_choice_kb
+from src.keyboards.auth_keyboard import company_kb
+from src.keyboards.inline import yes_no_inline_keyboard, set_signup_type_inline, tutorial_choice_kb
 from src.utils.password import hash_password, verify_password 
 import re
 import logging
@@ -19,6 +24,45 @@ import logging
 router = Router()
 
 logger = logging.getLogger(__name__)
+
+@router.message(Command("login"))
+async def handle_login_identifier(message: Message, state: FSMContext):
+    full_user_data = await get_full_user_data(state)
+    if full_user_data:
+        await route_user(full_user_data = full_user_data, message=message,
+                         state=state)
+        return
+    
+    await message.answer(LOGIN_MSG["welcome_back"], reply_markup=set_signup_type_inline)
+    await state.set_state(Authentication.set_login_type)
+
+# Handler: Are you part of organization?
+@router.callback_query(Authentication.set_login_type, F.data.in_(["email", "phone_number"]))
+async def handle_organization_callback(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    
+    if callback.data == "email":
+        await callback.message.answer(LOGIN_MSG["enter_email"])
+        await state.set_state(Authentication.login_email)
+    elif callback.data == "phone_number":
+        await callback.message.answer(LOGIN_MSG["enter_phone"])
+        await state.set_state(Authentication.login_phone)
+
+@router.message(Command("logout"))
+async def handle_login_identifier(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer(LOGOUT['logout'])
+
+@router.message(Command("exit"))
+async def handle_login_identifier(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer(EXIT['exit'])
+
+@router.message(Command("signup"))
+async def handle_login_identifier(message: Message, state: FSMContext):
+    await message.answer("Ok, Let's beggin your onboarding !")
+    await message.answer(ONBOARDING_MSG["organization"],reply_markup=yes_no_inline_keyboard())
+    await state.set_state(Authentication.organization_check)
 
 #chose user type
 @router.callback_query(Authentication.collector_check, F.data.in_(["registered_yes", "new_user"]))
@@ -35,7 +79,6 @@ async def handle_user_type_choice(callback: CallbackQuery, state: FSMContext):
         await callback.message.answer(TUTORIAL_MSG["intro"], reply_markup=tutorial_choice_kb())
         await state.set_state(Tutorial.ready_to_start)
 
-
 # Handler: Login - Email/Phone input
 @router.message(Authentication.login_email)
 async def handle_login_identifier(message: Message, state: FSMContext):
@@ -51,13 +94,18 @@ async def handle_login_password(message: Message, state: FSMContext):
     user_data = await state.get_data()
     identifier = user_data.get('login_identifier')
     
-    response = user_login(identifier, password)
+    response = await user_login(identifier, password)
 
-    if not response:
+    if not response['success']:
         await message.answer(LOGIN_MSG["fail"])
+        await state.clear()
+        return
 
-    await message.answer(LOGIN_MSG["success"].format(name=response.data.name if response else "User"))
-    await state.set_data({"user_data":response.data.model_dump()})
+    await message.answer(LOGIN_MSG["success"].format(name=response['base_info'].name if response else "User"))
+    await state.clear()
+    await state.set_data({"user_data":response['base_info'].model_dump()})
+    await route_user(full_user_data = UserData.model_validate(response['base_info']), 
+                     message = message, state = state)
     
 
 # Failed login
@@ -80,10 +128,11 @@ async def handle_login_failure_choice(callback: CallbackQuery, state: FSMContext
 @router.callback_query(Authentication.organization_check, F.data.in_(["org_yes", "org_no"]))
 async def handle_organization_callback(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
-       
+    
     if callback.data == "org_yes":
         await state.update_data(has_organization="Yes")
-        await callback.message.answer(ONBOARDING_MSG["org_selection"],reply_markup=company_kb())
+        keyboard = await company_kb()
+        await callback.message.answer(ONBOARDING_MSG["org_selection"], reply_markup=keyboard)
         await state.set_state(Authentication.company_selection)
     else:
         await state.update_data(has_organization="No", company="Individual")
@@ -103,8 +152,20 @@ async def handle_company_selection(message: Message, state: FSMContext):
 async def handle_name_input(message: Message, state: FSMContext):
     name = message.text.strip()
     await state.update_data(auth_name=name)
-    await message.answer(EMAIL_MSG["prompt"])
-    await state.set_state(Authentication.email_input)
+    await message.answer(ONBOARDING_MSG["set_signup_type"], reply_markup=set_signup_type_inline)
+    await state.set_state(Authentication.set_signup_type)
+
+# Handler: Are you part of organization?
+@router.callback_query(Authentication.set_signup_type, F.data.in_(["email", "phone_number"]))
+async def handle_organization_callback(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    
+    if callback.data == "email":
+        await callback.message.answer(EMAIL_MSG["prompt"])
+        await state.set_state(Authentication.email_input)
+    elif callback.data == "phone_number":
+        await callback.message.answer(PHONE_MSG["prompt"])
+        await state.set_state(Authentication.phone_input)
 
 # Handler: Email input
 @router.message(Authentication.email_input)
@@ -116,8 +177,8 @@ async def handle_email_input(message: Message, state: FSMContext):
         return 
     await state.update_data(email=email)
     
-    await message.answer(PHONE_MSG["prompt"])
-    await state.set_state(Authentication.phone_input)
+    await message.answer(PASSWORD_MSG["prompt"])
+    await state.set_state(Authentication.password_input)
 
 # Handler: Phone input
 @router.message(Authentication.phone_input)
@@ -139,9 +200,11 @@ async def handle_phone_input(message: Message, state: FSMContext):
 async def handle_password_input(message: Message, state: FSMContext):
     password = message.text.strip()
 
-    if len(password) < 8 or not re.search(r"[A-Za-z]", password) or not re.search(r"\d", password):
-        await message.answer(PASSWORD_MSG["weak"])
-        return  
+    valid, errors = validate_password(password)
+
+    if not valid:
+        await message.answer(PASSWORD_MSG["weak"].format(problems=" \n".join(errors)))
+        return
     
     await state.update_data(password=password)
     await message.answer(PASSWORD_MSG["confirm"])
@@ -150,23 +213,38 @@ async def handle_password_input(message: Message, state: FSMContext):
 
 @router.message(Authentication.confirm_password)
 async def handle_confirm_password(message: Message, state: FSMContext):
-    print(f"🔍 [DEBUG] Confirm password handler appelé")
+    logger.info(f"🔍 [DEBUG] Confirm password handler appelé")
     
     confirm_password = message.text.strip()
     user_data = await state.get_data()
     if confirm_password != user_data.get('password'):
         await message.answer(PASSWORD_MSG["mismatch"])
         return
-    hashed_password = hash_password(confirm_password)
-    await state.update_data(password_hash=hashed_password)
-    
-    # Passwords match - create account
-    await message.answer(ONBOARDING_MSG["account_created"])
-    await state.set_state(Onboarding.location)
-    print(f"🔍 [DEBUG] État changé vers Onboarding.location")
 
-    from src.routes.onboarding_routes.onboarding import get_country
-    await get_country(message, state)
-
+    response = await user_signup(user_data)    
     
-   
+    if response['success']:
+        await message.answer(ONBOARDING_MSG["account_created"])
+        await state.set_state(Authentication.otp_step)
+    elif not response['success']:
+        await message.answer(ONBOARDING_MSG['error_occured'].format(error=response['error']))
+
+@router.message(Authentication.otp_step)
+async def handle_confirm_password(message: Message, state: FSMContext):
+    otp = message.text.strip()
+    user_data = await state.get_data()
+
+    output = await user_verify_otp(user_data=user_data, inputed_otp=otp)
+
+    if output['success']:
+        await state.clear()
+        await state.set_data({"user_data":output["base_info"].model_dump()})
+        
+        await message.answer(ONBOARDING_MSG["right_otp"])
+        await state.set_state(Onboarding.location)
+        await get_country(message, state)
+    else :
+        await message.answer(ONBOARDING_MSG["wrong_otp"])
+        
+    logger.info(f"🔍 [DEBUG] État changé vers Onboarding.location")
+    

@@ -20,7 +20,7 @@ TUTORIAL_MSG = {
     "skip_ready": ("Have you finished watching all the videos?\\nStart quiz now?"),
     
     
-    "video_not_found": ("⚠️ Video file not found.")
+    "video_not_found": ("⚠️ Video file not found."),
 }
 
 # ---------------- USER TYPE ----------------
@@ -42,6 +42,11 @@ LOCATION_MSG = {
         "🏘️ What state/region do you live in within {country}?\n\n"
         "Please select your state of residence:"
     ),
+
+    "lga_prompt": (
+        "🏘️ What lga do you live in within {state}?\n\n"
+        "Please select your Local Goverment:"
+    ),
     
     "state_selected": ("State of residence: {state}"),
     
@@ -49,7 +54,11 @@ LOCATION_MSG = {
     
     "state_unavailable": ("State of residence: {country} (No states available)"),
     
-    "pagination": ("...")
+    "pagination": ("..."),
+
+    "select_country": ("Please select a valid country from the list."),
+
+    "select_state": ("Please select a valid state for {selected_country}:"),
 }
 
 # ---------------- PERSONAL INFO ----------------
@@ -65,7 +74,12 @@ PERSONAL_MSG = {
     
     "education_invalid": ("Please select a valid education level from the options provided."),
     
-    "industry": ("💼 What field do you work in?")
+    "industry": ("💼 What field do you work in?"),
+
+    "education_level_selected": ("✅ Education level selected: {level}"),
+    
+    "Field": "💼 What field do you work in?"
+    
 }
 
 # ---------------- LANGUAGES ----------------
@@ -73,9 +87,16 @@ LANGUAGE_MSG = {
     "selection_prompt": (
         "🗣️ Which languages do you speak fluently?\n\n"
         "Select up to 2 languages. Click each language to select/deselect."
+    ), 
+
+    "selection_another": (
+        "🗣️ Select another language you speak fluently\n\n"
+        "Click another language to select/deselect it \n\n"
+        "Click ✅ Done to continue"
     ),  
-    
-    "max_reached": ("❌ You can only select up to 2 languages."),
+
+    "max_reached": ("❌ You can only select up to 2 languages.\n\n"
+                    "Click ✅ Done to continue or Deselect a previously selected language"),
     
     "added": ("Added: {language}"),
     
@@ -90,12 +111,12 @@ LANGUAGE_MSG = {
         "✅ Two languages selected: {languages}. Proceeding to the next step!"
     ),
     
-    "selection_confirmed": ("✅ Selection confirmed!")
+    "selection_confirmed": ("✅ Language Selection Complete")
 }
 
 # ---------------- DIALECTS ----------------
 DIALECT_MSG = {
-    "selection_prompt": ("🗣️ Select the type of **{language}** you speak in your hometown:"),
+    "selection_prompt": ("🗣️ Select the type of <b>{language}</b> you speak in your hometown:"),
     
     "manual_entry": ("Write your hometown language below:"),
     
@@ -157,3 +178,8 @@ COMPLETION_MSG = {
     
    
 }
+
+QUIZ_MSG = {
+    "quiz_skip": ("⏭️ Quiz skipped!"),
+    
+    "begin_quiz": ("✅ Great! Let's begin the short quiz.")}
