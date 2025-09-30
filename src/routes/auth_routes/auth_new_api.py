@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 async def handle_start(message: Message, state: FSMContext):
     """Send welcome message and prompt login/signup"""
     await message.answer(WELCOME_MESSAGE)
-    await message.answer(LOGIN_MSG["welcome_back"], reply_markup=set_signup_type_inline)
+    await message.answer(LOGIN_MSG["login"], reply_markup=set_signup_type_inline)
     await state.set_state(Authentication.set_login_type)
 
 
@@ -40,15 +40,14 @@ async def handle_exit(message: Message, state: FSMContext):
     await message.answer(EXIT["exit"])
 
 
-@router.callback_query(Authentication.set_login_type, F.data.in_(["email", "phone_number"]))
+@router.callback_query(Authentication.set_login_type, F.data.in_(["email"]))
 async def handle_login_type(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
-    if callback.data == "email":
-        await callback.message.answer(LOGIN_MSG["enter_email"])
-        await state.set_state(Authentication.login_email)
-    elif callback.data == "phone_number":
-        await callback.message.answer(LOGIN_MSG["enter_phone"])
-        await state.set_state(Authentication.login_phone)
+    await callback.message.answer(LOGIN_MSG["enter_email"])
+    await state.set_state(Authentication.login_email)
+    # elif callback.data == "phone_number":
+    #     await callback.message.answer(LOGIN_MSG["enter_phone"])
+    #     await state.set_state(Authentication.login_phone)
 
 
 @router.message(Authentication.login_email)

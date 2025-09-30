@@ -1,13 +1,13 @@
 # ---------------- LOGIN ----------------
 LOGIN_MSG = {
-    "welcome_back":(
-            "🎉 Welcome back!\n\n"
-            "Please select your login type"
+    "login":(
+            # "🎉 Welcome back!\n\n"
+            "Please select email to login:"
     ),
 
 
     "enter_email": ("🔄 Please enter your email"),
-    "enter_phone": "🔄 Please enter your phone number",
+    # "enter_phone": "🔄 Please enter your phone number",
 
     "success": (
         "✅ Login successful!\n\n🎉 Welcome back to {name}\n\n"
@@ -16,7 +16,7 @@ LOGIN_MSG = {
     "fail": (
         "❌ Login failed! Please check your credentials and try again.\n\n"
     ),
-    "login": "Please enter your email or phone number to login:"
+    "login": "Please enter your email to login:"
 
 
 }
