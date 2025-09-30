@@ -5,12 +5,12 @@ from aiogram.fsm.context import FSMContext
 import logging
 
 from src.handlers.auth_handlers.auth_handlers import route_user, user_signup, user_verify_otp
-from src.handlers.onboarding_handlers.onboarding import get_full_user_data, get_country
+
 from src.models.auth_models import UserData
 from src.responses.auth_response import EXIT, LOGIN_MSG, LOGOUT, ONBOARDING_MSG, EMAIL_MSG, PHONE_MSG, PASSWORD_MSG
+from src.responses.onboarding_response import WELCOME_MESSAGE
 from src.responses.onboarding_response import TUTORIAL_MSG
 from src.services.server.auth import user_login
-from src.utils.auth_utils import validate_email, validate_password, validate_phone_format, format_phone
 from src.states.authentication import Authentication
 from src.states.onboarding import Onboarding, Tutorial
 from src.keyboards.inline import yes_no_inline_keyboard, set_signup_type_inline, tutorial_choice_kb
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 @router.message(Command("start"))
 async def handle_start(message: Message, state: FSMContext):
     """Send welcome message and prompt login/signup"""
-    await message.answer("👋 Welcomme to Equalyz Crowd!\n\nWe're building the future of AI by collecting multilingual data across Africa.\n\nAs a contributor/agent, you'll help train AI models and earn money for quality work.\n\nLet's begin! 🚀.\n\nPlease log in to continue.")
+    await message.answer(WELCOME_MESSAGE)
     await message.answer(LOGIN_MSG["welcome_back"], reply_markup=set_signup_type_inline)
     await state.set_state(Authentication.set_login_type)
 
