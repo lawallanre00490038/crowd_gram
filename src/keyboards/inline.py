@@ -72,7 +72,7 @@ ready_kb = InlineKeyboardMarkup(
 set_signup_type_inline = InlineKeyboardMarkup(
             inline_keyboard=[
                 [InlineKeyboardButton(text="Email", callback_data="email")],
-                [InlineKeyboardButton(text="Phone Number", callback_data="phone_number")]
+                # [InlineKeyboardButton(text="Phone Number", callback_data="phone_number")]
             ]
         )
 
