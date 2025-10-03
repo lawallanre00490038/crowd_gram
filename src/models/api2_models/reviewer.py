@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 from typing import Dict, List, Optional
 from datetime import datetime
 from src.models.api2_models.task import TaskDetailResponseModel
@@ -17,9 +17,9 @@ class UploadReviewModel(BaseModel):
     )
     
 
-class ReviewScores(BaseModel):
-    __root__: Dict[str, int]  # Dynamic keys with integer values
-    
+class ReviewScores(RootModel[Dict[str, int]]):
+    pass
+
 
 class ReviewModel(BaseModel):
     submission_id: str
@@ -67,5 +67,5 @@ class ReviewerHistoryResponseModel(BaseModel):
     status: str
     reviewed_at: Optional[datetime] = None
 
-class ReviewerHistoryResponseListModel(BaseModel):
-    __root__: List[ReviewerHistoryResponseModel]
+class ReviewerHistoryResponseListModel(RootModel[List[ReviewerHistoryResponseModel]]):
+    pass

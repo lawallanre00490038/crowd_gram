@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 from typing import List, Optional, Union
 from datetime import datetime
 
@@ -43,13 +43,13 @@ class SubmissionResponseModel(BaseModel):
     created_at: datetime = Field(..., description="Timestamp when the submission was created")
     updated_at: datetime = Field(..., description="Timestamp when the submission was last updated")
     prompt: PromptModel = Field(..., description="Associated prompt details")
-    
-    
-class SubmissionListResponseModel(BaseModel):
+
+
+class SubmissionListResponseModel(RootModel[List[SubmissionResponseModel]]):
     """Model representing a list of submissions."""
-    __root__: List[SubmissionResponseModel]
-    
-    
+    pass
+
+
 class SubmissionFilterModel(BaseModel):
     """Model for filtering submissions."""
     project_id: Optional[str] = Field(None, description="Filter by project ID")

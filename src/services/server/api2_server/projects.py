@@ -25,7 +25,7 @@ async def get_projects(project_data: dict) -> Optional[Project]:
                 project_result = await response.json()
                 
                 if response.status == 200:
-                    return Project.model_validate(project_result['data'])
+                    return Project.model_validate(project_result)
                 else:
                     logger.error(f"Failed to fetch project: {project_result.get('message', 'Unknown error')}")
                     return None
@@ -47,7 +47,7 @@ async def get_all_projects() -> Optional[ProjectListResponseModel]:
                 projects_result = await response.json()
                 
                 if response.status == 200:
-                    return ProjectListResponseModel.model_validate(projects_result['data'])
+                    return ProjectListResponseModel.model_validate(projects_result)
                 else:
                     logger.error(f"Failed to fetch projects: {projects_result.get('message', 'Unknown error')}")
                     return None
@@ -73,7 +73,7 @@ async def update_project(project_data: ProjectUpdateModel) -> Optional[Project]:
                 update_result = await response.json()
                 
                 if response.status == 200:
-                    return Project.model_validate(update_result['data'])
+                    return Project.model_validate(update_result)
                 else:
                     logger.error(f"Failed to update project: {update_result.get('message', 'Unknown error')}")
                     return None
@@ -99,7 +99,7 @@ async def get_agent_project_assigned_tasks(project_data: ContributorProjectTaskR
                 tasks_result = await response.json()
 
                 if response.status == 200:
-                    return ProjectTaskAllocationResponseModel.model_validate(tasks_result['data'])
+                    return ProjectTaskAllocationResponseModel.model_validate(tasks_result)
                 else:
                     logger.error(f"Failed to fetch assigned tasks: {tasks_result.get('message', 'Unknown error')}")
                     return None
@@ -151,7 +151,7 @@ async def get_agent_project_task_details(project_data: ContributorProjectTaskReq
                 tasks_result = await response.json()
 
                 if response.status == 200:
-                    return ProjectTaskDetailsResponseModel.model_validate(tasks_result['data'])
+                    return ProjectTaskDetailsResponseModel.model_validate(tasks_result)
                 else:
                     logger.error(f"Failed to fetch project task details: {tasks_result.get('message', 'Unknown error')}")
                     return None
@@ -177,10 +177,59 @@ async def get_reviewer_project_task_details(project_data: ReviewerProjectAssigne
                 tasks_result = await response.json()
 
                 if response.status == 200:
-                    return ReviewerProjectAssignedTasksResponseModel.model_validate(tasks_result['data'])
+                    return ReviewerProjectAssignedTasksResponseModel.model_validate(tasks_result)
                 else:
                     logger.error(f"Failed to fetch reviewer project task details: {tasks_result.get('message', 'Unknown error')}")
                     return None
     except Exception as e:
         logger.error(f"Exception during fetching reviewer project task details: {str(e)}")
         return None
+    
+
+async def get_projects_details_by_user_email(user_email: str) -> Optional[ProjectListResponseModel]:
+    """Fetch projects associated with a specific user email.
+
+    Args:
+        user_email (str): The user's email address.
+
+    Returns:
+        Optional[ProjectListResponseModel]: The list of projects or None if an error occurs.
+    """
+    url = f"{BASE_URL_V2}/project/projects/by-email/{user_email}"
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                projects_result = await response.json()
+
+                if response.status == 200:
+                    return ProjectListResponseModel.model_validate(projects_result)
+                else:
+                    logger.error(f"Failed to fetch projects by user email: {projects_result.get('message', 'Unknown error')}")
+                    return None
+    except Exception as e:
+        logger.error(f"Exception during fetching projects by user email: {str(e)}")
+        return None
+    
+
+
+async def get_projects_names(user_email: str) -> list[str]:
+    """Fetch all project names by calling get_projects_details_by_user_email method.
+    
+    Args:
+        user_email (str): The user's email address.
+
+    Returns:
+        Optional[list[str]]: A list of project names, or None if an error occurs.
+    """
+
+    try:
+        projects = await get_projects_details_by_user_email(user_email)
+        
+        if projects:
+            return [project.name for project in projects.root]
+        else:
+            return []
+    except Exception as e:
+        logger.error(f"Exception during fetching project names: {str(e)}")
+        return []

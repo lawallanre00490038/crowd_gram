@@ -4,17 +4,15 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 import logging
 
-from src.handlers.auth_handlers.auth_handlers import route_user, user_signup, user_verify_otp
 
-from src.models.auth_models import UserData
-from src.responses.auth_response import EXIT, LOGIN_MSG, LOGOUT, ONBOARDING_MSG, EMAIL_MSG, PHONE_MSG, PASSWORD_MSG
+from src.responses.auth_response import EXIT, LOGIN_MSG, LOGOUT
 from src.responses.onboarding_response import WELCOME_MESSAGE
-from src.responses.onboarding_response import TUTORIAL_MSG
-from src.services.server.auth import user_login
+from src.services.server.api2_server.auth import user_login
+from src.services.server.api2_server.projects import get_projects_names
+from src.models.api2_models.telegram import LoginModel
 from src.states.authentication import Authentication
-from src.states.onboarding import Onboarding, Tutorial
-from src.keyboards.inline import yes_no_inline_keyboard, set_signup_type_inline, tutorial_choice_kb
-from src.keyboards.auth_keyboard import company_kb
+from src.keyboards.inline import project_selection_kb, new_api_login_type_inline
+
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -24,7 +22,7 @@ logger = logging.getLogger(__name__)
 async def handle_start(message: Message, state: FSMContext):
     """Send welcome message and prompt login/signup"""
     await message.answer(WELCOME_MESSAGE)
-    await message.answer(LOGIN_MSG["welcome_back"], reply_markup=set_signup_type_inline)
+    await message.answer(LOGIN_MSG["welcome_back"], reply_markup=new_api_login_type_inline)
     await state.set_state(Authentication.set_login_type)
 
 
@@ -40,71 +38,49 @@ async def handle_exit(message: Message, state: FSMContext):
     await message.answer(EXIT["exit"])
 
 
-@router.callback_query(Authentication.set_login_type, F.data.in_(["email", "phone_number"]))
+@router.callback_query(Authentication.set_login_type, F.data.in_(["login", "register"]))
 async def handle_login_type(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
-    if callback.data == "email":
+    if callback.data == "login":
         await callback.message.answer(LOGIN_MSG["enter_email"])
-        await state.set_state(Authentication.login_email)
-    elif callback.data == "phone_number":
-        await callback.message.answer(LOGIN_MSG["enter_phone"])
-        await state.set_state(Authentication.login_phone)
+        await state.set_state(Authentication.api_login_email)
+    elif callback.data == "register":
+        await callback.message.answer(LOGIN_MSG["register"])
+        await state.set_state(Authentication.api_register_type)
 
 
-@router.message(Authentication.login_email)
+@router.message(Authentication.api_login_email)
 async def handle_login_email(message: Message, state: FSMContext):
     email = message.text.strip()
     await state.update_data(login_identifier=email)
     await message.answer("🔒 Please enter your password:")
-    await state.set_state(Authentication.login_password)
+    await state.set_state(Authentication.api_login_password)
 
 
-@router.message(Authentication.login_password)
+@router.message(Authentication.api_login_password)
 async def handle_login_password(message: Message, state: FSMContext):
     password = message.text.strip()
     user_data = await state.get_data()
     email = user_data.get("login_identifier")
 
-    response = await user_login(email, password)
+    user_input = LoginModel(email=email, password=password)
+    response = await user_login(user_data=user_input)
 
     if not response.get("success"):
         await message.answer(LOGIN_MSG["fail"])
         await state.clear()
         return
 
-    # Friendly login success message
-    await message.answer(
-        f"{response['message']}\n\n"
-        f"Role: {response['user_role']}\n"
-        f"Languages: {', '.join(response['user_languages'])}\n"
-        f"Dialects: {', '.join(response['user_dialects'])}"
-    )
+    name = getattr(response['base_info'], 'name', 'User')
+    await message.answer(LOGIN_MSG["success_2"].format(name=name))
+    projects_list = await get_projects_names(user_email=email)
 
-    # Save data + route to tasks
+    # Save data
     await state.clear()
-    await state.set_data({"user_data": response})
-    await route_user(
-        full_user_data=UserData.model_validate(response),
-        message=message,
-        state=state,
-    )
-
-
-@router.message(Command("signup"))
-async def handle_signup(message: Message, state: FSMContext):
-    await message.answer("Ok, Let's begin your onboarding !")
-    await message.answer(ONBOARDING_MSG["organization"], reply_markup=yes_no_inline_keyboard())
-    await state.set_state(Authentication.organization_check)
-
-
-@router.callback_query(Authentication.collector_check, F.data.in_(["registered_yes", "new_user"]))
-async def handle_user_type_choice(callback: CallbackQuery, state: FSMContext):
-    await callback.answer()
-    if callback.data == "registered_yes":
-        await callback.message.answer(LOGIN_MSG["welcome_back"])
-        await state.set_state(Authentication.login_email)
-    elif callback.data == "new_user":
-        await callback.message.answer(ONBOARDING_MSG["welcome"])
-        await callback.message.answer(TUTORIAL_MSG["intro"], reply_markup=tutorial_choice_kb())
-        await state.set_state(Tutorial.ready_to_start)
+    await state.set_data({"user_data": response['base_info'].dict()})
+    await state.set_data({"projects_list": projects_list})
+    await message.answer("Select Your Project", reply_markup=project_selection_kb(projects_list))
+    
+    
+    
 

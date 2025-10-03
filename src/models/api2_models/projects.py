@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 from typing import List, Optional
 from datetime import datetime
 from src.models.api2_models.task import TaskAllocation, TaskDetailResponseModel
@@ -11,12 +11,12 @@ class Project(BaseModel):
     description: str
     per_user_quota: int = Field(..., ge=0)
     reuse_count: int = Field(..., ge=0)
-    agent_coin: int = Field(..., ge=0)
-    reviewer_coin: int = Field(..., ge=0)
-    super_reviewer_coin: int = Field(..., ge=0)
-    agent_amount: int = Field(..., ge=0)
-    reviewer_amount: int = Field(..., ge=0)
-    super_reviewer_amount: int = Field(..., ge=0)
+    agent_coin: float = Field(..., ge=0)
+    reviewer_coin: float = Field(..., ge=0)
+    super_reviewer_coin: float = Field(..., ge=0)
+    agent_amount: float = Field(..., ge=0)
+    reviewer_amount: float = Field(..., ge=0)
+    super_reviewer_amount: float = Field(..., ge=0)
     is_public: bool
     review_parameters: List[str]
     review_scale: int = Field(..., ge=1)
@@ -27,18 +27,18 @@ class Project(BaseModel):
     created_at: datetime
     updated_at: datetime
     
-    
-class ProjectListResponseModel(BaseModel):
-    data: List[Project]
+
+class ProjectListResponseModel(RootModel[List[Project]]):
+    pass
     
 
 class ProjectUpdateModel(BaseModel):
     name: str
     description: str
     is_public: bool
-    agent_coin: int = Field(..., ge=0)
-    reviewer_coin: int = Field(..., ge=0)
-    
+    agent_coin: float = Field(..., ge=0)
+    reviewer_coin: float = Field(..., ge=0)
+
 
 class ContributorProjectTaskRequestModel(BaseModel):
     project_id: str

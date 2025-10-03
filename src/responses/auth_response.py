@@ -8,9 +8,15 @@ LOGIN_MSG = {
 
     "enter_email": ("🔄 Please enter your email"),
     "enter_phone": "🔄 Please enter your phone number",
+    "register": "To register, please enter your name",
 
     "success": (
         "✅ Login successful!\n\n🎉 Welcome back to {name}\n\n"
+        "You can now access your tasks and continue earning."
+    ),
+
+    "success_2": (
+        "✅ Login successful!\n\n🎉 Welcome back,  {name}\n\n"
         "You can now access your tasks and continue earning."
     ),
     "fail": (
