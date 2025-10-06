@@ -30,5 +30,6 @@ class Authentication(StatesGroup):
     # New States for API v2
     api_login_type = State()
     api_login_email = State()
-    api_login_password = State()         
+    api_login_password = State()
+    user_projects = State()
     api_register_type = State()      

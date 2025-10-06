@@ -1,5 +1,4 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.types import Message, CallbackQuery
 from src.data.video_tutorials import tutorial_videos
 
 
@@ -27,6 +26,7 @@ def project_selection_kb(projects: list[str]):
     return InlineKeyboardMarkup(
         inline_keyboard=[[InlineKeyboardButton(text=proj, callback_data= f"proj_{i}")] for i, proj in enumerate(projects)]
     )
+
 
 def tutorial_choice_kb():
     return InlineKeyboardMarkup(
