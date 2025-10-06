@@ -1,5 +1,4 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.types import Message, CallbackQuery
 from src.data.video_tutorials import tutorial_videos
 
 
@@ -11,9 +10,21 @@ def task_inline_keyboard():
         ]
     )
 
+def start_task_inline_kb():
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Start Task", callback_data="start_task")]
+        ]
+    )
+
 def quiz_options_kb(options: list[str]):
     return InlineKeyboardMarkup(
         inline_keyboard=[[InlineKeyboardButton(text=opt, callback_data=f"opt_{i}")] for i, opt in enumerate(options)]
+    )
+
+def project_selection_kb(projects: list[str]):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text=proj, callback_data= f"proj_{i}")] for i, proj in enumerate(projects)]
     )
 
 
@@ -61,7 +72,14 @@ ready_kb = InlineKeyboardMarkup(
 set_signup_type_inline = InlineKeyboardMarkup(
             inline_keyboard=[
                 [InlineKeyboardButton(text="Email", callback_data="email")],
-                [InlineKeyboardButton(text="Phone Number", callback_data="phone_number")]
+                # [InlineKeyboardButton(text="Phone Number", callback_data="phone_number")]
+            ]
+        )
+
+new_api_login_type_inline = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="Login", callback_data="login")],
+                [InlineKeyboardButton(text="Register", callback_data="register")]
             ]
         )
 

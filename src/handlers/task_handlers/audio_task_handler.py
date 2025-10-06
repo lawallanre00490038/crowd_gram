@@ -15,7 +15,7 @@ from src.responses.task_formaters import (TEXT_TASK_PROMPT, SELECT_TASK_TO_PERFO
 from src.utils.downloader import download_telegram
 from src.constant.auth_constants import TOKEN_LOCATION
 from src.states.tasks import AudioTaskSubmission
-from src.states.test_knowledge import TestKnowledge
+# from src.states.test_knowledge import TestKnowledge
 from typing import List
 
 

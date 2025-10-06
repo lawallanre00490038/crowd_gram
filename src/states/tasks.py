@@ -26,3 +26,5 @@ class ImageTaskSubmission(StatesGroup):
 
 class VideoTaskSubmission(StatesGroup):
     waiting_for_video = State()
+
+

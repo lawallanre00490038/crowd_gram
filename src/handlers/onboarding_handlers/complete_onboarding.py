@@ -7,6 +7,7 @@ from src.services.server.auth import complete_user_profile
 
 async def complete_profile(user_data: Dict) -> CompleteProfileResponseDict:
     # Convert answers into TaskAnswerItem list
+    print(user_data)
     task_answer = [
         TaskAnswerItem(
             category_id=answer.get("category_id"),

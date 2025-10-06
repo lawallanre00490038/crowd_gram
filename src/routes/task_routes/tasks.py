@@ -21,6 +21,7 @@ from src.responses.task_formaters import (IMAGE_TASK_PROMPT, TEXT_TASK_PROMPT, S
 
 from src.services.quality_assurance.text_validation import validate_text_input
 from src.services.quality_assurance.image_validation import validate_image_input
+from src.services.quality_assurance.video_validation import validate_video_input
 from src.services.quality_assurance.audio_parameter_check import check_audio_parameter, TaskParameterModel
 from src.services.quality_assurance.audio_quality_check import check_audio_quality
 from src.services.task_distributor import assign_task, get_full_task_detail, Task
@@ -235,7 +236,7 @@ async def handle_image_input(message: Message, state: FSMContext):
     
     # Download the image to a temporary file
     local_path = await download_telegram(image_file.file_id, bot=message.bot)
-    # Continue with validation
+    # Continue with valirrdation
     result = validate_image_input(local_path)
 
     if result["success"]:
@@ -255,34 +256,28 @@ async def handle_video_input(message: Message, state: FSMContext):
     # print(message)
     # If sent as a photo (Telegram auto-compressed image)
     if message.video:
-        video_file = message.video  # Highest resolution
+        image_file = message.video[-1]  # Highest resolution
 
     # If sent as a document with mime type = image/*
     elif message.document and message.document.mime_type.startswith("video/"):
         video_file = message.document
 
-    # Not a supported image
+    # Not a supported video
     else:
-        await message.answer("⚠️ Please upload a valid image (JPG, PNG, or WEBP).")
+        await message.answer("⚠️ Please upload a valid video (MP4, MOV, or AVI).")
         return
     
     # Download the image to a temporary file
-    local_path = await download_telegram(video_file.file_id, bot=message.bot)
+    local_path = await download_telegram(image_file.file_id, bot=message.bot)
     # Continue with validation
-    await message.answer(SUBMISSION_RECIEVED_MESSAGE)
-
-    result = validate_video_input(local_path)
-
-    user_state = await state.get_data()
-
-    print(user_state['task_info']['instruction'], local_path, result)
+    result = validate_image_input(local_path)
 
     if result["success"]:
         await message.answer(APPROVED_TASK_MESSAGE)
         await state.set_state()
     else:
         await message.answer(
-            "Image failed the quality check:\n\n" +
+            "Video failed the quality check:\n\n" +
             "\n".join(f"• {reason}" for reason in result["fail_reasons"])
         )
 
