@@ -2,17 +2,14 @@ from aiogram.fsm.state import StatesGroup, State
 
 class TaskState(StatesGroup):
     waiting_for_task = State()
+    working_on_task = State()
+    waiting_for_audio = State()
+    waiting_for_text = State()
+    waiting_for_image = State()
+    waiting_for_video = State()
     reviewing = State()
-    language_selection = State()
-    task_in_progress = State()
-    task_completed = State()
 
-'''
-class AssessmentState(StatesGroup):
-    
-    ready_to_start_assessment = State()
-    waiting_for_translation = State()
-    assessment_complete = State()'''
+
 
 
 class AudioTaskSubmission(StatesGroup):

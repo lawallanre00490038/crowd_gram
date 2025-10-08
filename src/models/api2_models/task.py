@@ -63,10 +63,10 @@ class ReviewInfoModel(BaseModel):
 
 class TaskDetailResponseModel(BaseModel):
     task_id: str
-    assignments_id: str
+    assignment_id: str
     assigned_at: datetime
     status: str
     prompt: PromptInfoModel
-    submissions: List[SubmissionInfoModel]
-    reviews: List[ReviewInfoModel]
-    user_email: Optional[str] = None
+    submissions: Optional[List[SubmissionInfoModel]] = []
+    reviews: Optional[List[ReviewInfoModel]] = []
+    user_email: str

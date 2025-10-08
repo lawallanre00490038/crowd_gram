@@ -16,6 +16,12 @@ def start_task_inline_kb():
             [InlineKeyboardButton(text="Start Task", callback_data="start_task")]
         ]
     )
+def next_task_inline_kb():
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Next Task", callback_data="start_task")]
+        ]
+    )
 
 def quiz_options_kb(options: list[str]):
     return InlineKeyboardMarkup(

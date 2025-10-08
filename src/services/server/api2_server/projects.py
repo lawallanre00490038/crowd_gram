@@ -3,7 +3,8 @@ from typing import Optional
 import aiohttp
 
 from src.config import BASE_URL_V2
-from src.models.api2_models.projects import Project, ProjectListResponseModel, ProjectTaskAllocationResponseModel, ProjectUpdateModel, ProjectTaskDetailsResponseModel, ReviewerProjectAssignedTasksResponseModel, ContributorProjectTaskRequestModel, ReviewerProjectAssignedTasksResponseModel
+from src.models.api2_models.projects import ( Project, ProjectListResponseModel,ProjectUpdateModel, 
+                                            ProjectTaskDetailsResponseModel, ProjectTaskRequestModel )
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +83,7 @@ async def update_project(project_data: ProjectUpdateModel) -> Optional[Project]:
         return None
     
 
-async def get_agent_project_assigned_tasks(project_data: ContributorProjectTaskRequestModel) -> Optional[ProjectTaskAllocationResponseModel]:
+
     """Fetch assigned tasks for a specific project.
 
     Args:
@@ -108,32 +109,7 @@ async def get_agent_project_assigned_tasks(project_data: ContributorProjectTaskR
         return None
 
 
-async def get_reviewer_project_assigned_tasks(project_data: ReviewerProjectAssignedTasksResponseModel) -> Optional[ProjectTaskAllocationResponseModel]:
-    """Fetch assigned tasks for reviewers in a specific project.
 
-    Args:
-        project_data (ReviewerProjectAssignedTasksResponseModel): The project data containing the project ID.
-    Returns:
-        Optional[ReviewerProjectAssignedTasksResponseModel]: The assigned tasks for reviewers or None if an error occurs.
-    """
-    url = f"{BASE_URL_V2}/project/{project_data.project_id}/tasks/reviewer"
-    params = {**project_data.model_dump(exclude_none=True)}
-
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, params=params) as response:
-                tasks_result = await response.json()
-
-                if response.status == 200:
-                    return ProjectTaskAllocationResponseModel.model_validate(tasks_result['data'])
-                else:
-                    logger.error(f"Failed to fetch reviewer assigned tasks: {tasks_result.get('message', 'Unknown error')}")
-                    return None
-    except Exception as e:
-        logger.error(f"Exception during fetching reviewer assigned tasks: {str(e)}")
-        return None
-
-async def get_agent_project_task_details(project_data: ContributorProjectTaskRequestModel) -> Optional[ProjectTaskDetailsResponseModel]:
     """
     Fetch task details for a specific project.
 
@@ -160,7 +136,7 @@ async def get_agent_project_task_details(project_data: ContributorProjectTaskReq
         return None
 
 
-async def get_reviewer_project_task_details(project_data: ReviewerProjectAssignedTasksResponseModel) -> Optional[ReviewerProjectAssignedTasksResponseModel]:
+
     """Fetch task details for a specific project.
 
     Args:
@@ -211,23 +187,47 @@ async def get_projects_details_by_user_email(user_email: str) -> Optional[Projec
         logger.error(f"Exception during fetching projects by user email: {str(e)}")
         return None
     
+async def get_project_tasks_assigned_to_user(task_details: ProjectTaskRequestModel) -> Optional[ProjectTaskDetailsResponseModel]:
+    """Fetch project task allocations assigned to a specific user.
 
+    Args:
+        task_details (ProjectTaskRequestModel): The task details containing the user email.
 
-async def get_projects_names(user_email: str) -> list[str]:
+    Returns:
+        Optional[ProjectTaskDetailsResponseModel]: The task allocations or None if an error occurs.
+    """
+    url = f"{BASE_URL_V2}/project/{task_details.project_id}/tasks/detailed"
+    params = {**task_details.model_dump(exclude_none=True)}
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params) as response:
+                tasks_result = await response.json()
+
+                if response.status == 200:
+                    return ProjectTaskDetailsResponseModel.model_validate(tasks_result)
+                else:
+                    logger.error(f"Failed to fetch project tasks allocations by user: {tasks_result.get('message', 'Unknown error')}")
+                    return None
+    except Exception as e:
+        logger.error(f"Exception during fetching project tasks allocations by user: {str(e)}")
+        return None
+
+async def get_projects_names(user_email: str) -> list[dict]:
     """Fetch all project names by calling get_projects_details_by_user_email method.
     
     Args:
         user_email (str): The user's email address.
 
     Returns:
-        Optional[list[str]]: A list of project names, or None if an error occurs.
+        list[dict]: A list of project important details or an empty list if none found.
     """
 
     try:
         projects = await get_projects_details_by_user_email(user_email)
         
         if projects:
-            return [project.name for project in projects.root]
+            return [{"project_id": proj.id, "name": proj.name, "description": proj.description, "agent_coin": proj.agent_coin, "total_tasks": proj.total_tasks} for proj in projects.root]
         else:
             return []
     except Exception as e:

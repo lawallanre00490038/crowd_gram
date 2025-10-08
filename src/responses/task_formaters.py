@@ -94,3 +94,47 @@ Focus on what is happening, the people, objects, and actions you see.
 ✔ Use complete sentences.
 ❌ Avoid unrelated details.
 """
+
+
+TASK_MSG = {
+    "intro": (
+        "🆕 Your first task is a *{task_type}* task!\n\n"
+        "{task_text}\n\n"
+        "📝 Please follow the instructions carefully and submit your work when done."
+    ),
+
+    "reminder": (
+        "🔔 Reminder: This is a *{task_type}* task.\n"
+        "Ensure your submission matches the expected format."
+    ),
+
+    "audio_instruction": (
+        "🎙️ Since this is an *audio* task, make sure your recording is clear, "
+        "background noise is minimal, and the sentence is spoken naturally."
+    ),
+
+    "text_instruction": (
+        "✍️ Since this is a *text* task, double-check for typos and ensure your response "
+        "matches the provided prompt."
+    ),
+
+    "image_instruction": (
+        "🖼️ Since this is an *image* task, please ensure the image is relevant, "
+        "clear, and meets the project requirements."
+    ),
+
+    "video_instruction": (
+        "🎥 Since this is a *video* task, make sure your clip is stable, properly lit, "
+        "and matches the task description."
+    ),
+
+    "submitted": (
+        "✅ Your submission for this *{task_type}* task has been received successfully!\n"
+        "You can move on to your next task."
+    ),
+
+    "error": (
+        "⚠️ Oops! There was an issue submitting your *{task_type}* task.\n"
+        "Please try again or contact support if the issue persists."
+    ),
+}

@@ -74,7 +74,7 @@ async def handle_login_password(message: Message, state: FSMContext):
     name = getattr(response['base_info'], 'name', 'User')
     role = getattr(response['base_info'], 'role', 'User')
     telegram_id = getattr(response['base_info'], 'telegram_id', 'N/A')
-    await message.answer(LOGIN_MSG["success_2"].format(name='jane'))
+    await message.answer(LOGIN_MSG["success_2"].format(name=name))
 
     # Save data - check for None before calling model_dump()
     await state.clear()
@@ -88,14 +88,13 @@ async def handle_user_projects(message: Message, state: FSMContext):
     user_data = await state.get_data()
     email = user_data.get("user_email")
 
-    projects_list = await get_projects_names(user_email=email)
-    if not projects_list:
+    projects_details = await get_projects_names(user_email=email)
+    if not projects_details:
         await message.answer("No projects found for your account.")
         return
-    
 
-    await state.update_data({"projects_list": projects_list})
+    await state.update_data({"projects_details": projects_details})
     await message.answer(
         "Please select a project to continue:",
-        reply_markup=project_selection_kb(projects_list)
+        reply_markup=project_selection_kb([proj["name"] for proj in projects_details])
     )

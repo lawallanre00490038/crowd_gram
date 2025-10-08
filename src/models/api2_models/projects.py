@@ -40,35 +40,14 @@ class ProjectUpdateModel(BaseModel):
     reviewer_coin: float = Field(..., ge=0)
 
 
-class ContributorProjectTaskRequestModel(BaseModel):
+class ProjectTaskRequestModel(BaseModel):
     project_id: str
-    status: Optional[str] = None  # e.g., "pending", "completed"
-    user_email: Optional[str] = None  # Filter by user email if needed
-    user_id: Optional[str] = None  # Filter by user ID if needed
-    prompt_id: Optional[str] = None  # Filter by prompt ID if needed
-    
-
-class ReviewerProjectTaskRequestModel(BaseModel):
-    project_id: str
-    status: Optional[str] = None  # e.g., "pending", "completed"
-    reviewer_email: Optional[str] = None  # Filter by reviewer email if needed
-    reviewer_id: Optional[str] = None  # Filter by reviewer ID if needed
-    prompt_id: Optional[str] = None  # Filter by prompt ID if needed
-
-class ProjectTaskAllocationResponseModel(BaseModel):
-    project_id: str
-    project_name: str
-    allocations: List[TaskAllocation]
-    
+    email: str
+    status: Optional[str] = None
+    prompt_id: Optional[str] = None
 
 class ProjectTaskDetailsResponseModel(BaseModel):
     project_id: str
     project_name: str
-    tasks: List[TaskDetailResponseModel]
-    
-
-class ReviewerProjectAssignedTasksResponseModel(BaseModel):
-    project_id: str
-    project_name: str
-    reviewers: List[ReviewerTaskResponseModel]
-    
+    tasks: Optional[List[TaskDetailResponseModel]] = None
+    reviewer: Optional[List[ReviewerTaskResponseModel]] = None

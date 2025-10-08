@@ -10,6 +10,7 @@ from src.routes.debug import debug_routes
 from src.routes.errors_routes import errors
 from src.routes.onboarding_routes import onboarding, quiz
 from src.routes.payment_routes import payments
+from src.routes.task_routes.api2_task_routes.contributors import tasks
 # from src.routes.task_routes import tasks, test_knowledge_router 
 
 from src.loader import create_bot
@@ -30,6 +31,7 @@ async def bot_main():
     #add router for login
     # dp.include_router(auth.router)
     dp.include_router(auth_new_api.router)
+    dp.include_router(tasks.router)
     dp.include_router(onboarding.router)
     dp.include_router(quiz.quiz_router)
     # dp.include_router(tasks.router)

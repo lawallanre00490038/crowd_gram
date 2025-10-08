@@ -1,6 +1,7 @@
 import logging
 from typing import Optional
 import aiohttp
+from pathlib import Path
 
 from src.config import BASE_URL_V2
 
@@ -8,24 +9,39 @@ from src.models.api2_models.agent import SubmissionModel, SubmissionResponseMode
 
 logger = logging.getLogger(__name__)
 
-async def create_submission(submission_data: SubmissionModel) -> Optional[SubmissionResponseModel]:
+async def create_submission(submission_data: SubmissionModel, file_path: str | None = None) -> Optional[SubmissionResponseModel]:
     """Create a new submission asynchronously using aiohttp.
 
     Args:
         submission_data (SubmissionModel): Data for the new submission.
+        file_path (str, optional): Path to the file to be uploaded. Defaults to None.
 
     Returns:
         Optional[SubmissionResponseModel]: Created submission details if successful; None otherwise.
     """
-    url = f"{BASE_URL_V2}/submissions/projects/{submission_data.project_id}/agent"
-    payload = submission_data.model_dump()
+    url = f"{BASE_URL_V2}/submission/projects/{submission_data.project_id}/agent"
+    form = aiohttp.FormData()
+    
+    # Add text fields
+    for key, value in submission_data.model_dump(exclude={"file"}).items():
+        if value is not None:
+            form.add_field(key, str(value))
+            
+    # Add file if provided
+    if file_path and Path(file_path).exists():
+        try:
+            with open(file_path, 'rb') as f:
+                form.add_field('file', f, filename=file_path.split('/')[-1], content_type='application/octet-stream')
+        except Exception as e:
+            logger.error(f"Error opening file {file_path}: {e}")
+            return None
 
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.post(url, json=payload) as response:
+            async with session.post(url, data=form) as response:
                 if response.status == 200:
                     data = await response.json()
-                    return SubmissionResponseModel(**data['data'])
+                    return SubmissionResponseModel.model_validate(data)
                 else:
                     error_message = await response.text()
                     logger.error(f"Failed to create submission: {error_message}")
@@ -51,7 +67,7 @@ async def get_submissions(submission_id: str) -> Optional[SubmissionListResponse
             async with session.get(url) as response:
                 if response.status == 200:
                     data = await response.json()
-                    return SubmissionListResponseModel(**data['data'])
+                    return SubmissionListResponseModel.model_validate(data)
                 else:
                     error_message = await response.text()
                     logger.error(f"Failed to fetch submissions: {error_message}")

@@ -4,10 +4,16 @@ from aiogram.fsm.context import FSMContext
 import logging
 
 from src.services.server.api2_server.task import get_task, get_all_tasks, update_task
-from src.models.api2_models.task import TaskModel, TaskListResponseModel, TaskAllocation, PromptInfoModel, SubmissionInfoModel, ReviewInfoModel
-from src.keyboards.inline import start_task_inline_kb
-from src.states.task_state import TaskState
-
+from src.models.api2_models.task import TaskModel, TaskListResponseModel, TaskAllocation, PromptInfoModel, ReviewInfoModel
+from src.models.api2_models.agent import SubmissionModel
+from src.keyboards.inline import start_task_inline_kb, next_task_inline_kb
+from src.responses.project_responses import PROJECT_WELCOME_MSG
+from src.states.tasks import TaskState
+from src.services.server.api2_server.projects import get_project_tasks_assigned_to_user
+from src.services.server.api2_server.agent_submission import create_submission
+from src.handlers.task_handlers.audio_task_handler import handle_api2_audio_submission
+from src.responses.task_formaters import SUBMISSION_RECIEVED_MESSAGE, TASK_MSG
+from src.models.api2_models.projects import ProjectTaskRequestModel
 
 
 logger = logging.getLogger(__name__)
@@ -22,15 +28,138 @@ async def handle_project_selection(callback: CallbackQuery, state: FSMContext):
         await callback.answer()
         project_index = int(callback.data.split("_")[1])
         user_data = await state.get_data()
-        projects = user_data.get("projects_list", [])
+        projects_details = user_data.get("projects_details", [])
         
-        if 0 <= project_index < len(projects):
-            selected_project = projects[project_index]
-            await state.update_data(selected_project=selected_project)
-            await callback.message.answer(f"Welcome to {selected_project} project! You can now start working on tasks.", reply_markup=start_task_inline_kb())
+        if 0 <= project_index < len(projects_details):
+            selected_project = projects_details[project_index]
+            await state.update_data(project_id=selected_project.get("project_id"))
+            welcome_message =(
+                PROJECT_WELCOME_MSG['intro'].format(project_name=selected_project.get("name"), 
+                project_description=selected_project.get("description"))
+                + "\n\n"
+                + PROJECT_WELCOME_MSG['stats'].format(
+                    agent_coin=selected_project.get("agent_coin"),
+                    total_tasks=selected_project.get("total_tasks")
+                )
+                + "\n\n"
+                + PROJECT_WELCOME_MSG['ready']
+            )
+            await callback.message.answer(welcome_message, reply_markup=start_task_inline_kb())
             await state.set_state(TaskState.waiting_for_task)
         else:
             await callback.message.answer("Invalid project selection. Please try again.")
     except Exception as e:
         logger.error(f"Error in handle_project_selection: {str(e)}")
         await callback.answer("Error occurred, please try again")
+        
+
+@router.callback_query(F.data == "start_task")
+async def start_task(callback: CallbackQuery, state: FSMContext):
+    try:
+        await callback.answer()
+        user_data = await state.get_data()
+        email = user_data.get("user_email")
+        project_id = user_data.get("project_id")
+        if not email or not project_id:
+            await callback.message.answer("Please select a project first using /start.")
+            return
+        
+        task_details = ProjectTaskRequestModel(project_id=project_id, email=email, status="assigned")
+        allocations = await get_project_tasks_assigned_to_user(task_details)
+        if not allocations:
+            print(allocations)
+            await callback.message.answer("No tasks available at the moment. Please check back later.")
+            return
+        
+        task_list = allocations.tasks if hasattr(allocations, 'tasks') else []
+        if task_list:
+            first_task = task_list[0]
+            type = "Audio" if first_task.prompt.category == "speech" else "Text"
+            task_text = first_task.prompt.sentence_text
+            first_task_msg = TASK_MSG['intro'].format(task_type=type, task_text=task_text)
+            await callback.message.answer(first_task_msg)
+            await state.update_data(project_id=project_id, task_id=first_task.task_id, assignment_id=first_task.assignment_id, prompt_id=first_task.prompt.prompt_id, sentence_id=first_task.prompt.sentence_id, task_type=type, task=first_task_msg)
+            await state.set_state(TaskState.working_on_task)
+            await handle_task_submission(callback.message, state)
+        else:
+            await callback.message.answer("No tasks available at the moment. Please check back later.")
+    except Exception as e:
+        logger.error(f"Error in start_task: {str(e)}")
+        await callback.message.answer("Error occurred, please try again.")
+
+@router.message(TaskState.working_on_task)
+async def handle_task_submission(message: Message, state: FSMContext):
+    try:
+        user_data = await state.get_data()
+        type = user_data.get("task_type")
+        if type.lower() == "audio":
+            await state.set_state(TaskState.waiting_for_audio)
+        elif type.lower() == "text":
+            await state.set_state(TaskState.waiting_for_text)
+        elif type.lower() == "image":
+            await state.set_state(TaskState.waiting_for_image)
+        elif type.lower() == "video":
+            await state.set_state(TaskState.waiting_for_video)
+        else:
+            logger.error(f"Unknown task type: {type}")
+            return
+    except Exception as e:
+        logger.error(f"Error in handle_task_submission: {str(e)}")
+        await message.answer("Error occurred, please try again.")
+        
+
+@router.message(TaskState.waiting_for_audio)
+async def handle_audio_task_submission(message: Message, state: FSMContext):
+    try:
+        if not message.voice and not message.audio:
+            await message.answer("Please submit an audio file or voice message.")
+            return
+        await message.answer(SUBMISSION_RECIEVED_MESSAGE)
+
+        user_data = await state.get_data()
+        task_id = user_data.get("task_id")
+        project_id = user_data.get("project_id")
+        assignment_id = user_data.get("assignment_id")
+        task_type = user_data.get("task_type").lower()
+        file_id = message.voice.file_id if message.voice else message.audio.file_id
+        prompt_id = user_data.get("prompt_id")
+        sentence_id = user_data.get("sentence_id")
+        email = user_data.get("user_email")
+        task_msg = user_data.get("task", "")
+
+        response, out_message = await handle_api2_audio_submission(task_info={}, file_id=message.voice.file_id if message.voice else message.audio.file_id, user_id=message.from_user.id, bot=message.bot)
+        if not response:
+            await message.answer(out_message or "Failed to process audio submission. Please try again.")
+            await message.answer(task_msg)
+            logger.error("Audio submission failed")
+            return
+        
+        
+        
+        print(file_id)
+        if not all([task_id, assignment_id, prompt_id, sentence_id, email]):
+            await message.answer("Session data missing. Please restart the task using /start.")
+            return
+        
+        file_info = await message.bot.get_file(message.voice.file_id if message.voice else message.audio.file_id)
+        file_url = f"https://api.telegram.org/file/bot{message.bot.token}/{file_info.file_path}"
+        
+        submission = SubmissionModel(
+            project_id=project_id,
+            task_id=task_id,
+            assignment_id=assignment_id,
+            user_email=email,
+            type=task_type,
+            payload_text="",
+            telegram_file_id=file_id,
+        )
+        submission_response = await create_submission(submission)
+        print(submission_response)
+        if not submission_response:
+            await message.answer("Failed to submit your work. Please try again.")
+            return
+        await message.answer("Your audio submission has been received and recorded successfully. Thank you!")
+        await message.answer("Begin the next task.", reply_markup=next_task_inline_kb())
+    except Exception as e:
+        logger.error(f"Error in handle_audio_task_submission: {str(e)}")
+        await message.answer("Error occurred, please try again.")
