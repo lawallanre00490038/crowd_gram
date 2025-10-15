@@ -28,7 +28,7 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
         email = user_data.get("user_email")
         project_index = user_data.get("project_index")
         project_id = user_data.get("projects_details")[project_index]['id']
-        project_name = user_data.get("projects_details")[project_index]['project_name']
+        project_name = user_data.get("projects_details")[project_index]['name']
         reviewer_instruction = user_data.get("projects_details")[project_index].get('reviewer_instruction', 'No specific instructions provided.')
         
         if not email or not project_id:

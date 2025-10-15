@@ -79,9 +79,8 @@ async def handle_login_password(message: Message, state: FSMContext):
         
         await handle_user_projects(message, state)
     else:
-        await message.answer(LOGIN_MSG["fail"])
         await state.clear()
-        await message.answer(LOGIN_MSG["welcome_back"], reply_markup=new_api_login_type_inline)
+        await message.answer(LOGIN_MSG["fail"], reply_markup=new_api_login_type_inline)
         await state.set_state(Authentication.set_login_type)
         
 
