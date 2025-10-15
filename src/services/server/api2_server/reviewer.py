@@ -7,11 +7,11 @@ from src.config import BASE_URL_V2
 from src.models.api2_models.reviewer import ReviewerModel, UploadReviewModel, ReviewModel, UpdateReviewModel, ReviewerTaskResponseModel, ReviewFilterModel, ReviewFilterResponseModel, ReviewerHistoryRequestModel, ReviewerHistoryResponseListModel
 logger = logging.getLogger(__name__)
 
-async def assign_submission_to_reviewer(reviewer_data: ReviewerModel) -> str:
+async def assign_submission_to_reviewer(reviewer_data: ReviewModel) -> str:
     """Assigns a submission to a reviewer.
 
     Args:
-        reviewer_data (ReviewerModel): The reviewer data containing submission details.
+        reviewer_data (ReviewModel): The reviewer data containing submission details.
 
     Returns:
         str: A message indicating the result of the assignment.
@@ -20,7 +20,7 @@ async def assign_submission_to_reviewer(reviewer_data: ReviewerModel) -> str:
     
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=reviewer_data.model_dump()) as response:
+            async with session.post(url, json=reviewer_data.model_dump(exclude_none=True)) as response:
                 response_text = await response.text()
                 if response.status == 200:
                     return "Submission assigned to reviewer successfully."
@@ -66,7 +66,7 @@ async def submit_review(review_data: ReviewModel) -> str:
     
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=review_data.model_dump()) as response:
+            async with session.post(url, json=review_data.model_dump(exclude_none=True)) as response:
                 response_text = await response.text()
                 if response.status == 200:
                     return "Review submitted successfully."

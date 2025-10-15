@@ -8,6 +8,8 @@ class TaskState(StatesGroup):
     waiting_for_image = State()
     waiting_for_video = State()
     reviewing = State()
+    scoring = State()
+    summary = State()
 
 
 
@@ -25,3 +27,6 @@ class VideoTaskSubmission(StatesGroup):
     waiting_for_video = State()
 
 
+class ReviewState(StatesGroup):
+    waiting_for_score = State()
+    finished = State()

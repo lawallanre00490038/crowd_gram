@@ -3,11 +3,8 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 import logging
 
-from src.services.server.api2_server.task import get_task, get_all_tasks, update_task
-from src.models.api2_models.task import TaskModel, TaskListResponseModel, TaskAllocation, PromptInfoModel, ReviewInfoModel
 from src.models.api2_models.agent import SubmissionModel
-from src.keyboards.inline import start_task_inline_kb, next_task_inline_kb
-from src.responses.project_responses import PROJECT_WELCOME_MSG
+from src.keyboards.inline import next_agent_task_inline_kb
 from src.states.tasks import TaskState
 from src.services.server.api2_server.projects import get_project_tasks_assigned_to_user
 from src.services.server.api2_server.agent_submission import create_submission
@@ -22,44 +19,14 @@ logger = logging.getLogger(__name__)
 router = Router()
 
 
-@router.callback_query(F.data.startswith("proj_"))
-async def handle_project_selection(callback: CallbackQuery, state: FSMContext):
-    try:
-        await callback.answer()
-        project_index = int(callback.data.split("_")[1])
-        user_data = await state.get_data()
-        projects_details = user_data.get("projects_details", [])
-        
-        if 0 <= project_index < len(projects_details):
-            selected_project = projects_details[project_index]
-            await state.update_data(project_id=selected_project.get("project_id"))
-            welcome_message =(
-                PROJECT_WELCOME_MSG['intro'].format(project_name=selected_project.get("name"), 
-                project_description=selected_project.get("description"))
-                + "\n\n"
-                + PROJECT_WELCOME_MSG['stats'].format(
-                    agent_coin=selected_project.get("agent_coin"),
-                    total_tasks=selected_project.get("total_tasks")
-                )
-                + "\n\n"
-                + PROJECT_WELCOME_MSG['ready']
-            )
-            await callback.message.answer(welcome_message, reply_markup=start_task_inline_kb())
-            await state.set_state(TaskState.waiting_for_task)
-        else:
-            await callback.message.answer("Invalid project selection. Please try again.")
-    except Exception as e:
-        logger.error(f"Error in handle_project_selection: {str(e)}")
-        await callback.answer("Error occurred, please try again")
-        
-
-@router.callback_query(F.data == "start_task")
+@router.callback_query(F.data == "start_agent_task")
 async def start_task(callback: CallbackQuery, state: FSMContext):
     try:
-        await callback.answer()
         user_data = await state.get_data()
         email = user_data.get("user_email")
-        project_id = user_data.get("project_id")
+        project_index=user_data.get("project_index")
+        project_id = user_data.get("projects_details")[project_index]['id']
+        agent_instruction = user_data.get("projects_details")[project_index].get("agent_instructions", "Please translate carefully.")
         if not email or not project_id:
             await callback.message.answer("Please select a project first using /start.")
             return
@@ -76,7 +43,7 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
             first_task = task_list[0]
             type = "Audio" if first_task.prompt.category == "speech" else "Text"
             task_text = first_task.prompt.sentence_text
-            first_task_msg = TASK_MSG['intro'].format(task_type=type, task_text=task_text)
+            first_task_msg = TASK_MSG['intro'].format(task_type=type, task_instruction=agent_instruction, task_text=task_text)
             await callback.message.answer(first_task_msg)
             await state.update_data(project_id=project_id, task_id=first_task.task_id, assignment_id=first_task.assignment_id, prompt_id=first_task.prompt.prompt_id, sentence_id=first_task.prompt.sentence_id, task_type=type, task=first_task_msg)
             await state.set_state(TaskState.working_on_task)
@@ -136,13 +103,12 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
         
         
         
-        print(file_id)
         if not all([task_id, assignment_id, prompt_id, sentence_id, email]):
             await message.answer("Session data missing. Please restart the task using /start.")
             return
         
         file_info = await message.bot.get_file(message.voice.file_id if message.voice else message.audio.file_id)
-        file_url = f"https://api.telegram.org/file/bot{message.bot.token}/{file_info.file_path}"
+        # file_url = f"https://api.telegram.org/file/bot{message.bot.token}/{file_info.file_path}"
         
         submission = SubmissionModel(
             project_id=project_id,
@@ -154,12 +120,11 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
             telegram_file_id=file_id,
         )
         submission_response = await create_submission(submission)
-        print(submission_response)
         if not submission_response:
             await message.answer("Failed to submit your work. Please try again.")
             return
         await message.answer("Your audio submission has been received and recorded successfully. Thank you!")
-        await message.answer("Begin the next task.", reply_markup=next_task_inline_kb())
+        await message.answer("Begin the next task.", reply_markup=next_agent_task_inline_kb())
     except Exception as e:
         logger.error(f"Error in handle_audio_task_submission: {str(e)}")
         await message.answer("Error occurred, please try again.")

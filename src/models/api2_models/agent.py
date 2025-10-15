@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, RootModel
+from pydantic import BaseModel, RootModel
 from typing import List, Optional, Union
 from datetime import datetime
 from src.models.api2_models.task import PromptInfoModel
@@ -41,7 +41,7 @@ class SubmissionListResponseModel(RootModel[List[SubmissionResponseModel]]):
 
 class SubmissionFilterModel(BaseModel):
     """Model for filtering submissions."""
-    project_id: Optional[str] = Field(None, description="Filter by project ID")
-    user_id: Optional[str] = Field(None, description="Filter by user ID")
-    user_email: Optional[str] = Field(None, description="Filter by user email")
-    status: Optional[str] = Field(None, description="Filter by submission status (e.g., pending, accepted, rejected)")
+    project_id: Optional[str] = None
+    user_id: Optional[str] = None
+    user_email: Optional[str] = None
+    status: Optional[str] = None

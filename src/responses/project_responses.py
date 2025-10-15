@@ -2,14 +2,14 @@ PROJECT_SELECTION_MESSAGE = "Please select a project to work on:"
 
 PROJECT_WELCOME_MSG = {
     "intro": (
-        "👋 Welcome to the *{project_name}* project!\n\n"
-        "{project_description}\n\n"
+        "👋 Welcome to the <b>{project_name}</b> project!\n\n"
+        "<i>{project_instruction}</i>\n\n"
         "🎯 You’re about to contribute valuable data to this initiative."
     ),
 
     "stats": (
-        "💰 *Agent Coin:* {agent_coin}\n"
-        "🧩 *Total Tasks:* {total_tasks}\n"
+        "💰 <b>{user_type} Coin:</b> {user_coin}\n"
+        "🧩 <b>Total Tasks:</b> {total_tasks}\n"
     ),
 
     "ready": (
@@ -23,15 +23,24 @@ PROJECT_WELCOME_MSG = {
     ),
 
     "resuming": (
-        "👋 Welcome back to *{project_name}*!\n"
+        "👋 Welcome back to <b>{project_name}</b>!\n"
         "You have unfinished tasks waiting.\n\n"
         "💪 Let’s pick up where you left off."
     ),
 
     "completed": (
-        "🎉 Congratulations! You’ve completed all your tasks in *{project_name}*.\n"
+        "🎉 Congratulations! You’ve completed all your tasks in <b>{project_name}</b>.\n"
         "Thank you for your contribution! 🏅"
     ),
 }
 
 START_TASK_PROMPT = "Click the button below to start your first task!"
+
+PROJECT_FULL_WELCOME_MSG = (
+    PROJECT_WELCOME_MSG['intro'].format(project_name="{project_name}", project_instruction="{project_instruction}")
+    + "\n\n"
+    + PROJECT_WELCOME_MSG['stats'].format(user_type="{user_type}", user_coin="{user_coin}", total_tasks="{total_tasks}")
+    + "\n\n"
+    + PROJECT_WELCOME_MSG['ready']
+)
+

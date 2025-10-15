@@ -65,7 +65,7 @@ Please review and correct them, then try again.
 """
 
 SUBMISSION_RECIEVED_MESSAGE = """Your submission has been received! 📥
-We will review it shortly and notify you of the outcome.
+Sit tight while we review your submission...
 """
 
 IMAGE_REQUEST_MESSAGE = """
@@ -87,8 +87,8 @@ IMAGE_SUBMISSION_RECEIVED_MESSAGE = """
 """
 
 IMAGE_REQUEST_ANNOTATION_MESSAGE = """
-✅ Your image for **{theme}** has been received and approved!
-Now, please describe this image in **{target_lang}** using {annotation_type}.
+✅ Your image for <b>{theme}</b> has been received and approved!
+Now, please describe this image in <b>{target_lang}</b> using <b>{annotation_type}</b>.
 Focus on what is happening, the people, objects, and actions you see.
 ✔ Be detailed and accurate.
 ✔ Use complete sentences.
@@ -98,13 +98,16 @@ Focus on what is happening, the people, objects, and actions you see.
 
 TASK_MSG = {
     "intro": (
-        "🆕 Your first task is a *{task_type}* task!\n\n"
-        "{task_text}\n\n"
+        "🆕 Your first task is <b>{task_type}</b> task!\n\n\n"
+        "Instructions: <i>{task_instruction}</i>\n\n"
+        "───────────────────────────────────────────\n"
+        "Task Prompt: <b>{task_text}</b>\n"
+        "───────────────────────────────────────────\n\n\n"
         "📝 Please follow the instructions carefully and submit your work when done."
     ),
 
     "reminder": (
-        "🔔 Reminder: This is a *{task_type}* task.\n"
+        "🔔 Reminder: This is a <b>{task_type}</b> task.\n"
         "Ensure your submission matches the expected format."
     ),
 
@@ -129,12 +132,73 @@ TASK_MSG = {
     ),
 
     "submitted": (
-        "✅ Your submission for this *{task_type}* task has been received successfully!\n"
+        "✅ Your submission for this <b>{task_type}</b> task has been received successfully!\n"
         "You can move on to your next task."
     ),
 
     "error": (
-        "⚠️ Oops! There was an issue submitting your *{task_type}* task.\n"
+        "⚠️ Oops! There was an issue submitting your <b>{task_type}</b> task.\n"
         "Please try again or contact support if the issue persists."
     ),
 }
+
+
+REVIEWER_TASK_MSG = {
+    "intro": (
+        "🧾 New Submission to Review!\n\n"
+        "📂 Project: {project_name}\n"
+        "🧠 Task Type: {submission_type}\n\n\n"
+        "📜 Review Instructions: <b>{reviewer_instruction}</b>\n"
+        "───────────────────────────────────────────\n"
+        "🗒️ Task Prompt: {payload_text}\n\n"
+        " Task Submission: {file_section} \n"
+        "───────────────────────────────────────────\n\n\n"
+        "Please evaluate the submission carefully and choose an appropriate action."
+    ),
+
+    "audio_instruction": (
+        "🎧 Since this is an *audio* submission, listen carefully for clarity, "
+        "pronunciation accuracy, and background noise quality."
+    ),
+
+    "text_instruction": (
+        "✍️ Since this is a *text* submission, check for grammar, spelling, and alignment "
+        "with the original prompt or task description."
+    ),
+
+    "image_instruction": (
+        "🖼️ Since this is an *image* submission, review image clarity, relevance, and compliance "
+        "with the project’s visual requirements."
+    ),
+
+    "video_instruction": (
+        "🎥 Since this is a *video* submission, evaluate stability, sound, lighting, and whether "
+        "it meets the required scenario or prompt."
+    ),
+
+    "reminder": (
+        "🔔 Reminder: You still have a pending <b>{submission_type}</b> review.\n"
+        "Please complete your review to help keep the workflow on track."
+    ),
+
+    "approved": (
+        "✅ You have *approved* this <b>{submission_type}</b> submission.\n"
+        "The contributor will be notified and credited accordingly."
+    ),
+
+    "rejected": (
+        "❌ You have *rejected* this <b>{submission_type}</b> submission.\n"
+        "Please ensure your rejection includes a short reason or feedback."
+    ),
+
+    "changes_requested": (
+        "🗣 You have *requested changes* for this <b>{submission_type}</b> submission.\n"
+        "The contributor will be notified to revise and resubmit."
+    ),
+
+    "error": (
+        "⚠️ Oops! Something went wrong while processing your review.\n"
+        "Please try again or contact support if the issue persists."
+    ),
+}
+

@@ -17,11 +17,11 @@ async def get_contributor_status(contributor_data: StatusModel) -> StatusContrib
     Returns:
         StatusContributorResponseModel: The status details of the contributor.
     """
-    url = f"{BASE_URL_V2}/status/contributor"
+    url = f"{BASE_URL_V2}/status/contributor/{contributor_data.email}"
     
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=contributor_data.model_dump()) as response:
+            async with session.get(url, json=contributor_data.model_dump()) as response:
                 response_text = await response.text()
                 if response.status == 200:
                     data = await response.json()
@@ -43,11 +43,11 @@ async def get_reviewer_status(reviewer_data: StatusModel) -> StatusReviewerRespo
     Returns:
         StatusReviewerResponseModel: The status details of the reviewer.
     """
-    url = f"{BASE_URL_V2}/status/reviewer"
+    url = f"{BASE_URL_V2}/status/reviewer/{reviewer_data.email}"
     
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=reviewer_data.model_dump()) as response:
+            async with session.get(url, json=reviewer_data.model_dump()) as response:
                 response_text = await response.text()
                 if response.status == 200:
                     data = await response.json()

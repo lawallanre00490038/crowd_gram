@@ -39,7 +39,7 @@ async def user_login(user_data: LoginModel) -> LoginResponseDict:
     """
     url = f"{BASE_URL_V2}/telegram/login"
     # payload = user_data.model_dump()
-    params = {"email": user_data.email, "password": ""}
+    params = {"email": user_data.email, "password":""}
 
     async with aiohttp.ClientSession() as session:
         try:
@@ -54,3 +54,29 @@ async def user_login(user_data: LoginModel) -> LoginResponseDict:
         except Exception as e:
             logger.error(f"Exception during login: {str(e)}")
             return {'success': False, 'error': str(e), 'base_info': None}
+        
+
+async def get_user_details(user_email: str) -> Optional[LoginResponseModel]:
+    """Get the details of a user by their email.
+
+    Args:
+        user_email (str): The email of the user.
+
+    Returns:
+        Optional[LoginResponseModel]: The user details if found, None otherwise.
+    """
+    url = f"{BASE_URL_V2}/telegram/me"
+    params = {"email": user_email}
+
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get(url, params=params) as response:
+                response_result = await response.json()
+                if response.status == 200:
+                    return LoginResponseModel.model_validate(response_result)
+                else:
+                    logger.error(f"HTTP error during user details retrieval: {response.status} - {response_result}")
+                    return None
+        except Exception as e:
+            logger.error(f"Exception during user details retrieval: {str(e)}")
+            return None

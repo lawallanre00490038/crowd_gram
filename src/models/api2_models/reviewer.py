@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, RootModel
+from pydantic import BaseModel, RootModel
 from typing import Dict, List, Optional
 from datetime import datetime
 from src.models.api2_models.task import TaskDetailResponseModel
@@ -11,10 +11,7 @@ class ReviewerModel(BaseModel):
 
 class UploadReviewModel(BaseModel):
     project_id: str
-    file: Optional[str] = Field(
-        None,
-        description="File reference (nullable). Can be a string or BSON $binary object"
-    )
+    file: Optional[str] 
     
 
 class ReviewScores(RootModel[Dict[str, int]]):

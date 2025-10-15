@@ -11,40 +11,40 @@ class StatusModel(BaseModel):
 class ProjectStats(BaseModel):
     project_id: str
     project_name: str
-    total: int = Field(..., ge=0)
-    number_assigned: int = Field(..., ge=0)
-    total_submissions: int = Field(..., ge=0)
-    approved: int = Field(..., ge=0)
-    rejected: int = Field(..., ge=0)
-    pending: int = Field(..., ge=0)
-    total_coins_earned: int = Field(..., ge=0)
-    total_amount_earned: float = Field(..., ge=0.0)
+    total: int
+    number_assigned: int
+    total_submissions: int
+    approved: int
+    rejected: int
+    pending: int
+    total_coins_earned: int
+    total_amount_earned: float
 
 class ProjectReviewStats(BaseModel):
     project_id: str
     project_name: str
-    total_reviewed: int = Field(..., ge=0)
-    approved: int = Field(..., ge=0)
-    rejected: int = Field(..., ge=0)
-    pending: int = Field(..., ge=0)
-    number_assigned: int = Field(..., ge=0)
-    total_coins_earned: int = Field(..., ge=0)
-    total_amount_earned: float = Field(..., ge=0.0)
+    total_reviewed: int
+    approved: int
+    rejected: int
+    pending: int
+    number_assigned: int
+    total_coins_earned: int
+    total_amount_earned: float
 
 class StatusContributorResponseModel(BaseModel):
     user_email: str
-    approved: int = Field(..., ge=0)
-    pending: int = Field(..., ge=0)
-    rejected: int = Field(..., ge=0)
+    approved: int
+    pending: int
+    rejected: int
     per_project: List[ProjectStats] = []
     
 
 class StatusReviewerResponseModel(BaseModel):
     reviewer_email: str
-    total_reviews: int = Field(..., ge=0)
-    approved_reviews: int = Field(..., ge=0)
-    rejected_reviews: int = Field(..., ge=0)
-    pending_reviews: int = Field(..., ge=0)
+    total_reviews: int
+    approved_reviews: int
+    rejected_reviews: int
+    pending_reviews: int
     per_project: List[ProjectReviewStats] = []
     
 
@@ -61,12 +61,12 @@ class AnalyticsResponseModel(BaseModel):
 
 class DailyAnalytics(BaseModel):
     date: datetime
-    audio_submissions: int = Field(..., ge=0)
-    text_submissions: int = Field(..., ge=0)
-    image_submissions: int = Field(..., ge=0)
-    video_submissions: int = Field(..., ge=0)
-    total_submissions: int = Field(..., ge=0)
-    
-    
+    audio_submissions: int
+    text_submissions: int
+    image_submissions: int
+    video_submissions: int
+    total_submissions: int
+
+
 class DailyAnalyticsResponseModel(BaseModel):
     data: List[DailyAnalytics]
