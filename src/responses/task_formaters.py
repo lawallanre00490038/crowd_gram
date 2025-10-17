@@ -98,7 +98,7 @@ Focus on what is happening, the people, objects, and actions you see.
 
 TASK_MSG = {
     "intro": (
-        "🆕 Your first task is <b>{task_type}</b> task!\n\n\n"
+        "🆕 Your task is <b>{task_type}</b> task!\n\n\n"
         "Instructions: <i>{task_instruction}</i>\n\n"
         "───────────────────────────────────────────\n"
         "Task Prompt: <b>{task_text}</b>\n"

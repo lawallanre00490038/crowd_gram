@@ -4,7 +4,7 @@ from datetime import datetime
 
 class StatusModel(BaseModel):
     email: str
-    start: datetime
+    start: Optional[datetime] = None
     end: Optional[datetime] = None
     
 

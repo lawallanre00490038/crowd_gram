@@ -8,7 +8,7 @@ from src.models.api2_models.agent import SubmissionModel
 from src.keyboards.inline import next_reviewer_task_inline_kb, review_task_kb, create_score_kb, summary_kb
 from src.states.tasks import TaskState, ReviewState
 from src.services.server.api2_server.projects import get_project_review_parameters, get_project_tasks_assigned_to_user
-from src.services.server.api2_server.reviewer import assign_submission_to_reviewer
+from src.services.server.api2_server.reviewer import submit_review_details
 from src.services.server.api2_server.agent_submission import create_submission
 from src.handlers.task_handlers.audio_task_handler import handle_api2_audio_submission
 from src.responses.task_formaters import REVIEWER_TASK_MSG
@@ -210,7 +210,8 @@ async def submit_review(callback: CallbackQuery, state: FSMContext):
             scores=scores
         )
 
-        result = await assign_submission_to_reviewer(review_data)
+        result = await submit_review_details(review_data)
+        print(result)
         if result:
             await callback.message.answer("✅ Review submitted successfully!")
         else:

@@ -53,7 +53,7 @@ async def upload_review_file(review_data: UploadReviewModel) -> str:
         return f"Error occurred: {str(e)}"
     
 
-async def submit_review(review_data: ReviewModel) -> str:
+async def submit_review_details(review_data: ReviewModel) -> str:
     """Submits a review to the server.
 
     Args:

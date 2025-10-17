@@ -75,7 +75,7 @@ async def handle_login_password(message: Message, state: FSMContext):
         # Save data - check for None before calling model_dump()
         await state.clear()
 
-        await state.set_data({'user_email': email, "name": name, "role": role, "telegram_id": telegram_id })
+        await state.set_data({'user_email': email, "name": name, "role": role.lower(), "telegram_id": telegram_id })
         
         await handle_user_projects(message, state)
     else:

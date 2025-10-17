@@ -39,7 +39,7 @@ async def user_login(user_data: LoginModel) -> LoginResponseDict:
     """
     url = f"{BASE_URL_V2}/telegram/login"
     # payload = user_data.model_dump()
-    params = {"email": user_data.email, "password":""}
+    params = {"email": user_data.email, "password": user_data.password}
 
     async with aiohttp.ClientSession() as session:
         try:

@@ -207,7 +207,7 @@ async def get_project_tasks_assigned_to_user(task_details: ProjectTaskRequestMod
                 if response.status == 200:
                     return ProjectTaskDetailsResponseModel.model_validate(tasks_result)
                 else:
-                    logger.error(f"Failed to fetch project tasks allocations by user: {tasks_result.get('message', 'Unknown error')}")
+                    logger.error(f"Failed to fetch project tasks allocations by user: {tasks_result}")
                     return None
     except Exception as e:
         logger.error(f"Exception during fetching project tasks allocations by user: {str(e)}")

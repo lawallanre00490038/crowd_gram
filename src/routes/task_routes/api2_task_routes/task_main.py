@@ -46,8 +46,7 @@ async def handle_project_selection(callback: CallbackQuery, state: FSMContext):
                         project_name=selected_project.get("name", "Unknown Project"),
                         project_instruction=selected_project.get("reviewer_instructions", "No instructions provided."),
                         user_type=user_type,
-                        user_coin=reviewer_coin,
-                        total_tasks=selected_project.get("total_tasks", 0)
+                        user_coin=reviewer_coin
                     )
                     await callback.message.answer(welcome_message, reply_markup=start_reviewer_task_inline_kb())
         else:
