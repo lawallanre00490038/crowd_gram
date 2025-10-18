@@ -198,18 +198,19 @@ async def submit_review(callback: CallbackQuery, state: FSMContext):
         submission_id = data.get("submission_id")
         if not submission_id:
             first_task = reviewers_list[0].get("tasks", [{}])[0]
-            submission_id = (first_task.get("submission") or {}).get("submission_id")
+            submission_id = (first_task.get("submission")).get("submission_id")
         
-        reviewer_id = data.get("reviewer_id") or (reviewers_list[0].get("reviewer_id"))
+        reviewer_email = data.get('user_email')
 
         review_data = ReviewModel(
             submission_id=submission_id,
             project_id=project_id,
-            reviewer_id=reviewer_id,
+            reviewer_identifier=reviewer_email,
             comments=data.get("comments", ""),
             scores=scores
         )
 
+        print(review_data)
         result = await submit_review_details(review_data)
         print(result)
         if result:

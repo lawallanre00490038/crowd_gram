@@ -4,7 +4,7 @@ import aiohttp
 
 from src.config import BASE_URL_V2
 
-from src.models.api2_models.reviewer import ReviewerModel, UploadReviewModel, ReviewModel, UpdateReviewModel, ReviewerTaskResponseModel, ReviewFilterModel, ReviewFilterResponseModel, ReviewerHistoryRequestModel, ReviewerHistoryResponseListModel
+from src.models.api2_models.reviewer import ReviewScores, ReviewerModel, UploadReviewModel, ReviewModel, UpdateReviewModel, ReviewerTaskResponseModel, ReviewFilterModel, ReviewFilterResponseModel, ReviewerHistoryRequestModel, ReviewerHistoryResponseListModel
 logger = logging.getLogger(__name__)
 
 async def assign_submission_to_reviewer(reviewer_data: ReviewModel) -> str:
@@ -62,16 +62,28 @@ async def submit_review_details(review_data: ReviewModel) -> str:
     Returns:
         str: A message indicating the result of the submission.
     """
-    url = f"{BASE_URL_V2}/reviewer/submissions/{review_data.submission_id}/review"
-    
+    url = f"{BASE_URL_V2}/reviewer/submissions/{review_data.submission_id}/review"\
+        
+    # Separate query and body param4s as per API design
+    params = {
+        "project_id": review_data.project_id,
+        "reviewer_identifier": review_data.reviewer_identifier,
+        "comments": review_data.comments or ""
+    }
+
+    if isinstance(review_data.scores, ReviewScores):
+        body = review_data.scores.model_dump()
+    else:
+        body = review_data.scores
+
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=review_data.model_dump(exclude_none=True)) as response:
+            async with session.post(url, json=body, params=params) as response:
                 response_text = await response.text()
                 if response.status == 200:
                     return "Review submitted successfully."
                 else:
-                    return f"Failed to submit review: {response_text}"
+                    return f"Failed to submit review ({response.status}): {response_text}"
     except Exception as e:
         return f"Error occurred: {str(e)}"
     
