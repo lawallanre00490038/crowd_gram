@@ -4,13 +4,17 @@ import logging
 from fastapi import FastAPI
 
 from src.routes.admin_routes import admin
-from src.routes.auth_routes import auth, auth_new_api
+from src.routes.auth_routes import auth_new_api
 from src.routes.community_routes import community, support
 from src.routes.debug import debug_routes
 from src.routes.errors_routes import errors
 from src.routes.onboarding_routes import onboarding, quiz
 from src.routes.payment_routes import payments
-# from src.routes.task_routes import tasks, test_knowledge_router 
+from src.routes.task_routes.api2_task_routes import task_main
+from src.routes.task_routes.api2_task_routes.contributors import tasks as contributor_tasks
+from src.routes.task_routes.api2_task_routes.reviewers import tasks as reviewer_tasks
+from src.routes.status import status 
+
 
 from src.loader import create_bot
 
@@ -26,14 +30,14 @@ def root():
 async def bot_main():
     bot, dp = await create_bot()
 
-    # Register routes
-    #add router for login
-    # dp.include_router(auth.router)
+
+    dp.include_router(status.router)
     dp.include_router(auth_new_api.router)
+    dp.include_router(task_main.router)
+    dp.include_router(contributor_tasks.router)
+    dp.include_router(reviewer_tasks.router)
     dp.include_router(onboarding.router)
     dp.include_router(quiz.quiz_router)
-    # dp.include_router(tasks.router)
-    # dp.include_router(test_knowledge_router.router)
     dp.include_router(payments.router)
     dp.include_router(community.router)
     dp.include_router(support.router)
@@ -43,18 +47,13 @@ async def bot_main():
 
     await bot.delete_webhook(drop_pending_updates=True)
     print("✅ Bot is running... Press Ctrl+C to stop.")
-    # asyncio.create_task(coro=community.start_community_background_tasks())
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 
-# Entry function
-#def start_bot():
-   # asyncio.run(bot_main())
+
 
 # Run everything
 if __name__ == "__main__":
-   # bot_thread = threading.Thread(target=start_bot, daemon=True)
-   # bot_thread.start()
     asyncio.run(bot_main())
 
     #uvicorn.run(app, host="0.0.0.0", port=10000)

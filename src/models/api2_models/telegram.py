@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import List, Optional, TypedDict
 
 class RegisterModel(BaseModel):
@@ -21,12 +21,12 @@ class LoginResponseModel(BaseModel):
     """Model for login response."""
     message: str
     id: str
-    email: EmailStr
+    email: str
     name: str
-    telegram_id: str
+    telegram_id: Optional[str] = None
     role: str
-    languages: List[str]
-    dialects: List[str]
+    languages: Optional[List[str]] = []
+    dialects: Optional[List[str]] = []
     
 
 class TelegramStatusModel(BaseModel):

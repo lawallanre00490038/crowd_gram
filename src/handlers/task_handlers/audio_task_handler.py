@@ -184,3 +184,48 @@ async def handle_audio_submission(task_info, file_id, user_id, bot):
 
         return False, errors
     
+
+async def handle_api2_audio_submission(task_info, file_id, user_id, bot):
+    """
+    Handles the audio submission for a given task.
+
+    Args:
+        task (Task): The task object containing details about the audio task.
+        submission (Submission): The submission object containing the audio data.
+    """
+
+    file_path = await download_telegram(file_id, bot=bot)
+    parameters = TaskParameterModel(min_duration=3, 
+                    max_duration=20,
+                    language="English", 
+                    expected_format="oga",
+                    sample_rate=48000,
+                    bit_depth=32)
+
+    response = check_audio_parameter(file_path, parameters)
+
+    data, sr = librosa.load(file_path, sr=None)
+
+    new_audio, quality_response = check_audio_quality(data=data, sr=sr)
+    
+    new_path = file_path.replace(".oga", "_enhanced.oga")
+
+    save_librosa_audio_as_mp3(new_audio, sr, new_path)
+
+    logger.info(f"New audio saved at {new_path}")
+    logger.info(f"Audio check result for user {user_id}: {response.is_valid}, errors: {response.errors}, {quality_response}")
+
+    if response.is_valid and (quality_response["message"] == "Approved"):
+        return True, APPROVED_TASK_MESSAGE
+    else:
+        errors = ""
+
+        if not response.is_valid:
+            errors = "\n".join(response.errors)
+        if quality_response["message"] != "Approved": 
+            errors += f"\nQuality check message: {quality_response['message']}"
+        errors = ERROR_MESSAGE.format(errors=errors)
+
+        logger.info(f"Audio submission failed for user {user_id}: {errors}")
+
+        return False, errors

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 
@@ -7,15 +7,15 @@ class TaskModel(BaseModel):
     id: str
     project_id: str
     prompt_id: str
-    type: str = Field(..., description="Type of the task, e.g., Text, Audio, Video, Image")
+    type: str 
     domain: str
     category: str
-    status: str = Field(..., description="Status of the task, e.g., pending, completed")
+    status: str
     deadline: datetime
-    submissions_count: int = Field(..., ge=0)
-    reviews_count: int = Field(..., ge=0)
-    accepted_count: int = Field(..., ge=0)
-    rejected_count: int = Field(..., ge=0)
+    submissions_count: int
+    reviews_count: int
+    accepted_count: int
+    rejected_count: int
     created_at: datetime
     updated_at: datetime
     
@@ -33,8 +33,7 @@ class TaskAllocation(BaseModel):
     user_id: Optional[str] = None
     user_email: Optional[str] = None
     assigned_at: datetime
-    status: str = Field(..., description="Status of the allocation, e.g., assigned, completed")
-    
+    status: str
 
 class PromptInfoModel(BaseModel):
     prompt_id: str
@@ -43,9 +42,9 @@ class PromptInfoModel(BaseModel):
     media_url: Optional[str] = None
     category: str
     domain: str
-    max_reuses: int = Field(..., ge=0)
-    current_reuses: int = Field(..., ge=0)
-    
+    max_reuses: int
+    current_reuses: int
+
 class SubmissionInfoModel(BaseModel):
     submission_id: str
     user_id: str
@@ -58,15 +57,15 @@ class SubmissionInfoModel(BaseModel):
     updated_at: datetime
 
 class ReviewInfoModel(BaseModel):
-    reviewers: List[str]
+    reviewers: List[dict]
     
 
 class TaskDetailResponseModel(BaseModel):
     task_id: str
-    assignments_id: str
+    assignment_id: str
     assigned_at: datetime
     status: str
     prompt: PromptInfoModel
-    submissions: List[SubmissionInfoModel]
-    reviews: List[ReviewInfoModel]
+    submission: Optional[SubmissionInfoModel] = None
+    review: Optional[ReviewInfoModel] = None
     user_email: Optional[str] = None

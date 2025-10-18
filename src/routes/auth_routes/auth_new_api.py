@@ -8,7 +8,7 @@ import logging
 from src.responses.auth_response import EXIT, LOGIN_MSG, LOGOUT
 from src.responses.onboarding_response import WELCOME_MESSAGE
 from src.services.server.api2_server.auth import user_login
-from src.services.server.api2_server.projects import get_projects_names
+from src.services.server.api2_server.projects import get_projects_details
 from src.models.api2_models.telegram import LoginModel
 from src.states.authentication import Authentication
 from src.keyboards.inline import project_selection_kb, new_api_login_type_inline
@@ -66,36 +66,35 @@ async def handle_login_password(message: Message, state: FSMContext):
     user_input = LoginModel(email=email, password=password)
     response = await user_login(user_data=user_input)
 
-    if not response.get("success"):
-        await message.answer(LOGIN_MSG["fail"])
+    if response.get("success"):
+        name = getattr(response['base_info'], 'name', 'User')
+        role = getattr(response['base_info'], 'role', 'User')
+        telegram_id = getattr(response['base_info'], 'telegram_id', 'N/A')
+        await message.answer(LOGIN_MSG["success_2"].format(name=name))
+
+        # Save data - check for None before calling model_dump()
         await state.clear()
-        return
 
-    name = getattr(response['base_info'], 'name', 'User')
-    role = getattr(response['base_info'], 'role', 'User')
-    telegram_id = getattr(response['base_info'], 'telegram_id', 'N/A')
-    await message.answer(LOGIN_MSG["success_2"].format(name='jane'))
-
-    # Save data - check for None before calling model_dump()
-    await state.clear()
-
-    await state.set_data({'user_email': email, "name": name, "role": role, "telegram_id": telegram_id })
-    
-    await handle_user_projects(message, state)
-
+        await state.set_data({'user_email': email, "name": name, "role": role.lower(), "telegram_id": telegram_id })
+        
+        await handle_user_projects(message, state)
+    else:
+        await state.clear()
+        await message.answer(LOGIN_MSG["fail"], reply_markup=new_api_login_type_inline)
+        await state.set_state(Authentication.set_login_type)
+        
 
 async def handle_user_projects(message: Message, state: FSMContext):
     user_data = await state.get_data()
     email = user_data.get("user_email")
 
-    projects_list = await get_projects_names(user_email=email)
-    if not projects_list:
+    projects_details = await get_projects_details(user_email=email)
+    if not projects_details:
         await message.answer("No projects found for your account.")
         return
-    
 
-    await state.update_data({"projects_list": projects_list})
+    await state.update_data({"projects_details": projects_details})
     await message.answer(
         "Please select a project to continue:",
-        reply_markup=project_selection_kb(projects_list)
+        reply_markup=project_selection_kb([proj["name"] for proj in projects_details])
     )

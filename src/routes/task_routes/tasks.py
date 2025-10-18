@@ -108,7 +108,7 @@ async def cmd_start_audio_task(message: Message, state: FSMContext):
     await state.set_data({UserParams.TASK_INFO.value: assigned_task.model_dump()})
     await state.set_state(AudioTaskSubmission.waiting_for_audio)
 
-## Abdusshakur
+
 @router.message(TaskState.waiting_for_task, Command("audio_task"))
 async def cmd_start_task(message: Message, state: FSMContext):
     assigned_task = await assign_task("aha", TaskType.Audio)

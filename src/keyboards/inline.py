@@ -1,5 +1,8 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram_dialog.widgets.kbd import Row, Button
+from aiogram_dialog.widgets.text import Format, Const
 from src.data.video_tutorials import tutorial_videos
+from src.utils.submission_utils import on_score_click
 
 
 def task_inline_keyboard():
@@ -16,6 +19,57 @@ def start_task_inline_kb():
             [InlineKeyboardButton(text="Start Task", callback_data="start_task")]
         ]
     )
+
+def start_agent_task_inline_kb():
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Start Task", callback_data="start_agent_task")]
+        ]
+    )
+    
+def start_reviewer_task_inline_kb():
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Start Task", callback_data="start_reviewer_task")]
+        ]
+    )
+    
+def next_agent_task_inline_kb():
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Next Task", callback_data="start_agent_task")]
+        ]
+    )
+
+def next_reviewer_task_inline_kb():
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Next Task", callback_data="start_reviewer_task")]
+        ]
+    )
+    
+def review_task_kb():
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Click to Review", callback_data="review_task")]
+        ]
+    )
+
+def create_score_kb(param_index: int, scale: int = 5):
+    """Generate inline keyboard for scoring"""
+    buttons = [
+        InlineKeyboardButton(text=str(i), callback_data=f"score:{param_index}:{i}")
+        for i in range(scale + 1)
+    ]
+    return InlineKeyboardMarkup(
+        inline_keyboard=[buttons]
+    )
+
+def summary_kb():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="✅ Submit Review", callback_data="submit_review")],
+        [InlineKeyboardButton(text="🔄 Start Again", callback_data="restart_review")]
+    ])
 
 def quiz_options_kb(options: list[str]):
     return InlineKeyboardMarkup(
