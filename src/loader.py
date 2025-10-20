@@ -16,11 +16,11 @@ bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
 
 # MongoDB FSM storage
 async def create_bot():
-
-    # Initialize MongoDB client
-    mongo_client = AsyncIOMotorClient(MONGO_DB_URI)
-    
+    print(USE_MONGO_DB)
     if USE_MONGO_DB:
+        # Initialize MongoDB client
+        mongo_client = AsyncIOMotorClient(MONGO_DB_URI)
+    
         # Create FSM storage using aiogram-mongodb
         storage = MongoStorage(
             client=mongo_client,
