@@ -57,7 +57,7 @@ class SubmissionInfoModel(BaseModel):
     updated_at: datetime
 
 class ReviewInfoModel(BaseModel):
-    reviewers: List[str]
+    reviewers: List[dict]
     
 
 class TaskDetailResponseModel(BaseModel):

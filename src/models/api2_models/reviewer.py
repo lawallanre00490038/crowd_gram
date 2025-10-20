@@ -21,17 +21,17 @@ class ReviewScores(RootModel[Dict[str, int]]):
 class ReviewModel(BaseModel):
     submission_id: str
     project_id: str
-    reviewer_id: str
+    reviewer_identifier: str
     comments: Optional[str] = None
     scores: ReviewScores
     
 class ReviewFilterModel(BaseModel):
-    reviewer_id: Optional[str] = None
+    reviewer_identifier: Optional[str] = None
     project_id: Optional[str] = None
     status: Optional[str] = None
     
 class ReviewFilterResponseModel(BaseModel):
-    reviewer_id: str
+    reviewer_identifier: str
     submission_id: str
     sentence_id: str
     prompt: str
@@ -53,7 +53,7 @@ class ReviewerTaskResponseModel(BaseModel):
     
 
 class ReviewerHistoryRequestModel(BaseModel):
-    reviewer_id: str
+    reviewer_identifier: str
     project_id: Optional[str] = None
     
 class ReviewerHistoryResponseModel(BaseModel):

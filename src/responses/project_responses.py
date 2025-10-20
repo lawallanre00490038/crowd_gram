@@ -9,7 +9,6 @@ PROJECT_WELCOME_MSG = {
 
     "stats": (
         "💰 <b>{user_type} Coin:</b> {user_coin}\n"
-        "🧩 <b>Total Tasks:</b> {total_tasks}\n"
     ),
 
     "ready": (
@@ -39,7 +38,7 @@ START_TASK_PROMPT = "Click the button below to start your first task!"
 PROJECT_FULL_WELCOME_MSG = (
     PROJECT_WELCOME_MSG['intro'].format(project_name="{project_name}", project_instruction="{project_instruction}")
     + "\n\n"
-    + PROJECT_WELCOME_MSG['stats'].format(user_type="{user_type}", user_coin="{user_coin}", total_tasks="{total_tasks}")
+    + PROJECT_WELCOME_MSG['stats'].format(user_type="{user_type}", user_coin="{user_coin}")
     + "\n\n"
     + PROJECT_WELCOME_MSG['ready']
 )
