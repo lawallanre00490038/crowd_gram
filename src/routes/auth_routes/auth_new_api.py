@@ -3,6 +3,7 @@ from aiogram.filters import Command
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 import logging
+from typing import Union
 
 
 from src.responses.auth_response import EXIT, LOGIN_MSG, LOGOUT
@@ -77,13 +78,11 @@ async def handle_login_password(message: Message, state: FSMContext):
         telegram_id = getattr(response['base_info'], 'telegram_id', 'N/A')
         await message.answer(LOGIN_MSG["success_2"].format(name=name))
 
-        # Save data - check for None before calling model_dump()
         await state.clear()
 
         await state.set_data({'user_email': email, "name": name, "role": role.lower(), "telegram_id": telegram_id })
         
         await message.answer(TUTORIAL_MSG["intro"], reply_markup=tutorial_choice_kb())
-        # await handle_user_projects(message, state)
     else:
         await state.clear()
         await message.answer(LOGIN_MSG["fail"], reply_markup=new_api_login_type_inline)
@@ -91,22 +90,29 @@ async def handle_login_password(message: Message, state: FSMContext):
         
 
 @router.message(Command("projects"))
-@router.callback_query(F.data.in_( "ready_for_task"))
-async def handle_user_projects(callback: CallbackQuery, state: FSMContext):
+@router.callback_query(F.data.in_(["ready_for_task"]))
+async def handle_user_projects(event: Union[Message, CallbackQuery], state: FSMContext):
+    # Get the message object
+    if isinstance(event, CallbackQuery):
+        await event.answer()
+        message = event.message
+    else:
+        message = event
+    
     user_data = await state.get_data()
     email = user_data.get("user_email")
     
     if not email:
-        await callback.message.answer("You need to log in first. Use /start to log in.")
+        await message.answer("You need to log in first. Use /start to log in.")
         return
 
     projects_details = await get_projects_details(user_email=email)
     if not projects_details:
-        await callback.message.answer("No projects found for your account.")
+        await message.answer("No projects found for your account.")
         return
 
     await state.update_data({"projects_details": projects_details})
-    await callback.message.answer(
+    await message.answer(
         "Please select a project to continue:",
         reply_markup=project_selection_kb([proj["name"] for proj in projects_details])
     )
