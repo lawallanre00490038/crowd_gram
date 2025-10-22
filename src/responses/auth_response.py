@@ -35,7 +35,7 @@ LOGOUT = {
 
 EXIT = {
     "exit":(
-        "You have been Exited the platform. To Start again, use /start"
+        "You have been Exited from the platform. To Start again, use /start"
     ),
 }
 
