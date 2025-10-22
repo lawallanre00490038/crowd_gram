@@ -15,4 +15,14 @@ uvicorn
 fastapi
 pydantic[email]
 motor
-aiogram-dialog
+langchain_groq
+librosa
+noisereduce
+pydub
+opencv-python
+moviepy
+langid
+pycountry
+pystate
+better_profanity
+sentencepiece
