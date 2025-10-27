@@ -99,7 +99,7 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
         if not response:
             await message.answer(out_message or "Failed to process audio submission. Please try again.")
             await message.answer(task_msg)
-            logger.error("Audio submission failed")
+            logger.info("Audio submission failed")
             return
 
         if not all([task_id, assignment_id, prompt_id, sentence_id, email]):

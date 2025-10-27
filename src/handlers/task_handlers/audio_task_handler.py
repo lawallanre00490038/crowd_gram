@@ -228,5 +228,6 @@ async def handle_api2_audio_submission(task_info, file_id, user_id, bot):
         errors = ERROR_MESSAGE.format(errors=errors)
 
         logger.info(f"Audio submission failed for user {user_id}: {errors}")
+        logger.debug(f"Audio submission file path: {new_path}")
 
         return False, errors
