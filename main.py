@@ -38,7 +38,9 @@ async def bot_main():
     await bot.delete_webhook(drop_pending_updates=True)
     logger.info("✅ Bot is running... Press Ctrl+C to stop.")
 
-    dp.message.middleware(LoggingMiddleware())
+    loggingmiddleware = LoggingMiddleware()
+    dp.message.middleware(loggingmiddleware)
+    dp.callback_query.middleware(loggingmiddleware)
 
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
