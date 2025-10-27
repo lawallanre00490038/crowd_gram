@@ -1,6 +1,7 @@
 import asyncio
 from loguru import logger
 
+from src.middlewares.logging import LoggingMiddleware
 from src.routes.admin_routes import admin
 from src.routes.auth_routes import auth_new_api
 from src.routes.community_routes import community, support
@@ -36,8 +37,10 @@ async def bot_main():
 
     await bot.delete_webhook(drop_pending_updates=True)
     logger.info("✅ Bot is running... Press Ctrl+C to stop.")
-    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
+    dp.message.middleware(LoggingMiddleware())
+
+    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 # Run everything
 if __name__ == "__main__":
