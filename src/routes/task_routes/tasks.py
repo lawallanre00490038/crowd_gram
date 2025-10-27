@@ -1,7 +1,7 @@
-import logging
+from loguru import logger
 import random
 
-from aiogram.filters import Command 
+from aiogram.filters import Command
 from aiogram import Router, F, Bot
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.fsm.context import FSMContext
@@ -17,7 +17,7 @@ from src.utils.parameters import UserParams
 from src.utils.downloader import download_telegram
 from src.utils.save_audio import save_librosa_audio_as_mp3
 from src.responses.task_formaters import (IMAGE_TASK_PROMPT, TEXT_TASK_PROMPT, SELECT_TASK_TO_PERFORM,
-    APPROVED_TASK_MESSAGE, ERROR_MESSAGE, SUBMISSION_RECIEVED_MESSAGE, VIDEO_TASK_PROMPT)
+                                          APPROVED_TASK_MESSAGE, ERROR_MESSAGE, SUBMISSION_RECIEVED_MESSAGE, VIDEO_TASK_PROMPT)
 
 from src.services.quality_assurance.text_validation import validate_text_input
 from src.services.quality_assurance.image_validation import validate_image_input
@@ -27,21 +27,22 @@ from src.services.quality_assurance.audio_quality_check import check_audio_quali
 from src.services.task_distributor import assign_task, get_full_task_detail, Task
 from src.handlers.task_handlers.audio_task_handler import send_audio_question_actual_tasks, handle_audio_submission
 
-logger = logging.getLogger(__name__)
-
 router = Router()
+
 
 def get_unused_sample(user_data):
     # to avoid repetition of the same sample
     used_samples = user_data.get("used_samples", [])
-    
+
     if len(used_samples) >= len(TASK_SAMPLES):
         used_samples = []
-    
-    available_samples = [sample for sample in TASK_SAMPLES if sample["id"] not in used_samples]
-    
-    #select randomly asample
+
+    available_samples = [
+        sample for sample in TASK_SAMPLES if sample["id"] not in used_samples]
+
+    # select randomly asample
     return random.choice(available_samples), used_samples
+
 
 @router.message(F.text == "/welcome")
 async def cmd_welcome(message: Message):
@@ -50,35 +51,39 @@ async def cmd_welcome(message: Message):
         f"Welcome to EqualyzAI Task Portal, {user_name}!\n\n"
         "This is where the magic happens - find all sorts of tasks to match your skills:\n\n"
         "🔤 Translation tasks\n"
-        "📝 Data collection\n" 
+        "📝 Data collection\n"
         "✅ Content review\n"
         "🎧 Audio work\n"
         "...and much more!\n\n"
         "Want to dive into translation tasks? start right now!\n"
         "Or explore other opportunities through the main menu.\n\n"
         "Let's start earning together! 💪"
-        )  
-    
+    )
+
     start_kb = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="Start task", callback_data="select_task_language")],
+            [InlineKeyboardButton(
+                text="Start task", callback_data="select_task_language")],
             [InlineKeyboardButton(text="Menu", callback_data="view_commands")],
-            #[InlineKeyboardButton(text="View My Status", callback_data="view_status")]
+            # [InlineKeyboardButton(text="View My Status", callback_data="view_status")]
         ]
     )
-    
+
     await message.answer(welcome_text, reply_markup=start_kb)
+
 
 @router.message(Command("status"))
 async def cmd_status(message: Message):
     # Fetch and display agent's status
     await message.answer("Your task status: ...")
 
+
 @router.message(Command("start_task"))
 async def cmd_start_task(message: Message, state: FSMContext):
     print("Here")
     await message.answer(SELECT_TASK_TO_PERFORM)
     await state.set_state(TaskState.waiting_for_task)
+
 
 @router.message(TaskState.waiting_for_task, Command("text_task"))
 async def cmd_start_task(message: Message, state: FSMContext):
@@ -91,9 +96,12 @@ async def cmd_start_task(message: Message, state: FSMContext):
     await state.set_state(TextTaskSubmission.waiting_for_text)
     await state.set_data({UserParams.TASK_INFO.value: assigned_task.model_dump()})
 
-    logger.info(f"User {message.from_user.id} with {login_identifier} started a new task: {assigned_task.category}")
+    logger.info(
+        f"User {message.from_user.id} with {login_identifier} started a new task: {assigned_task.category}")
 
 # For testing purposes, to be removed later
+
+
 @router.message(Command("start_audio_task_real"))
 async def cmd_start_audio_task(message: Message, state: FSMContext):
     assigned_task = await assign_task("aha", TaskType.Audio)
@@ -123,30 +131,33 @@ async def cmd_start_task(message: Message, state: FSMContext):
     await state.set_data({UserParams.TASK_INFO.value: assigned_task.model_dump()})
     await state.set_state(AudioTaskSubmission.waiting_for_audio)
 
+
 @router.message(TaskState.waiting_for_task, Command("image_task"))
 async def cmd_start_image_task(message: Message, state: FSMContext):
     """
     Start a new image task and prompt the user to submit an image.
     """
     login_identifier = await state.get_value(UserParams.LOGIN_IDENTIFIER.value)
-    
+
     # Assign the image task (this function would return an image task object)
     assigned_task = await assign_task(login_identifier, TaskType.Image)
 
     # Prepare the task description (e.g., a prompt to upload an image)
     user_message = IMAGE_TASK_PROMPT.format(**assigned_task.model_dump())
-    
+
     # Send the task instructions to the user
     await message.answer(user_message)
-    
+
     # Set the FSM state to 'waiting_for_image_submission'
     await state.set_state(ImageTaskSubmission.waiting_for_image)
-    
+
     # Store the task info in the state
     await state.set_data({UserParams.TASK_INFO.value: assigned_task.model_dump()})
-    
+
     # Log the task initiation
-    logger.info(f"User {message.from_user.id} with {login_identifier} started a new image task: {assigned_task.category}")
+    logger.info(
+        f"User {message.from_user.id} with {login_identifier} started a new image task: {assigned_task.category}")
+
 
 @router.message(TaskState.waiting_for_task, Command("video_task"))
 async def cmd_start_video_task(message: Message, state: FSMContext):
@@ -155,35 +166,39 @@ async def cmd_start_video_task(message: Message, state: FSMContext):
     """
     # Assign the video task (this function would return a video task object)
     login_identifier = await state.get_value(UserParams.LOGIN_IDENTIFIER.value)
-    assigned_task = await assign_task(login_identifier, TaskType.Video)  # You would define this method
+    # You would define this method
+    assigned_task = await assign_task(login_identifier, TaskType.Video)
 
     # Prepare the task description (e.g., a prompt to upload a video)
     user_message = VIDEO_TASK_PROMPT.format(**assigned_task.model_dump())
-    
+
     # Send the task instructions to the user
     await message.answer(user_message)
-    
+
     # Set the FSM state to 'waiting_for_video_submission'
     await state.set_state(VideoTaskSubmission.waiting_for_video)
-    
+
     # Store the task info in the state
     await state.set_data({UserParams.TASK_INFO.value: assigned_task.model_dump()})
-    
-    # Log the task initiation
-    logger.info(f"User {message.from_user.id} with {login_identifier} started a new video task: {assigned_task.category}")
 
-        
+    # Log the task initiation
+    logger.info(
+        f"User {message.from_user.id} with {login_identifier} started a new video task: {assigned_task.category}")
+
+
 @router.message(F.text == "/exit")
 async def cmd_exit(message: Message, state: FSMContext):
     await message.answer("Exiting task selection. Type /start_task to begin again.")
     await state.clear()
 
+
 @router.message(AudioTaskSubmission.waiting_for_audio)
 async def handle_audio_input(message: Message, state: FSMContext, bot: Bot):
     task_info = await state.get_value(UserParams.TASK_INFO.value)
-    
+
     login_identifier = await state.get_value(UserParams.LOGIN_IDENTIFIER.value)
-    logger.info(f"User {message.from_user.id} with {login_identifier} submitted task: {task_info['task_id']}")
+    logger.info(
+        f"User {message.from_user.id} with {login_identifier} submitted task: {task_info['task_id']}")
 
     if message.voice:
         await message.answer(SUBMISSION_RECIEVED_MESSAGE)
@@ -196,6 +211,7 @@ async def handle_audio_input(message: Message, state: FSMContext, bot: Bot):
     else:
         await message.answer("Please. Record a audio")
 
+
 @router.message(TextTaskSubmission.waiting_for_text)
 async def handle_text_input(message: Message, state: FSMContext):
     text = message.text.strip()
@@ -206,16 +222,18 @@ async def handle_text_input(message: Message, state: FSMContext):
     task_script = data.get("task_script", "LATIN").upper()
     user_id = message.from_user.id
 
-    result = validate_text_input(text, task_lang=task_lang,exp_task_script=task_script)
+    result = validate_text_input(
+        text, task_lang=task_lang, exp_task_script=task_script)
 
     if result["success"]:
-        await message.answer(APPROVED_TASK_MESSAGE)        
+        await message.answer(APPROVED_TASK_MESSAGE)
         await state.set_state()
-        
+
     else:
         errors = "\n".join(result["fail_reasons"])
         errors = ERROR_MESSAGE.format(errors=errors)
         await message.answer(errors)
+
 
 @router.message(ImageTaskSubmission.waiting_for_image)
 async def handle_image_input(message: Message, state: FSMContext):
@@ -233,7 +251,7 @@ async def handle_image_input(message: Message, state: FSMContext):
     else:
         await message.answer("⚠️ Please upload a valid image (JPG, PNG, or WEBP).")
         return
-    
+
     # Download the image to a temporary file
     local_path = await download_telegram(image_file.file_id, bot=message.bot)
     # Continue with valirrdation
@@ -241,13 +259,14 @@ async def handle_image_input(message: Message, state: FSMContext):
 
     if result["success"]:
         await message.answer(APPROVED_TASK_MESSAGE)
-        
+
         await state.set_state()
     else:
         await message.answer(
             "Image failed the quality check:\n\n" +
             "\n".join(f"• {reason}" for reason in result["fail_reasons"])
         )
+
 
 @router.message(VideoTaskSubmission.waiting_for_video)
 async def handle_video_input(message: Message, state: FSMContext):
@@ -266,7 +285,7 @@ async def handle_video_input(message: Message, state: FSMContext):
     else:
         await message.answer("⚠️ Please upload a valid video (MP4, MOV, or AVI).")
         return
-    
+
     # Download the image to a temporary file
     local_path = await download_telegram(image_file.file_id, bot=message.bot)
     # Continue with validation
@@ -306,7 +325,7 @@ async def cmd_next_task(message: Message, state: FSMContext):
         assigned_task = assign_task(login_identifier, TaskType.Video)
         user_message = VIDEO_TASK_PROMPT.format(**assigned_task.model_dump())
         await state.set_state(VideoTaskSubmission.waiting_for_video)
-    
+
     # Send the task instructions to the user
     await message.answer(user_message)
     await state.set_data({UserParams.TASK_INFO.value: assigned_task.model_dump()})
@@ -319,7 +338,7 @@ async def cmd_status(message: Message, state: FSMContext):
     telegram_id = message.from_user.id
 
     completed_tasks = user_data.get("completed_tasks", 0)
-    
+
     status_text = (
         f"Name: {user_name}\n\n"
         f"Task Type: \n"
@@ -329,45 +348,44 @@ async def cmd_status(message: Message, state: FSMContext):
         f"Tasks Completed: {completed_tasks}\n"
         f"Number of tasks aproved:"
     )
-    
+
     await message.answer(status_text, reply_markup=create_task_action_keyboard())
+
 
 @router.callback_query(F.data == "select_task_language")
 async def handle_language_selection_start(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
     await state.update_data(preferred_language="Yoruba", preferred_lang_code="yoruba")
-    
+
     confirmation_text = (
         f"✅ Language: Yoruba\n\n"
         f"You'll be translating English texts to Yoruba\n\n"
         f"Ready for your first task?"
     )
-    
+
     await callback.message.answer(confirmation_text, reply_markup=create_task_action_keyboard())
+
 
 @router.callback_query(F.data == "start_translate")
 async def handle_start_task(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
-    
 
     preferred_language = "Yoruba"
     await state.update_data(preferred_language=preferred_language, preferred_lang_code="yoruba")
-    
+
     user_data = await state.get_data()
     current_task, used_samples = get_unused_sample(user_data)
     task_number = user_data.get("completed_tasks", 0) + 1
-    
 
     used_samples.append(current_task["id"])
-    
 
     await state.update_data(
-        current_task=current_task, 
+        current_task=current_task,
         current_task_number=task_number,
         used_samples=used_samples
     )
-    
+
     task_text = (
         f"Task #{task_number}\n\n"
         f"Category: {current_task['category'].title()}\n"
@@ -378,56 +396,57 @@ async def handle_start_task(callback: CallbackQuery, state: FSMContext):
         f"Your {preferred_language} translation:\n"
         f"Type your translation below ⬇️"
     )
-    
+
     await callback.message.answer(task_text)
     await state.set_state(TaskState.task_in_progress)
+
 
 @router.callback_query(F.data == "get_next_task")
 async def handle_get_another_task(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
-    
+
     development_text = (
         "🚧 Feature in Development\n\n"
         "The 'Get Another Task' feature is currently being develope.\n\n"
         "For now, please use 'Start Translation' to continue with regular tasks.\n\n"
         "Thank you for your patience!"
     )
-    
+
     continue_kb = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="Start Translation", callback_data="start_translate")],
+            [InlineKeyboardButton(text="Start Translation",
+                                  callback_data="start_translate")],
             [InlineKeyboardButton(text="Menu", callback_data="view_commands")]
         ]
     )
-    
+
     await callback.message.answer(development_text, reply_markup=continue_kb)
+
 
 @router.message(TaskState.task_in_progress)
 async def handle_task_submission(message: Message, state: FSMContext):
-    
+
     if not message.text:
         await message.answer("Please send your translation as text.")
         return
-    
+
     user_translation = message.text.strip()
     user_data = await state.get_data()
     current_task = user_data.get("current_task")
     task_number = user_data.get("current_task_number", 1)
     preferred_language = user_data.get("preferred_language")
-    
+
     if not current_task:
         await message.answer("No active task found. Please start a new task.")
         return
-    
-   
+
     completed_tasks = user_data.get("completed_tasks", 0) + 1
 
     await state.update_data(
         completed_tasks=completed_tasks,
         last_translation=user_translation
     )
-    
-    
+
     confirmation_text = (
         f"✅ Task #{task_number} Completed!\n\n"
         f"Original (English):\n"
@@ -436,25 +455,25 @@ async def handle_task_submission(message: Message, state: FSMContext):
         f'"{user_translation}"\n\n'
         f"Status: Submitted for validation"
     )
-    
+
     await message.answer(confirmation_text)
-    
-    # Simulation 
+
+    # Simulation
     await simulate_task_validation(message, state)
+
 
 async def simulate_task_validation(message: Message, state: FSMContext):
     """Validation simulation"""
     import asyncio
-    
-    await asyncio.sleep(1)  
-    
+
+    await asyncio.sleep(1)
+
     user_data = await state.get_data()
     current_task = user_data.get("current_task")
     completed_tasks = user_data.get("completed_tasks", 0)
-    
 
     validation_result = random.random() > 0.1
-    
+
     if validation_result:
         success_text = (
             f"🎉 Task Approved!\n\n"
@@ -462,20 +481,23 @@ async def simulate_task_validation(message: Message, state: FSMContext):
             f"Tasks completed: {completed_tasks}\n\n"
             f"Ready for your next challenge?"
         )
-        
+
         next_kb = InlineKeyboardMarkup(
             inline_keyboard=[
-                [InlineKeyboardButton(text="Next task", callback_data="start_translate")],
-                [InlineKeyboardButton(text="Menu", callback_data="view_commands")],
+                [InlineKeyboardButton(
+                    text="Next task", callback_data="start_translate")],
+                [InlineKeyboardButton(
+                    text="Menu", callback_data="view_commands")],
             ]
         )
-        
+
         await message.answer(success_text, reply_markup=next_kb)
-        
+
         # Log admin
-        print(f"✅ TASK APPROVED - User {message.from_user.id}, Task #{completed_tasks}")
+        print(
+            f"✅ TASK APPROVED - User {message.from_user.id}, Task #{completed_tasks}")
         print(f"Translation: {user_data.get('last_translation')}")
-        
+
     else:
         failure_text = (
             f"Task needs revision\n\n"
@@ -483,14 +505,16 @@ async def simulate_task_validation(message: Message, state: FSMContext):
             f"💡 Tip: Focus on accuracy and natural flow.\n\n"
             f"Try again?"
         )
-        
+
         retry_kb = InlineKeyboardMarkup(
             inline_keyboard=[
-                [InlineKeyboardButton(text="Retry Task", callback_data="start_translate")],
-                [InlineKeyboardButton(text="Menu", callback_data="view_commands")]
+                [InlineKeyboardButton(
+                    text="Retry Task", callback_data="start_translate")],
+                [InlineKeyboardButton(
+                    text="Menu", callback_data="view_commands")]
             ]
         )
-        
+
         await message.answer(failure_text, reply_markup=retry_kb)
-    
+
     await state.set_state(TaskState.task_completed)

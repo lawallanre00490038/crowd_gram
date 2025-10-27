@@ -1,14 +1,15 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-import logging
+from loguru import logger
 from typing import List
 from aiogram.utils.markdown import hbold
 from src.keyboards.inline import quiz_options_kb
 from aiogram.types import Message, FSInputFile
-from src.routes.task_routes.task_formaters import VIDEO_REQUEST_MESSAGE  # You should define this similar to IMAGE_REQUEST_MESSAGE
-
-logger = logging.getLogger(__name__)
+# You should define this similar to IMAGE_REQUEST_MESSAGE
+from src.routes.task_routes.task_formaters import VIDEO_REQUEST_MESSAGE
 
 # --- Utility Functions ---
+
+
 def format_caption(question: str, target_lang: str, annotation_type: str) -> str:
     """
     Formats the caption for open-ended video tasks.
@@ -22,8 +23,10 @@ async def handle_open_end_task(message: Message, quiz, target_lang: str):
     Handles open-ended video task.
     """
     video_file = FSInputFile(quiz['video_id'])
-    caption = format_caption(quiz['question'], target_lang, quiz['annotation_type'])
+    caption = format_caption(
+        quiz['question'], target_lang, quiz['annotation_type'])
     return await message.answer_video(video=video_file, caption=caption)
+
 
 async def handle_close_end_task(message: Message, video_path: str, question: str, options: list):
     """
@@ -34,7 +37,7 @@ async def handle_close_end_task(message: Message, video_path: str, question: str
     # Build inline keyboard for options
     await message.answer_video(video=video_file, caption=caption, reply_markup=quiz_options_kb(options))
     logger.info("Sent close-ended video task with options.")
-    
+
 
 async def handle_request_task(message: Message, quiz, target_lang: str):
     """
@@ -45,13 +48,14 @@ async def handle_request_task(message: Message, quiz, target_lang: str):
     question = quiz['question']
     example = quiz['example_prompt']
     msg = VIDEO_REQUEST_MESSAGE.format(
-            target_lang=target_lang,
-            theme=theme,
-            annotation_type=annotation_type,
-            question=question,
-            example=example
-        )    
+        target_lang=target_lang,
+        theme=theme,
+        annotation_type=annotation_type,
+        question=question,
+        example=example
+    )
     return await message.answer(msg)
+
 
 async def handle_video_task(message: Message, quiz_data, target_lang: str):
     """

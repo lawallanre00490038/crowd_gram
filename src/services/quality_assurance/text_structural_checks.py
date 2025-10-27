@@ -16,11 +16,9 @@ Usage:
 """
 
 import unicodedata
-import logging
+from loguru import logger
 import re
 from better_profanity import profanity
-
-logger = logging.getLogger(__name__)
 
 
 def check_junk(text: str) -> bool:
@@ -74,7 +72,8 @@ def check_unicode_script(text: str, expected_script_prefix: str) -> bool:
                 continue  # Skip whitespace
             if unicodedata.category(char).startswith("M"):
                 continue  # Skip combining marks
-            if unicodedata.category(char).startswith("L"):  # Only enforce check on letters
+            # Only enforce check on letters
+            if unicodedata.category(char).startswith("L"):
                 name = unicodedata.name(char, "")
                 if not name.startswith(expected_script_prefix):
                     return False
@@ -85,7 +84,6 @@ def check_unicode_script(text: str, expected_script_prefix: str) -> bool:
     except Exception as e:
         logger.warning(f"Unicode script check failed: {e}")
         return False
-
 
 
 def check_profanity(text: str) -> bool:
@@ -125,4 +123,3 @@ def run_all_checks(text: str, expected_script_prefix: str = "LATIN", repeat_thre
         "script_ok": check_unicode_script(text, expected_script_prefix),
         "profanity": check_profanity(text),
     }
-

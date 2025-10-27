@@ -2,14 +2,11 @@ from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-import logging
+from loguru import logger
 
 from src.models.api2_models.status import StatusModel
 from src.services.server.api2_server.status import get_contributor_status, get_reviewer_status, get_analytics, get_daily_analytics
 from src.responses.status_response import format_agent_status, format_reviewer_status
-
-
-logger = logging.getLogger(__name__)
 
 
 router = Router()

@@ -2,7 +2,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 
-import logging
+from loguru import logger
 
 from src.models.api2_models.agent import SubmissionModel
 from src.keyboards.inline import next_reviewer_task_inline_kb, review_task_kb, create_score_kb, summary_kb
@@ -17,7 +17,7 @@ from src.utils.file_url_handlers import build_file_section
 from src.utils.submission_utils import get_submission_info
 from src.models.api2_models.reviewer import ReviewModel
 
-logger = logging.getLogger(__name__)
+
 router = Router()
 
 
@@ -29,54 +29,60 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
         project_index = user_data.get("project_index")
         project_id = user_data.get("projects_details")[project_index]['id']
         project_name = user_data.get("projects_details")[project_index]['name']
-        reviewer_instruction = user_data.get("projects_details")[project_index].get('reviewer_instruction', 'No specific instructions provided.')
-        
+        reviewer_instruction = user_data.get("projects_details")[project_index].get(
+            'reviewer_instruction', 'No specific instructions provided.')
+
         if not email or not project_id:
             await callback.message.answer("Please select a project first using /start.")
             return
-        
-        task_details = ProjectTaskRequestModel(project_id=project_id, email=email, status="pending")
+
+        task_details = ProjectTaskRequestModel(
+            project_id=project_id, email=email, status="pending")
         allocations = await get_project_tasks_assigned_to_user(task_details)
-        
+
         if not allocations:
             await callback.message.answer("No tasks available at the moment. Please check back later.")
             return
-            
-        reviewers_list = allocations.reviewers if hasattr(allocations, 'reviewers') else []
-        
+
+        reviewers_list = allocations.reviewers if hasattr(
+            allocations, 'reviewers') else []
+
         if reviewers_list:
             first_reviewer = reviewers_list[0]
-            
+
             # Check if reviewer has tasks
             if not first_reviewer.tasks or len(first_reviewer.tasks) == 0:
                 await callback.message.answer("No review tasks available at the moment. Please check back later.")
                 return
-            
+
             first_task = first_reviewer.tasks[0]
-            
+
             # Check if task has submission
             if first_task.submission is None:
                 await callback.message.answer("No submissions available for review at the moment. Please check back later.")
                 return
-            
+
             task_text = first_task.submission.payload_text
             submission_type = first_task.submission.type
             submission_file_url = first_task.submission.file_url
-                    
+
             await callback.message.answer(
                 REVIEWER_TASK_MSG['intro'].format(
                     project_name=project_name,
                     submission_type=submission_type,
                     payload_text=task_text,
-                    file_section=build_file_section(submission_type, submission_file_url),
+                    file_section=build_file_section(
+                        submission_type, submission_file_url),
                     reviewer_instruction=reviewer_instruction
                 ),
                 reply_markup=review_task_kb()
             )
 
             # Convert Pydantic objects to dictionaries for state storage
-            reviewers_list_dict = [reviewer.model_dump() for reviewer in reviewers_list]
-            first_task = reviewers_list_dict[0].get("tasks", [{}])[0] if reviewers_list_dict else {}
+            reviewers_list_dict = [reviewer.model_dump()
+                                   for reviewer in reviewers_list]
+            first_task = reviewers_list_dict[0].get(
+                "tasks", [{}])[0] if reviewers_list_dict else {}
             submission_dict = first_task.get("submission") or {}
             await state.update_data(
                 reviewers_list=reviewers_list_dict,
@@ -86,12 +92,12 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
             )
         else:
             await callback.message.answer("No submissions available for review at the moment. Please check back later.")
-            
+
     except Exception as e:
         logger.error(f"Error in start_reviewer_task: {str(e)}")
         await callback.message.answer("Error occurred, please try again.")
-        
-        
+
+
 @router.callback_query(F.data == "review_task")
 async def start_review(callback: CallbackQuery, state: FSMContext):
     """Begins the review scoring process"""
@@ -102,9 +108,9 @@ async def start_review(callback: CallbackQuery, state: FSMContext):
     reviewers_list = data.get("reviewers_list", [])
     project_index = data.get("project_index")
     project_id = projects_details[project_index]['id']
-    current_task = reviewers_list[0].get("tasks", [{}])[0] if reviewers_list else {}
+    current_task = reviewers_list[0].get(
+        "tasks", [{}])[0] if reviewers_list else {}
     submission_dict = current_task.get("submission") or {}
-
 
     if not reviewers_list or not project_id:
         await callback.message.answer("No assigned review task found.")
@@ -173,7 +179,8 @@ async def show_summary(message: Message, state: FSMContext):
     scores = data.get("scores", {})
     scale = data.get("review_scale", 5)
 
-    summary_lines = [f"• {param.upper()}:  {score}/{scale}" for param, score in scores.items()]
+    summary_lines = [
+        f"• {param.upper()}:  {score}/{scale}" for param, score in scores.items()]
     summary_text = "\n".join(summary_lines)
 
     await message.answer(
@@ -194,12 +201,11 @@ async def submit_review(callback: CallbackQuery, state: FSMContext):
         project_id = data.get("project_id")
         reviewers_list = data.get("reviewers_list", [])
 
-        
         submission_id = data.get("submission_id")
         if not submission_id:
             first_task = reviewers_list[0].get("tasks", [{}])[0]
             submission_id = (first_task.get("submission")).get("submission_id")
-        
+
         reviewer_email = data.get('user_email')
 
         review_data = ReviewModel(
@@ -231,5 +237,3 @@ async def restart_review(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await state.update_data(scores={}, index=0)
     await ask_next_param(callback.message, state)
-
-

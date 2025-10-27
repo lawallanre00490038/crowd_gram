@@ -1,6 +1,6 @@
 import asyncio
 import json
-import logging
+from loguru import logger
 import re
 
 from aiogram import types
@@ -56,7 +56,7 @@ async def send_leaderboard_weekly():
             "🏆 <b>Leaderboard This Week</b>\n\n"
             "Meaning of Columns\n{}\n"
             "<pre>{}</pre>"
-            ).format(code_text, table)
+        ).format(code_text, table)
 
         await bot.send_message(chat_id=CHANNEL_ID, text=text)
 
@@ -98,7 +98,6 @@ async def get_top_agent_this_week():
         await asyncio.sleep(delay=delay)
 
 
-
 async def send_monthly_contest():
 
     delay = 2592000  # 30 days
@@ -124,12 +123,15 @@ async def send_monthly_contest():
 
             reward = json_object["Reward"]
 
-            judging_criteria_text = "\n".join(f"- {criteria}" for criteria in judging_criteria)
+            judging_criteria_text = "\n".join(
+                f"- {criteria}" for criteria in judging_criteria)
             result = as_section(
                 Bold(f"📢 {title}\n\n"),
                 Text(Bold("📝 Task Instruction"), f"\n{task_instruction}\n\n"),
-                Text(Bold("📦 Submission Requirements"), f"\n{submission_requirements}\n\n"),
-                Text(Bold("⚖️ Judging Criteria\n"), f"{judging_criteria_text}\n\n"),
+                Text(Bold("📦 Submission Requirements"),
+                     f"\n{submission_requirements}\n\n"),
+                Text(Bold("⚖️ Judging Criteria\n"),
+                     f"{judging_criteria_text}\n\n"),
                 Italic(f"{social_media_instruction}\n\n"),
                 Text(Bold("📅 Deadline"), f"\n{deadline}\n\n"),
                 Text(Bold("🏆 Reward"), f"\n{reward}")
@@ -142,7 +144,9 @@ async def send_monthly_contest():
 
         await asyncio.sleep(delay)
 
-#@{name}.post(/projects)
+# @{name}.post(/projects)
+
+
 async def broadcast_new_projects():
     """Broadcast New Projects"""
     # TODO Logic to recieve and retrieve json from backend request
@@ -152,30 +156,34 @@ async def broadcast_new_projects():
         context = f"📢<b>Check out these New Projects</b>  \n<pre>{structure}</pre>"
         await bot.send_message(chat_id=CHANNEL_ID, text=context)
     except Exception as err:
-        logging.error(f"Community-Broadcast Projects Router Error: Details: {err}")
+        logging.error(
+            f"Community-Broadcast Projects Router Error: Details: {err}")
 
 # @{name}.post("/trainings")
+
+
 async def broadcast_new_trainings():
     """Broadcast New Trainings"""
     # TODO Logic to recieve and retrieve json from backend request
     try:
-            response_obj = format_json_str_to_json(json_data_broadcast_trainings_insert)
-            items = []
-            for i, content in enumerate(response_obj):
-                body = Text(
-                    Bold(Text(i+1), ". "),
-                    Bold(content['announcement_title']),
-                    '\n\n',
-                    content["body"],
-                    '\n\n'
-                )
-                items.append(body)
-            result = as_section(
-                Text(Underline(Bold("📢 Check out these New Policy Announcements\n"))),
-                Text(*items, sep="\n\n")
+        response_obj = format_json_str_to_json(
+            json_data_broadcast_trainings_insert)
+        items = []
+        for i, content in enumerate(response_obj):
+            body = Text(
+                Bold(Text(i+1), ". "),
+                Bold(content['announcement_title']),
+                '\n\n',
+                content["body"],
+                '\n\n'
             )
+            items.append(body)
+        result = as_section(
+            Text(Underline(Bold("📢 Check out these New Policy Announcements\n"))),
+            Text(*items, sep="\n\n")
+        )
 
-            await bot.send_message(**result.as_kwargs(), chat_id=CHANNEL_ID)
+        await bot.send_message(**result.as_kwargs(), chat_id=CHANNEL_ID)
     except Exception as err:
         logging.error(f"Community-Broadcast Policies Router Error: Details: {err}")  # noqa: E501
 
@@ -186,97 +194,96 @@ async def broadcast_new_policies():
     # TODO Logic to receive and retrieve json from backend request
 
     try:
-            response_obj = format_json_str_to_json(json_data_broadcast_policy_insert)
-            items = []
-            for i, content in enumerate(response_obj):
-                body = Text(
-                    Bold(Text(i+1, ". ")),
-                    Bold(content['announcement_title']),
-                    '\n\n',
-                    content["body"],
-                    '\n\n'
-                )
-                items.append(body)
-            result = as_section(
-                Text(Underline(Bold("📢 Check out these New Policy Announcements\n"))),
-                Text(*items, sep="\n\n")
+        response_obj = format_json_str_to_json(
+            json_data_broadcast_policy_insert)
+        items = []
+        for i, content in enumerate(response_obj):
+            body = Text(
+                Bold(Text(i+1, ". ")),
+                Bold(content['announcement_title']),
+                '\n\n',
+                content["body"],
+                '\n\n'
             )
+            items.append(body)
+        result = as_section(
+            Text(Underline(Bold("📢 Check out these New Policy Announcements\n"))),
+            Text(*items, sep="\n\n")
+        )
 
-            await bot.send_message(**result.as_kwargs(), chat_id=CHANNEL_ID)
+        await bot.send_message(**result.as_kwargs(), chat_id=CHANNEL_ID)
     except Exception as err:
-        logging.error(f"Community-Broadcast Policies Router Error. Details: {err}")
-
+        logging.error(
+            f"Community-Broadcast Policies Router Error. Details: {err}")
 
 
 theme_history = []
+
+
 async def send_wellness_weekly():
     """Send Weekly Wellness Activities"""
-    delay = 604800 # weekly delay
+    delay = 604800  # weekly delay
     title = ""
     activities = ""
     while True:
         try:
 
-          chat_response = await llm.ainvoke(
-              WELLNESS_PROMPT.format(theme_history=str(theme_history))
-          )
+            chat_response = await llm.ainvoke(
+                WELLNESS_PROMPT.format(theme_history=str(theme_history))
+            )
 
-          response_obj = format_json_str_to_json(chat_response.content)[0]
+            response_obj = format_json_str_to_json(chat_response.content)[0]
 
+            items = []
+            try:
+                if response_obj["Title"] and response_obj["Activities"]:
+                    title = response_obj["Title"]
+                    activities = response_obj["Activities"]
+                    for i, activity in enumerate(activities):
+                        body = Text(
+                            Bold(Text(i+1, ". ")),
+                            Bold('Activity: '),
+                            Bold("⚡", activity['Activity Name']),
+                            '\n',
+                            activity['Activity Instructions'],
+                            '\n\n'
+                        )
+                        items.append(body)
+            except Exception as err:
+                logging.error(
+                    f"Community Error POLL CREATION  Error: Details {err}")
 
-          items = []
-          try:
-            if response_obj["Title"] and response_obj["Activities"]:
-                title = response_obj["Title"]
-                activities = response_obj["Activities"]
-                for i, activity in enumerate(activities):
-                    body = Text(
-                        Bold(Text(i+1, ". ")),
-                        Bold('Activity: '),
-                        Bold("⚡", activity['Activity Name']),
-                        '\n',
-                        activity['Activity Instructions'],
-                        '\n\n'
-                    )
-                    items.append(body)
-          except Exception as err:
-              logging.error(
-                  f"Community Error POLL CREATION  Error: Details {err}")
-
-          result = as_section(
-              Text(Underline(Bold("🧘‍♀️ Wellness Activities of the Week\n"))),
-              Text(Bold("Theme: ", title, "\n\n")),
-              Text(*items, sep="\n")
-          )
-          theme_history.append(title)
-          await bot.send_message(**result.as_kwargs(), chat_id=CHANNEL_ID)
-          await asyncio.sleep(delay=delay)
+            result = as_section(
+                Text(Underline(Bold("🧘‍♀️ Wellness Activities of the Week\n"))),
+                Text(Bold("Theme: ", title, "\n\n")),
+                Text(*items, sep="\n")
+            )
+            theme_history.append(title)
+            await bot.send_message(**result.as_kwargs(), chat_id=CHANNEL_ID)
+            await asyncio.sleep(delay=delay)
 
         except Exception as err:
 
-            logging.error(f"Community Error POLL CREATION  Error: Details: {err}")
+            logging.error(
+                f"Community Error POLL CREATION  Error: Details: {err}")
 
             logging.error(
                 f"Community Error POLL CREATION  Error: Details: {err}")
 
 
-
-
-
-#=================================POLL CREATION=================================
-
+# =================================POLL CREATION=================================
 
 
 async def generate_poll(message_text: str) -> tuple[str, list[str]]:
     """
     Call the LLM to generate a poll question and options based on the input text.
-    
+
     Args:
         message_text (str): The text of the replied-to message.
-    
+
     Returns:
         tuple[str, list[str]]: The generated question and list of options.
-    
+
     Raises:
         ValueError: If the LLM fails or returns invalid output.
     """
@@ -285,106 +292,132 @@ async def generate_poll(message_text: str) -> tuple[str, list[str]]:
         try:
             formatted_prompt = POLL_PROMPT.format(message_text=message_text)
         except KeyError as e:
-            logging.error(f"Community Error POLL CREATION Error: Details: Prompt formatting failed: Invalid placeholder {str(e)}")
-            raise ValueError(f"Prompt formatting failed: Invalid placeholder {str(e)}")
-        
+            logging.error(
+                f"Community Error POLL CREATION Error: Details: Prompt formatting failed: Invalid placeholder {str(e)}")
+            raise ValueError(
+                f"Prompt formatting failed: Invalid placeholder {str(e)}")
+
         # Call the LLM
         response = await llm.ainvoke(formatted_prompt)
-        
-        
+
         # Extract the content field (LangChain response)
-        content = response.content if hasattr(response, 'content') else response.get('content') if isinstance(response, dict) else None
+        content = response.content if hasattr(response, 'content') else response.get(
+            'content') if isinstance(response, dict) else None
         if not content:
-            logging.error(f"Community Error POLL CREATION  Error: Details: LLM response does not contain 'content' field: {response}")
-            raise ValueError(f"LLM response does not contain 'content' field: {response}")
-        
+            logging.error(
+                f"Community Error POLL CREATION  Error: Details: LLM response does not contain 'content' field: {response}")
+            raise ValueError(
+                f"LLM response does not contain 'content' field: {response}")
+
         # Log content
         logging.debug(f"LLM content: {content}")
-        
+
         # Extract JSON from content
         # Look for JSON block within ```json ... ``` or standalone JSON
-        json_match = re.search(r'```json\n([\s\S]*?)\n```|({[\s\S]*?})', content)
+        json_match = re.search(
+            r'```json\n([\s\S]*?)\n```|({[\s\S]*?})', content)
         if not json_match:
-            logging.error(f"Community Error POLL CREATION  Error: Details: LLM response content does not contain valid JSON: {content}")
-            raise ValueError(f"LLM response content does not contain valid JSON: {content}")
-        
+            logging.error(
+                f"Community Error POLL CREATION  Error: Details: LLM response content does not contain valid JSON: {content}")
+            raise ValueError(
+                f"LLM response content does not contain valid JSON: {content}")
+
         json_str = json_match.group(1) or json_match.group(2)
-        
+
         # Parse JSON
         try:
             poll_data = json.loads(json_str)
         except json.JSONDecodeError as e:
-            logging.error(f"Community Error POLL CREATION  Error: Details: Failed to parse JSON from LLM response: {str(e)}")
-            raise ValueError(f"Failed to parse JSON from LLM response: {str(e)}")
-        
+            logging.error(
+                f"Community Error POLL CREATION  Error: Details: Failed to parse JSON from LLM response: {str(e)}")
+            raise ValueError(
+                f"Failed to parse JSON from LLM response: {str(e)}")
+
         # Validate and extract question and options
         if not isinstance(poll_data, dict):
-            logging.error(f"Community Error POLL CREATION  Error: Details: Parsed LLM response is not a dictionary: {poll_data}")
-            raise ValueError(f"Parsed LLM response is not a dictionary: {poll_data}")
-        
+            logging.error(
+                f"Community Error POLL CREATION  Error: Details: Parsed LLM response is not a dictionary: {poll_data}")
+            raise ValueError(
+                f"Parsed LLM response is not a dictionary: {poll_data}")
+
         question = poll_data.get("question")
         options = poll_data.get("options")
-        
+
         # Validate LLM output
         if not isinstance(question, str) or not question:
-            logging.error(f"Community Error POLL CREATION  Error: Details: LLM returned invalid or empty question: {question}")
-            raise ValueError(f"LLM returned invalid or empty question: {question}")
+            logging.error(
+                f"Community Error POLL CREATION  Error: Details: LLM returned invalid or empty question: {question}")
+            raise ValueError(
+                f"LLM returned invalid or empty question: {question}")
         if not isinstance(options, list) or len(options) < 2 or len(options) > 10:
-            logging.error(f"Community Error POLL CREATION  Error: Details: LLM returned invalid options (must be 2-10 options): {options}")
-            raise ValueError(f"LLM returned invalid options (must be 2-10 options): {options}")
+            logging.error(
+                f"Community Error POLL CREATION  Error: Details: LLM returned invalid options (must be 2-10 options): {options}")
+            raise ValueError(
+                f"LLM returned invalid options (must be 2-10 options): {options}")
         if any(not isinstance(opt, str) or not opt for opt in options):
-            logging.error(f"Community Error POLL CREATION  Error: Details: LLM returned empty or invalid options: {options}")
-            raise ValueError(f"LLM returned empty or invalid options: {options}")
-        
+            logging.error(
+                f"Community Error POLL CREATION  Error: Details: LLM returned empty or invalid options: {options}")
+            raise ValueError(
+                f"LLM returned empty or invalid options: {options}")
+
         logging.info(f"LLM generated question: {question}")
         logging.info(f"LLM generated options: {options}")
-        
+
         return question, options
-    
+
     except Exception as e:
-        logging.error(f"Community Error POLL CREATION  Error: Details: LLM failed to generate poll: {str(e)}")
+        logging.error(
+            f"Community Error POLL CREATION  Error: Details: LLM failed to generate poll: {str(e)}")
         raise ValueError(f"LLM failed to generate poll: {str(e)}")
+
 
 async def create_poll(message: Message):
     try:
         # Check if user is admin or creator in the chat
         member = await bot.get_chat_member(message.chat.id, message.from_user.id)
         if member.status not in ("administrator", "creator"):
-            logging.error(f"Community Error POLL CREATION  Error: Details: User {message.from_user.id} is not an admin")
+            logging.error(
+                f"Community Error POLL CREATION  Error: Details: User {message.from_user.id} is not an admin")
             return
-        
+
         # Check if the command is a reply to a message
         if not message.reply_to_message or not message.reply_to_message.text:
-            logging.error("Community Error POLL CREATION  Error: Details: No valid reply message provided for /poll")
+            logging.error(
+                "Community Error POLL CREATION  Error: Details: No valid reply message provided for /poll")
             return
-        
+
         # Get the replied message's text
         input_text = message.reply_to_message.text
-        
-        
+
         # Generate poll question and options using LLM
         question, options = await generate_poll(input_text)
-        
+
         # Validate inputs
         if not question:
-            logging.error("Community Error POLL CREATION  Error: Details: Sanitized question is empty")
+            logging.error(
+                "Community Error POLL CREATION  Error: Details: Sanitized question is empty")
             return
         if len(options) < 2:
-            logging.error("Community Error POLL CREATION  Error: Details: At least two options are required")
+            logging.error(
+                "Community Error POLL CREATION  Error: Details: At least two options are required")
             return
         if len(options) > 10:
-            logging.error("Community Error POLL CREATION  Error: Details: Telegram polls support a maximum of 10 options")
+            logging.error(
+                "Community Error POLL CREATION  Error: Details: Telegram polls support a maximum of 10 options")
             return
         if len(question) > 255:
-            logging.error("Community Error POLL CREATION  Error: Details: Poll question cannot exceed 255 characters")
+            logging.error(
+                "Community Error POLL CREATION  Error: Details: Poll question cannot exceed 255 characters")
             return
         if any(len(opt) > 100 for opt in options):
-            logging.error("Community Error POLL CREATION  Error: Details: Poll options cannot exceed 100 characters each")
+            logging.error(
+                "Community Error POLL CREATION  Error: Details: Poll options cannot exceed 100 characters each")
             return
         if any(not opt for opt in options):
-            logging.error("Community Error POLL CREATION  Error: Details: One or more sanitized options are empty")
+            logging.error(
+                "Community Error POLL CREATION  Error: Details: One or more sanitized options are empty")
             return
-        
+
         # Send the poll to the chat
         await bot.send_poll(
             chat_id=message.chat.id,
@@ -393,23 +426,25 @@ async def create_poll(message: Message):
             is_anonymous=False,
             allows_multiple_answers=False,
         )
-        logging.info(f"Poll created successfully: Question: {question}, Options: {options}")
-    
+        logging.info(
+            f"Poll created successfully: Question: {question}, Options: {options}")
+
     except TelegramForbiddenError as e:
-        logging.error(f"Community Error POLL CREATION  Error: Details: Bot lacks permission: {str(e)}")
+        logging.error(
+            f"Community Error POLL CREATION  Error: Details: Bot lacks permission: {str(e)}")
     except TelegramBadRequest as e:
-        logging.error(f"Community Error POLL CREATION  Error: Details: Invalid poll format: {str(e)}")
+        logging.error(
+            f"Community Error POLL CREATION  Error: Details: Invalid poll format: {str(e)}")
     except (ValueError, IndexError) as e:
-        logging.error(f"Community Error POLL CREATION  Error: Details: {str(e)}")
+        logging.error(
+            f"Community Error POLL CREATION  Error: Details: {str(e)}")
     except Exception as e:
 
-        logging.error(f"Community Error POLL CREATION  Error: Details: Failed to create poll: {str(e)}")
+        logging.error(
+            f"Community Error POLL CREATION  Error: Details: Failed to create poll: {str(e)}")
 
 
-
-
-#<==============================Trivia Questions==========================>
-
+# <==============================Trivia Questions==========================>
 
 
 """Global variables for trivia management"""
@@ -418,6 +453,7 @@ current_trivia_message_id = None
 user_answers = {}
 
 """Parse user response text into a list of uppercase letters (A-D). """
+
 
 def parse_user_response(text: str):
     """
@@ -440,7 +476,9 @@ def parse_user_response(text: str):
 
     return answers if answers else None
 
+
 """Send trivia results to channel after collecting answers."""
+
 
 async def send_trivia_results():
     """
@@ -493,6 +531,7 @@ async def send_trivia_results():
 
 # === Main Trivia Loop ===
 
+
 async def daily_trivia():
     """
     Runs the trivia loop indefinitely:
@@ -535,7 +574,6 @@ async def daily_trivia():
 
             current_trivia_message_id = sent_message.message_id
 
-
             await asyncio.sleep(3600)  # 1 hour in seconds
 
             # Announce results
@@ -544,11 +582,7 @@ async def daily_trivia():
         except Exception:
             logging.exception("Trivia session failed.")
 
-
         await asyncio.sleep(86400)  # 24 hours in seconds
-
-
-
 
 
 # === Message Handler ===#
@@ -559,13 +593,11 @@ async def handle_message(message: types.Message):
     Requires user to reply to trivia question message.
     """
 
-     # Note: Comment if you want to see what happens when a person gets everything
-     # correct. The correct answers will be sent first before the trivia questions.
+    # Note: Comment if you want to see what happens when a person gets everything
+    # correct. The correct answers will be sent first before the trivia questions.
     if not current_trivia:
 
         return
-
-
 
     if (
         not message.reply_to_message
@@ -589,6 +621,7 @@ async def handle_message(message: types.Message):
         "username": username,
         "answers": answers
     }
+
 
 async def is_trivia_reply(message: Message) -> bool:
 

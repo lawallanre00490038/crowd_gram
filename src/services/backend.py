@@ -1,8 +1,6 @@
 from typing import Dict
-import logging
+from loguru import logger
 import requests
-
-logger = logging.getLogger(__name__)
 
 
 def send_post_to_backend(url: str, payload: Dict[str, str]) -> None:
@@ -11,9 +9,11 @@ def send_post_to_backend(url: str, payload: Dict[str, str]) -> None:
     """
     response = requests.post(url, json=payload)
     if response.status_code != 200:
-        logger.error(f"Failed to send post to backend: {response.status_code}, {response.text}")
+        logger.error(
+            f"Failed to send post to backend: {response.status_code}, {response.text}")
     else:
         logger.info(f"Post sent successfully to {url} with payload: {payload}")
+
 
 def send_get_to_backend(url: str, payload: Dict[str, str]) -> Dict[str, str]:
     """
@@ -23,10 +23,12 @@ def send_get_to_backend(url: str, payload: Dict[str, str]) -> Dict[str, str]:
         payload (Dict[str, str]): The payload to include in the GET request.
     Returns:    
         Dict[str, str]: The response from the backend as a dictionary.
-    """ 
+    """
     response = requests.get(url, params=payload)
     if response.status_code != 200:
-        logger.error(f"Failed to get response from backend: {response.status_code}, {response.text}")    
+        logger.error(
+            f"Failed to get response from backend: {response.status_code}, {response.text}")
     else:
-        logger.info(f"GET request sent successfully to {url} with payload: {payload}")
+        logger.info(
+            f"GET request sent successfully to {url} with payload: {payload}")
         return response.json()

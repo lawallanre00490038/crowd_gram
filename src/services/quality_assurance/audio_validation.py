@@ -1,5 +1,5 @@
 from typing import Dict, Any, List, Optional
-import logging
+from loguru import logger
 
 
 from .audio_parameter_check import (
@@ -41,7 +41,8 @@ def validate_audio_input(
 
     # 1) Parameter bundle check (format, length, sample rate, bit depth)
     try:
-        param_result: AudioCheckResult = check_audio_parameter(audio_path, params)
+        param_result: AudioCheckResult = check_audio_parameter(
+            audio_path, params)
         metadata["parameter_is_valid"] = param_result.is_valid
         metadata["parameter_errors"] = list(param_result.errors or [])
         if not param_result.is_valid:

@@ -1,5 +1,5 @@
-import librosa 
-import logging
+import librosa
+from loguru import logger
 import numpy as np
 import noisereduce as nr
 from typing import Tuple, Dict, Optional
@@ -10,8 +10,6 @@ import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 
-logger = logging.getLogger(__name__)
-
 
 def reduce_noise(data, sr):
     '''Reduce the amount of noise in the Audio'''
@@ -19,16 +17,18 @@ def reduce_noise(data, sr):
         y=data,
         sr=sr,
         stationary=False,
-        time_constant_s = 3.5,  # 3.5
-        freq_mask_smooth_hz = 300.0,  # 2000.0
-        time_mask_smooth_ms = 100.0,  # 100.0
-        thresh_n_mult_nonstationary = 0.5 # 1.0
-    ) 
+        time_constant_s=3.5,  # 3.5
+        freq_mask_smooth_hz=300.0,  # 2000.0
+        time_mask_smooth_ms=100.0,  # 100.0
+        thresh_n_mult_nonstationary=0.5  # 1.0
+    )
 
     return enhanced
+
+
 def cal_signal_power(data):
     '''Calculate the signal power'''
-    rms = librosa.feature.rms(y = data, frame_length=len(data), center=False) 
+    rms = librosa.feature.rms(y=data, frame_length=len(data), center=False)
 
     # Convert RMS to dB
     rms_db = librosa.amplitude_to_db(rms)
@@ -37,9 +37,10 @@ def cal_signal_power(data):
 
     return signal_power
 
+
 def cal_noise_floor(data, sr):
     '''Calculate the noise power'''
-    rms = librosa.feature.rms(y=data, frame_length= int(sr * 0.5), center=False)
+    rms = librosa.feature.rms(y=data, frame_length=int(sr * 0.5), center=False)
 
     # Convert RMS to dB
     rms_db = librosa.amplitude_to_db(rms)
@@ -47,6 +48,7 @@ def cal_noise_floor(data, sr):
     noise_floor = np.min(rms_db)
 
     return noise_floor
+
 
 def cal_silence_percentage(data, noise_floor):
     '''Calculate the noise percentage'''
@@ -61,9 +63,10 @@ def cal_silence_percentage(data, noise_floor):
 
     return silence_percentage
 
+
 def analyze_audio(data, sr):
     '''Get Analysis of the Audio'''
-    noise_power = cal_noise_floor(data, sr = sr)
+    noise_power = cal_noise_floor(data, sr=sr)
     signal_power = cal_signal_power(data)
 
     snr_value = signal_power - noise_power
@@ -87,7 +90,6 @@ def check_audio_quality(
     max_speech_level: float = -15,
     min_noise_level: float = -40
 ) -> Tuple[np.ndarray, Dict[str, float | str]]:
-    
     """
     Evaluates the quality of an audio signal and attempts enhancement if necessary.
 
@@ -119,7 +121,7 @@ def check_audio_quality(
     """
     if file_path is not None:
         data, sr = librosa.load(file_path, sr=None)
-        
+
     if data is None or sr is None:
         raise ValueError("Either file_path or data and sr must be provided.")
     analysis = analyze_audio(data, sr)
@@ -154,30 +156,37 @@ def check_audio_quality(
     analysis['message'] = message
     return data, analysis
 
+
 if __name__ == "__main__":
     import os
-    import sys 
+    import sys
     import argparse
 
     parser = argparse.ArgumentParser(description="Audio Quality Check")
     parser.add_argument("file_path", type=str, help="Path to the audio file")
-    parser.add_argument("--try_enhance", type=int, default=2, help="Number of noise reduction attempts")
-    parser.add_argument("--min_snr_value", type=float, default=40, help="Minimum acceptable SNR value")
-    parser.add_argument("--min_snr_value_edit", type=float, default=20, help="Lower SNR threshold for enhancement")
-    parser.add_argument("--min_speech_level", type=float, default=-40, help="Minimum acceptable speech level in dB")
-    parser.add_argument("--max_speech_level", type=float, default=-15, help="Maximum acceptable speech level in dB")
-    parser.add_argument("--min_noise_level", type=float, default=-40, help="Maximum acceptable noise level in dB") 
+    parser.add_argument("--try_enhance", type=int, default=2,
+                        help="Number of noise reduction attempts")
+    parser.add_argument("--min_snr_value", type=float,
+                        default=40, help="Minimum acceptable SNR value")
+    parser.add_argument("--min_snr_value_edit", type=float,
+                        default=20, help="Lower SNR threshold for enhancement")
+    parser.add_argument("--min_speech_level", type=float,
+                        default=-40, help="Minimum acceptable speech level in dB")
+    parser.add_argument("--max_speech_level", type=float,
+                        default=-15, help="Maximum acceptable speech level in dB")
+    parser.add_argument("--min_noise_level", type=float,
+                        default=-40, help="Maximum acceptable noise level in dB")
 
     args = parser.parse_args()
     file_path = args.file_path
 
     if not file_path:
         print("Please provide a valid audio file path.")
-        sys.exit(1)   
+        sys.exit(1)
 
     try:
         y, sr = librosa.load(file_path, sr=None)
-        enhanced_audio, analysis = check_audio_quality(data = y, sr=sr,
+        enhanced_audio, analysis = check_audio_quality(data=y, sr=sr,
                                                        try_enhance=args.try_enhance, min_snr_value=args.min_snr_value,
                                                        min_snr_value_edit=args.min_snr_value_edit,
                                                        min_speech_level=args.min_speech_level,

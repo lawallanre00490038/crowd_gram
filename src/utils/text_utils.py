@@ -1,22 +1,22 @@
 import json
-import logging
+from loguru import logger
 import re
 
 from prettytable import PrettyTable
 
 
 def format_json_str_to_json(json_str: str):
+    """Format JSON string to JSON Object"""
+    try:
+        json_str = re.sub(r'^```json|```', '',
+                          json_str.strip(), flags=re.MULTILINE)
 
-  """Format JSON string to JSON Object"""
-  try:
-    json_str = re.sub(r'^```json|```', '', json_str.strip(), flags=re.MULTILINE)
+        json_object = json.loads(json_str)
 
-    json_object = json.loads(json_str)
-
-    return json_object
-  except Exception as e:
-      logging.error(f"Unable to parse JSON: {e}")
-      return []
+        return json_object
+    except Exception as e:
+        logging.error(f"Unable to parse JSON: {e}")
+        return []
 
 
 def format_json_to_table(json_data: list[dict]) -> str:
@@ -61,7 +61,9 @@ def format_json_to_table(json_data: list[dict]) -> str:
             f"Failed to convert JSON to table format. Details: {e}"
         )
 
+
 """Format trivia questions into a single message with options."""
+
 
 def format_all_trivia(trivia_list):
     """Format 4 trivia questions + options as one HTML string message."""

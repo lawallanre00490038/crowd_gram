@@ -2,8 +2,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
-import logging
-
+from loguru import logger
 
 from src.responses.auth_response import EXIT, LOGIN_MSG, LOGOUT
 from src.responses.onboarding_response import WELCOME_MESSAGE
@@ -13,9 +12,7 @@ from src.models.api2_models.telegram import LoginModel
 from src.states.authentication import Authentication
 from src.keyboards.inline import project_selection_kb, new_api_login_type_inline
 
-
 router = Router()
-logger = logging.getLogger(__name__)
 
 
 @router.message(Command("start"))
@@ -75,14 +72,14 @@ async def handle_login_password(message: Message, state: FSMContext):
         # Save data - check for None before calling model_dump()
         await state.clear()
 
-        await state.set_data({'user_email': email, "name": name, "role": role.lower(), "telegram_id": telegram_id })
-        
+        await state.set_data({'user_email': email, "name": name, "role": role.lower(), "telegram_id": telegram_id})
+
         await handle_user_projects(message, state)
     else:
         await state.clear()
         await message.answer(LOGIN_MSG["fail"], reply_markup=new_api_login_type_inline)
         await state.set_state(Authentication.set_login_type)
-        
+
 
 async def handle_user_projects(message: Message, state: FSMContext):
     user_data = await state.get_data()
@@ -96,5 +93,6 @@ async def handle_user_projects(message: Message, state: FSMContext):
     await state.update_data({"projects_details": projects_details})
     await message.answer(
         "Please select a project to continue:",
-        reply_markup=project_selection_kb([proj["name"] for proj in projects_details])
+        reply_markup=project_selection_kb(
+            [proj["name"] for proj in projects_details])
     )
