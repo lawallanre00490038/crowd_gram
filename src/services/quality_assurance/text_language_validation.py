@@ -9,10 +9,6 @@ from transformers import pipeline
 
 abs_path = os.path.dirname(os.path.abspath(__file__))
 
-# Setup logging
-# logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("afrolid")
-
 # Load AfroLID model globally
 try:
     afrolid_model = pipeline("text-classification",
@@ -78,7 +74,7 @@ def langid_fallback(text: str) -> Dict[str, Any]:
     else:
         # Fallback to pycountry
         lang_name = get_language_name_from_iso(fallback_code)
-        print("language name", get_language_name_from_iso("En"))
+        logger.info("language name", get_language_name_from_iso("En"))
         meta = {
             "name": lang_name,
             "script": "unknown"

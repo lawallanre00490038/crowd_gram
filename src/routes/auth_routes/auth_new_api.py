@@ -38,6 +38,7 @@ async def handle_exit(message: Message, state: FSMContext):
 @router.callback_query(Authentication.set_login_type, F.data.in_(["login", "register"]))
 async def handle_login_type(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
+    logger.trace("Supplying")
     if callback.data == "login":
         await callback.message.answer(LOGIN_MSG["enter_email"])
         await state.set_state(Authentication.api_login_email)

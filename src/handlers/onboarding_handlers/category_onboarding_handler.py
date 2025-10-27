@@ -1,4 +1,5 @@
 from typing import Dict, Optional
+from loguru import logger
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
@@ -9,10 +10,12 @@ from src.handlers.onboarding_handlers.onboarding import get_saved_categories
 from src.keyboards.onboarding_keyboard import build_multi_select_keyboard
 from src.states.onboarding import Onboarding
 
+
 async def init_category_section(message: Message, state: FSMContext):
     user_data = await state.get_data()
-    await _ask_next_category_question(message = message, state = state, user_data = user_data)
+    await _ask_next_category_question(message=message, state=state, user_data=user_data)
     await state.set_state(Onboarding.category_question)
+
 
 async def _ask_next_category_question(message: Message, state: FSMContext, user_data: Optional[Dict] = None):
     if user_data == None:
@@ -22,7 +25,7 @@ async def _ask_next_category_question(message: Message, state: FSMContext, user_
     next_question = int(user_data.get("next_question", 0))
 
     if current_category >= len(save_categories):
-        print(await complete_profile(user_data=user_data))
+        logger.trace(await complete_profile(user_data=user_data))
         await message.answer("✅ You’ve completed all the onboarding questions!")
         return
 
@@ -33,7 +36,7 @@ async def _ask_next_category_question(message: Message, state: FSMContext, user_
         user_data["current_category"] = current_category + 1
         user_data["next_question"] = 0
         await state.update_data(**user_data)
-        return await _ask_next_category_question(message=message,user_data=user_data, state=state)
+        return await _ask_next_category_question(message=message, user_data=user_data, state=state)
 
     question_data = questions[next_question]
     selection_type = question_data.selection
@@ -58,9 +61,11 @@ async def _ask_next_category_question(message: Message, state: FSMContext, user_
         await message.answer(question_text, reply_markup=keyboard)
 
     elif selection_type == "text":
-        user_data["awaiting_text"] = True  # Use this flag to know we’re waiting for text
+        # Use this flag to know we’re waiting for text
+        user_data["awaiting_text"] = True
         await state.update_data(**user_data)
         await message.answer(question_text)
+
 
 async def handle_multi_selection(callback: CallbackQuery, state: FSMContext):
     user_data = await state.get_data()
@@ -95,7 +100,7 @@ async def handle_multi_selection(callback: CallbackQuery, state: FSMContext):
             await callback.answer("Please select at least one option.", show_alert=True)
             return
 
-        print(question_data)
+        logger.trace(question_data)
         answer_record = {
             "category_id": question_data.category_id,
             "question_id": question_data.id,
@@ -115,6 +120,7 @@ async def handle_multi_selection(callback: CallbackQuery, state: FSMContext):
 
         await callback.message.delete()
         await _ask_next_category_question(message=callback.message, user_data=user_data, state=state)
+
 
 async def handle_single_selection(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
@@ -145,7 +151,8 @@ async def handle_single_selection(callback: CallbackQuery, state: FSMContext):
     await state.update_data(**user_data)
 
     await callback.message.delete()
-    await _ask_next_category_question(message = callback.message, user_data=user_data, state=state)
+    await _ask_next_category_question(message=callback.message, user_data=user_data, state=state)
+
 
 async def handle_text_input(message: Message, state: FSMContext):
     user_data = await state.get_data()
@@ -178,4 +185,4 @@ async def handle_text_input(message: Message, state: FSMContext):
     user_data["awaiting_text"] = False
     await state.update_data(**user_data)
 
-    await _ask_next_category_question(messge = message, user_data=user_data, state=state)
+    await _ask_next_category_question(messge=message, user_data=user_data, state=state)

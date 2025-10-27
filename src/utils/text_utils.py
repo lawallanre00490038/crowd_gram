@@ -15,7 +15,7 @@ def format_json_str_to_json(json_str: str):
 
         return json_object
     except Exception as e:
-        logging.error(f"Unable to parse JSON: {e}")
+        logger.error(f"Unable to parse JSON: {e}")
         return []
 
 
@@ -57,7 +57,7 @@ def format_json_to_table(json_data: list[dict]) -> str:
         return stringify_table
 
     except Exception as e:
-        logging.error(
+        logger.error(
             f"Failed to convert JSON to table format. Details: {e}"
         )
 

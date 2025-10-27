@@ -53,5 +53,5 @@ def load_json_file(file: Path) -> List:
         with open(Path(file), 'r', encoding="utf-8") as f:
             return json.load(f)
     except (FileNotFoundError, JSONDecodeError) as e:
-        logging.error(f"Error loading data: {e}")
+        logger.error(f"Error loading data: {e}")
         return []

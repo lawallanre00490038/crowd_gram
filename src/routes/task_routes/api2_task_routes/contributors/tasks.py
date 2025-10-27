@@ -33,7 +33,7 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
             project_id=project_id, email=email, status="assigned")
         allocations = await get_project_tasks_assigned_to_user(task_details)
         if not allocations:
-            print(allocations)
+            logger.trace(allocations)
             await callback.message.answer("No tasks available at the moment. Please check back later.")
             return
 

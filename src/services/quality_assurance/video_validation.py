@@ -13,8 +13,6 @@ from src.services.quality_assurance.video_parameter_check import (
     check_video_frame_rate,
     check_video_bit_depth,)
 
-logger = logging.getLogger("video_validator")
-
 
 def validate_video_input(video_path: str,
                          expected_format: str = "mp4",

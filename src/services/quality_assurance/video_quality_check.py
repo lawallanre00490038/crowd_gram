@@ -13,14 +13,14 @@ from src.services.quality_assurance.audio_quality_check import check_audio_quali
 
 def extract_audio_from_video(video_path: str, output_format: str = "wav") -> str:
     """Extract audio from video and save as WAV or other format for processing."""
-    logging.info(f"Extracting audio from video: {video_path}")
+    logger.info(f"Extracting audio from video: {video_path}")
     clip = VideoFileClip(video_path)
 
-    logging.info(clip.audio)
+    logger.info(clip.audio)
     if clip.audio is None:
         raise ValueError("No audio track found in the video file.")
     else:
-        logging.info("Audio track found, proceeding with extraction.")
+        logger.info("Audio track found, proceeding with extraction.")
         temp_audio_file = tempfile.NamedTemporaryFile(
             suffix=f".{output_format}", delete=False)
         clip.audio.write_audiofile(
@@ -171,8 +171,8 @@ def check_video_image_quality(video_path, blur_thresh=100.0, max_frames=100):
 if __name__ == "__main__":
     import argparse
 
-    logging.basicConfig(
-        level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', filename='app.log', filemode='w')
+    logger.basicConfig(
+        level=logger.INFO, format='%(asctime)s - %(levelname)s - %(message)s', filename='app.log', filemode='w')
 
     parser = argparse.ArgumentParser(description="Run video quality checks.")
     parser.add_argument("video_path", type=str, help="Path to the video file.")
@@ -197,16 +197,16 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    print(f"Checking video quality for: {args.video_path}")
+    logger.info(f"Checking video quality for: {args.video_path}")
 
     results, averages = check_video_image_quality(
         args.video_path, args.blur_thresh, args.max_frames)
-    print(f"Processed {averages['frames_processed']} frames.")
-    print(f"Average Blurriness: {averages['average_blurry']}")
-    print(f"Average Entropy: {averages['average_entropy']}")
-    print(f"Average NIQE Score: {averages['average_niqe_score']}")
+    logger.info(f"Processed {averages['frames_processed']} frames.")
+    logger.info(f"Average Blurriness: {averages['average_blurry']}")
+    logger.info(f"Average Entropy: {averages['average_entropy']}")
+    logger.info(f"Average NIQE Score: {averages['average_niqe_score']}")
 
-    print(f"Checking Audio quality for: {args.video_path}")
+    logger.info(f"Checking Audio quality for: {args.video_path}")
     audio_quality_report = check_video_audio_quality(
         file_path=args.video_path,
         min_snr_value=args.min_snr_value,
@@ -215,8 +215,8 @@ if __name__ == "__main__":
         max_speech_level=args.max_speech_level,
         min_noise_level=args.min_noise_level)
 
-    print(f"Audio Quality Report: {audio_quality_report}")
+    logger.info(f"Audio Quality Report: {audio_quality_report}")
 
     if args.replace_audio:
-        print(
+        logger.info(
             f"Output video with enhanced audio saved to: {args.output_video_path}")

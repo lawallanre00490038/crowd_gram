@@ -35,7 +35,7 @@ async def handle_close_end_task(message: Message, image_path: str, question: str
     """
     Handles close-ended image task: sends image, question, and options as inline keyboard.
     """
-    print("close")
+    logger.trace("close")
     image_file = FSInputFile(image_path)
     caption = f"❓{hbold(question)}\n\nChoose the correct option."
     # Build inline keyboard for options
@@ -65,9 +65,9 @@ async def handle_image_task(message: Message, quiz_data, target_lang: str):
     """
     Handles images task for all types.
     """
-    print("image task")
+    logger.trace("image task")
     image_task_type = quiz_data.get('mine_type')
-    print(image_task_type)
+    logger.trace(image_task_type)
     if image_task_type == "OpenEnd":
         return await handle_open_end_task(
             message,

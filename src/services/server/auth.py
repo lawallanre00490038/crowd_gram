@@ -63,19 +63,19 @@ async def user_login(email: str, password: str) -> LoginResponseDict:
                 try:
                     response_data = await response.json()
                 except aiohttp.ContentTypeError as e:
-                    logging.error(f"Invalid JSON response: {response_text}")
+                    logger.error(f"Invalid JSON response: {response_text}")
                     return {"success": False, "error": e, "base_info": {}}
 
-                # print(response_data)
+                # logger.trace(response_data)
                 if response.status == 200:
-                    logging.info("User authenticated successfully.")
+                    logger.info("User authenticated successfully.")
                     return {"success": True, "error": "", "base_info": UserData.model_validate(response_data['data'])}
                 else:
-                    logging.error(
+                    logger.error(
                         f"Authentication failed: {response.status}, {response_text}")
                     return {"success": False, "error": f"Authentication failed: {response.status}, {response_text}", "base_info": {}}
         except aiohttp.ClientError as exc:
-            logging.error(f"HTTP request error: {str(exc)}")
+            logger.error(f"HTTP request error: {str(exc)}")
             return None
 
 
@@ -105,19 +105,19 @@ async def verify_otp(user_info: VerifyPasswordInput) -> Optional[LoginResponse]:
                 try:
                     response_data = await response.json()
                 except aiohttp.ContentTypeError as e:
-                    logging.error(f"Invalid JSON response: {response_text}")
+                    logger.error(f"Invalid JSON response: {response_text}")
                     return {"success": False, "error": e, "base_info": {}}
 
                 if response.status == 200:
-                    logging.info("User authenticated successfully.")
+                    logger.info("User authenticated successfully.")
                     return {"success": True, "error": "", "base_info": UserData.model_validate(response_data['data'])}
                 else:
-                    logging.error(
+                    logger.error(
                         f"Authentication failed: {response.status}, {response_text}")
                     return {"success": False, "error": f"Authentication failed: {response.status}, {response_text}", "base_info": {}}
 
         except aiohttp.ClientError as exc:
-            logging.error(f"HTTP request error: {str(exc)}")
+            logger.error(f"HTTP request error: {str(exc)}")
             return {"success": False, "error": exc, "base_info": {}}
 
 
@@ -135,8 +135,8 @@ async def complete_user_profile(
     try:
         async with aiohttp.ClientSession() as session:
             data = profile_data.model_dump()
-            print(data)
-            print(authorization_token)
+            logger.trace(data)
+            logger.trace(authorization_token)
 
             async with session.post(complete_profile_url, json=data, headers=headers) as response:
                 result = await response.json()

@@ -80,7 +80,7 @@ async def cmd_status(message: Message):
 
 @router.message(Command("start_task"))
 async def cmd_start_task(message: Message, state: FSMContext):
-    print("Here")
+    logger.trace("Here")
     await message.answer(SELECT_TASK_TO_PERFORM)
     await state.set_state(TaskState.waiting_for_task)
 
@@ -272,7 +272,7 @@ async def handle_image_input(message: Message, state: FSMContext):
 async def handle_video_input(message: Message, state: FSMContext):
     video_file = None
 
-    # print(message)
+    # logger.trace(message)
     # If sent as a photo (Telegram auto-compressed image)
     if message.video:
         image_file = message.video[-1]  # Highest resolution
@@ -494,9 +494,9 @@ async def simulate_task_validation(message: Message, state: FSMContext):
         await message.answer(success_text, reply_markup=next_kb)
 
         # Log admin
-        print(
+        logger.info(
             f"✅ TASK APPROVED - User {message.from_user.id}, Task #{completed_tasks}")
-        print(f"Translation: {user_data.get('last_translation')}")
+        logger.info(f"Translation: {user_data.get('last_translation')}")
 
     else:
         failure_text = (

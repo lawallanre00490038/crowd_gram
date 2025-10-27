@@ -18,11 +18,11 @@ async def get_signup_list(company_id) -> SignUpResponseModel:
                     data = await response.json()
                     return SignUpResponseModel.model_validate(data)
                 else:
-                    logging.error(f"Something is wrong {response.json()}")
+                    logger.error(f"Something is wrong {response.json()}")
                     return get_fallback_countries()
 
     except Exception as e:
-        logging.error(f"Exception occured {e}")
+        logger.error(f"Exception occured {e}")
 
 
 async def get_category_list(company_id: str) -> List[Category]:
@@ -38,9 +38,9 @@ async def get_category_list(company_id: str) -> List[Category]:
                     for i in data['data']:
                         cat_list.append(Category.model_validate(i))
                 else:
-                    logging.error(f"Something is wrong {response.json()}")
+                    logger.error(f"Something is wrong {response.json()}")
     except Exception as e:
-        logging.error(f"Exception occured {e}")
+        logger.error(f"Exception occured {e}")
     return cat_list
 
 
@@ -54,12 +54,12 @@ async def get_companies_from_api() -> List[CompanyInfo]:
                 if response.status == 200:
                     return [CompanyInfo(**item) for item in data['data']['result']]
                 else:
-                    print(response)
-                    logging.error(f"Something is wrong {data}")
+                    logger.trace(response)
+                    logger.error(f"Something is wrong {data}")
                     return get_fallback_countries()
 
     except Exception as e:
-        logging.error(f"Exception occured {e}")
+        logger.error(f"Exception occured {e}")
         return get_fallback_countries()
 
 
@@ -166,13 +166,13 @@ async def get_languages_from_api(company_id):
                     return get_fallback_languages()
 
     except Exception as e:
-        print(f"❌ Error fetching languages: {e}")
+        logger.info(f"❌ Error fetching languages: {e}")
         return get_fallback_languages()
 
 
 def get_fallback_languages():
 
-    print("📋 Using fallback languages list")
+    logger.info("📋 Using fallback languages list")
     return [
         {"name": "English", "id": "english"},
         {"name": "French", "id": "french"},
@@ -190,7 +190,7 @@ def get_fallback_languages():
 
 def get_fallback_states(country_name: str):
 
-    print(f"📋 Using fallback states for {country_name}")
+    logger.info(f"📋 Using fallback states for {country_name}")
 
     fallback_states = {
         "Nigeria": ["Lagos", "Abuja", "Kano", "Rivers", "Ogun", "Other"],
@@ -203,7 +203,7 @@ def get_fallback_states(country_name: str):
 
 def get_fallback_countries():
 
-    print("📋 Using fallback countries list")
+    logger.info("📋 Using fallback countries list")
     return [
         "Nigeria", "Ghana", "Kenya", "South Africa", "Uganda",
         "Tanzania", "Rwanda", "Cameroon", "Egypt", "Morocco"

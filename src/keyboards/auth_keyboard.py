@@ -3,6 +3,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from src.models.onboarding_models import CompanyInfo, SignUpResponseModel
 from src.services.server.getters_api import get_companies_from_api, get_countries_from_api
 
+
 def organization_kb():
     return ReplyKeyboardMarkup(
         keyboard=[
@@ -13,12 +14,13 @@ def organization_kb():
         one_time_keyboard=True
     )
 
+
 async def company_kb():
     parsed_users = await get_companies_from_api()
-    print(parsed_users)
-    
+    logger.trace(parsed_users)
+
     return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text=info.name)] 
+        keyboard=[[KeyboardButton(text=info.name)]
                   for info in parsed_users],
         resize_keyboard=True,
         one_time_keyboard=True

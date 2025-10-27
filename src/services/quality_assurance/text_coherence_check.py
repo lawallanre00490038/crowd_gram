@@ -120,7 +120,7 @@ def check_coherence(
     entropy = embedding_entropy(text)
     results["entropy"] = entropy
 
-    print(f"Perplexity: {ppl}, Entropy: {entropy}")
+    logger.info(f"Perplexity: {ppl}, Entropy: {entropy}")
 
     # Coherence check
     results["coherence_ok"] = True if is_amharic(text) else (

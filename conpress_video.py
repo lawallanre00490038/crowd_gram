@@ -1,5 +1,6 @@
 import os
 import subprocess
+from loguru import logger
 
 # Paths
 input_folder = 'videos'
@@ -14,7 +15,7 @@ for filename in os.listdir(input_folder):
         input_path = os.path.join(input_folder, filename)
         output_path = os.path.join(output_folder, f"compressed_{filename}")
 
-        print(f"Compressing: {filename}")
+        logger.info(f"Compressing: {filename}")
 
         # FFmpeg command
         command = [
@@ -32,4 +33,4 @@ for filename in os.listdir(input_folder):
         # Run command
         subprocess.run(command, check=True)
 
-print("✅ Compression complete! Check 'compressed/' folder.")
+logger.info("✅ Compression complete! Check 'compressed/' folder.")

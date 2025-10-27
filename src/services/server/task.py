@@ -113,4 +113,4 @@ def get_category_list(user_id: str) -> CategoryListResponseModel:
 
 
 if __name__ == "__main__":
-    print(get_category_list("687a7363c2afef2e72355d57"))
+    logger.info(get_category_list("687a7363c2afef2e72355d57"))

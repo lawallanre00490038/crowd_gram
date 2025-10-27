@@ -8,6 +8,7 @@ from typing import Callable, Dict, Any, Awaitable
 # Set up Loguru logging (log to file and console)
 logger.add("logs/bot_logs.log", rotation="1 day",
            retention="7 days", compression="zip", level="INFO")
+# logger.add(sys.stdout, level="INFO")  # Logs to the console as well
 
 
 class LoggingMiddleware(BaseMiddleware):

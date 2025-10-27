@@ -216,9 +216,9 @@ async def submit_review(callback: CallbackQuery, state: FSMContext):
             scores=scores
         )
 
-        print(review_data)
+        logger.trace(review_data)
         result = await submit_review_details(review_data)
-        print(result)
+        logger.trace(result)
         if result:
             await callback.message.answer("✅ Review submitted successfully!")
         else:

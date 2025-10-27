@@ -1,23 +1,28 @@
 from typing import Dict
+from loguru import logger
 from aiogram.fsm.context import FSMContext
 
 from src.handlers.onboarding_handlers.onboarding import get_selected_languages
 from src.models.onboarding_models import Category, CompleteProfileRequest, CompleteProfileResponseDict, Language, LanguageResponseModel, Languages, TaskAnswerItem
 from src.services.server.auth import complete_user_profile
 
+
 async def complete_profile(user_data: Dict) -> CompleteProfileResponseDict:
     # Convert answers into TaskAnswerItem list
-    print(user_data)
+    logger.trace(user_data)
     task_answer = [
         TaskAnswerItem(
             category_id=answer.get("category_id"),
             category_name=next(
-                (cat["name"] for cat in user_data["categories"] if any(q["question"] == answer["question"] for q in cat.get("categoryQuestions", []))),
+                (cat["name"] for cat in user_data["categories"] if any(
+                    q["question"] == answer["question"] for q in cat.get("categoryQuestions", []))),
                 ""
             ),
-            ques_id=answer.get("ques_id") or answer.get("question_id"),  # handle different keys
+            ques_id=answer.get("ques_id") or answer.get(
+                "question_id"),  # handle different keys
             question=answer.get("question"),
-            answer=answer.get("answer") if isinstance(answer.get("answer"), list) else [answer.get("answer")]
+            answer=answer.get("answer") if isinstance(
+                answer.get("answer"), list) else [answer.get("answer")]
         )
         for answer in user_data["answers"]
     ]
@@ -28,7 +33,8 @@ async def complete_profile(user_data: Dict) -> CompleteProfileResponseDict:
     # Get languages and dialects
     selected_languages = await get_selected_languages(user_data=user_data)
     languages = [
-        Languages(lang_id=lang.id, dialects=user_data['dialects'].get(lang.name, ""))
+        Languages(lang_id=lang.id,
+                  dialects=user_data['dialects'].get(lang.name, ""))
         for lang in selected_languages
     ]
 
@@ -111,5 +117,5 @@ async def complete_profile(user_data: Dict) -> CompleteProfileResponseDict:
 #   "user_id": "689739f3c2afef2e724c5de3"
 # }
 
-    return await complete_user_profile(profile_data = complete_profile_data, 
+    return await complete_user_profile(profile_data=complete_profile_data,
                                        authorization_token=user_data["user_data"]['token'])

@@ -8,7 +8,8 @@ from src.services.quality_assurance.text_structural_checks import check_junk, ha
 from src.services.quality_assurance.text_coherence_check import check_coherence
 from src.services.quality_assurance.text_length_check import check_length_and_truncation
 
-def validate_text_input(text: str, task_lang: str = None, exp_task_script = None) -> Dict[str, Union[bool, List[str], Dict]]:
+
+def validate_text_input(text: str, task_lang: str = None, exp_task_script=None) -> Dict[str, Union[bool, List[str], Dict]]:
     """
     Telegram bot–friendly text QA validator.
     Runs all checks, accumulates failures, and returns structured result.
@@ -36,14 +37,14 @@ def validate_text_input(text: str, task_lang: str = None, exp_task_script = None
         fail_reasons.append("Text contains too many repeated characters.")
 
     # 3. Unicode Script Check
-    if not check_unicode_script(text,expected_script_prefix=exp_task_script):
-        print(f"expected script: {exp_task_script}")
+    if not check_unicode_script(text, expected_script_prefix=exp_task_script):
+        logger.info(f"expected script: {exp_task_script}")
         fail_reasons.append("Text contains unexpected or invalid characters.")
 
     # 4. Language Detection
     lang_result = detect_message_language(text)
     detected_lang_code = lang_result.get("code")
-    detected_lang = lang_result.get("language","unknown").upper()
+    detected_lang = lang_result.get("language", "unknown").upper()
     lang_confidence = lang_result.get("confidence", 0.0)
     metadata["language"] = detected_lang
     metadata["language_code"] = detected_lang_code
@@ -60,7 +61,8 @@ def validate_text_input(text: str, task_lang: str = None, exp_task_script = None
 
     # 6. Length and Truncation
 
-    length_result = check_length_and_truncation(source="This is a sample text to be translated",translation=text)
+    length_result = check_length_and_truncation(
+        source="This is a sample text to be translated", translation=text)
     if not length_result.get("length_ok", True):
         fail_reasons.append("Text is too short.")
     if length_result.get("is_truncated", False):

@@ -62,7 +62,7 @@ async def handle_video_task(message: Message, quiz_data, target_lang: str):
     Handles video task for all types.
     """
     video_task_type = quiz_data.get('mine_type')
-    print(video_task_type)
+    logger.trace(video_task_type)
     if video_task_type == "OpenEnd":
         return await handle_open_end_task(
             message,

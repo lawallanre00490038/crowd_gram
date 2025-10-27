@@ -17,7 +17,7 @@ bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
 
 
 async def create_bot():
-    print(USE_MONGO_DB)
+    logger.trace(USE_MONGO_DB)
     if USE_MONGO_DB:
         # Initialize MongoDB client
         mongo_client = AsyncIOMotorClient(MONGO_DB_URI)
@@ -35,7 +35,4 @@ async def create_bot():
         storage = MemoryStorage()
 
     dp = Dispatcher(storage=storage)
-
-    dp.message.middleware(LoggingMiddleware())
-
     return bot, dp

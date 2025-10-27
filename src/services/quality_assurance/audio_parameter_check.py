@@ -96,7 +96,7 @@ def check_audio_file_length(file_path: str, min_length: float = 0.5, max_length:
         is_valid = min_length <= duration <= max_length
         return {'is_valid': is_valid, 'actual_length': duration}
     except Exception as e:
-        print(f"Error checking audio length: {e}")
+        logger.info(f"Error checking audio length: {e}")
         return {'is_valid': False, 'actual_length': None}
 
 
@@ -119,7 +119,7 @@ def check_audio_sample_rate(file_path: str, expected_sample_rate: int = 16000) -
         is_valid = sr == expected_sample_rate
         return {'is_valid': is_valid, 'actual_sample_rate': sr}
     except Exception as e:
-        print(f"Error checking sample rate: {e}")
+        logger.info(f"Error checking sample rate: {e}")
         return {'is_valid': False, 'actual_sample_rate': None}
 
 
@@ -161,7 +161,7 @@ def check_audio_bit_depth(file_path: str, expected_bit_depth: int = 16) -> dict:
         return {'is_valid': is_valid, 'actual_bit_depth': actual_bit_depth}
 
     except Exception as e:
-        print(f"Error checking audio bit depth: {e}")
+        logger.info(f"Error checking audio bit depth: {e}")
         return {'is_valid': False, 'actual_bit_depth': None}
 
 
@@ -237,20 +237,20 @@ if __name__ == "__main__":
         "4": "Check audio bit depth"
     }
 
-    print("Available tests:")
+    logger.trace("Available tests:")
     for key, val in tests.items():
-        print(f"{key}. {val}")
+        logger.trace(f"{key}. {val}")
 
     choice = input(
         "\nSelect a test by entering the corresponding number: ").strip()
 
     if choice not in tests:
-        print("Invalid selection.")
+        logger.trace("Invalid selection.")
         sys.exit(1)
 
     file_path = input("Enter the path to the audio file: ").strip()
     if not os.path.exists(file_path):
-        print("File not found.")
+        logger.trace("File not found.")
         sys.exit(1)
 
     if choice == "1":
@@ -267,7 +267,7 @@ if __name__ == "__main__":
             max_length = float(
                 input("Enter maximum length in seconds (default 60.0): ") or 60.0)
         except ValueError:
-            print("Invalid number entered.")
+            logger.info("Invalid number entered.")
             sys.exit(1)
 
         logger.info(
@@ -279,7 +279,7 @@ if __name__ == "__main__":
             expected_sr = int(
                 input("Enter expected sample rate (default 16000): ") or 16000)
         except ValueError:
-            print("Invalid number entered.")
+            logger.info("Invalid number entered.")
             sys.exit(1)
         result = check_audio_sample_rate(file_path, expected_sr)
 
@@ -288,8 +288,8 @@ if __name__ == "__main__":
             expected_bd = int(
                 input("Enter expected bit depth (16 or 32, default 16): ") or 16)
         except ValueError:
-            print("Invalid number entered.")
+            logger.info("Invalid number entered.")
             sys.exit(1)
         result = check_audio_bit_depth(file_path, expected_bd)
 
-    print(f"\nResult: {'PASS ✅' if result else 'FAIL ❌'}")
+    logger.info(f"\nResult: {'PASS ✅' if result else 'FAIL ❌'}")

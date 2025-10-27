@@ -181,7 +181,7 @@ if __name__ == "__main__":
     file_path = args.file_path
 
     if not file_path:
-        print("Please provide a valid audio file path.")
+        logger.info("Please provide a valid audio file path.")
         sys.exit(1)
 
     try:
@@ -192,12 +192,12 @@ if __name__ == "__main__":
                                                        min_speech_level=args.min_speech_level,
                                                        max_speech_level=args.max_speech_level,
                                                        min_noise_level=args.min_noise_level)
-        print(f"Analysis Results: {analysis}")
+        logger.info(f"Analysis Results: {analysis}")
         os.path.split(file_path)
         output_path = file_path.replace(".wav", "_enhanced.mp3")
-        print(f"Saving enhanced audio to {output_path}")
+        logger.info(f"Saving enhanced audio to {output_path}")
         save_librosa_audio_as_mp3(enhanced_audio, sr, output_path)
 
     except Exception as e:
-        print(f"Error processing audio file: {e}")
+        logger.info(f"Error processing audio file: {e}")
         sys.exit(1)
