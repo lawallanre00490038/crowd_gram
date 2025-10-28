@@ -5,7 +5,9 @@ from aiogram.fsm.context import FSMContext
 from loguru import logger
 
 from src.responses.auth_response import EXIT, LOGIN_MSG, LOGOUT
-from src.responses.onboarding_response import WELCOME_MESSAGE
+from src.responses.onboarding_response import TUTORIAL_MSG, WELCOME_MESSAGE, QUIZ_MSG
+from src.states.onboarding import Tutorial
+from src.routes.onboarding_routes.quiz import start_quiz
 from src.services.server.api2_server.auth import user_login
 from src.services.server.api2_server.projects import get_projects_details
 from src.models.api2_models.telegram import LoginModel
@@ -18,6 +20,7 @@ router = Router()
 @router.message(Command("start"))
 async def handle_start(message: Message, state: FSMContext):
     """Send welcome message and prompt login/signup"""
+    await state.clear()
     await message.answer(WELCOME_MESSAGE)
     await message.answer(LOGIN_MSG["welcome_back"], reply_markup=new_api_login_type_inline)
     await state.set_state(Authentication.set_login_type)
@@ -70,7 +73,6 @@ async def handle_login_password(message: Message, state: FSMContext):
         telegram_id = getattr(response['base_info'], 'telegram_id', 'N/A')
         await message.answer(LOGIN_MSG["success_2"].format(name=name))
 
-        # Save data - check for None before calling model_dump()
         await state.clear()
 
         await state.set_data({'user_email': email, "name": name, "role": role.lower(), "telegram_id": telegram_id})
@@ -82,9 +84,22 @@ async def handle_login_password(message: Message, state: FSMContext):
         await state.set_state(Authentication.set_login_type)
 
 
-async def handle_user_projects(message: Message, state: FSMContext):
+@router.message(Command("projects"))
+@router.callback_query(F.data.in_(["ready_for_task"]))
+async def handle_user_projects(event: Union[Message, CallbackQuery], state: FSMContext):
+    # Get the message object
+    if isinstance(event, CallbackQuery):
+        await event.answer()
+        message = event.message
+    else:
+        message = event
+
     user_data = await state.get_data()
     email = user_data.get("user_email")
+
+    if not email:
+        await message.answer("You need to log in first. Use /start to log in.")
+        return
 
     projects_details = await get_projects_details(user_email=email)
     if not projects_details:
@@ -97,3 +112,34 @@ async def handle_user_projects(message: Message, state: FSMContext):
         reply_markup=project_selection_kb(
             [proj["name"] for proj in projects_details])
     )
+
+
+@router.callback_query(F.data.in_(["tutorial_yes", "skip_tutorials"]))
+async def handle_tutorial_choice(callback: CallbackQuery, state: FSMContext):
+    logger.info(f"🔍 [DEBUG] Tutorial choice: {callback.data}")
+    await callback.answer()
+
+    if callback.data == "tutorial_yes":
+        await callback.message.answer(TUTORIAL_MSG["intro"])
+        await state.set_state(Tutorial.watching)
+        await send_tutorial(callback.message, state, index=0)
+
+    elif callback.data == "skip_tutorials":
+        await handle_user_projects(callback, state)
+
+# --- Handle navigation (next/back/ready) ---
+
+
+@router.callback_query(F.data.in_(["next", "prev", "ready", "skip_videos"]))
+async def tutorial_navigation(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    data = await state.get_data()
+    index = data.get("tutorial_index", 0)
+    if callback.data == "skip_videos":
+        await handle_user_projects(callback.message, state)
+    elif callback.data == "next" and index < len(tutorial_videos) - 1:
+        index += 1
+        await send_tutorial(callback.message, state, index)
+    elif callback.data == "prev" and index > 0:
+        index -= 1
+        await send_tutorial(callback.message, state, index)

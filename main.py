@@ -14,12 +14,15 @@ from src.routes.task_routes.api2_task_routes.contributors import tasks as contri
 from src.routes.task_routes.api2_task_routes.reviewers import tasks as reviewer_tasks
 from src.routes.status import status
 
-
+from src.menu.set_menu import set_main_menu
 from src.loader import create_bot
 
 
 async def bot_main():
     bot, dp = await create_bot()
+
+    # Set the menu here
+    await set_main_menu(bot)
 
     dp.include_router(status.router)
     dp.include_router(auth_new_api.router)

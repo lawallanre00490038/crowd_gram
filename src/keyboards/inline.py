@@ -198,7 +198,7 @@ def tutorial_nav_kb(index: int):
     if index < len(tutorial_videos) - 1:
         nav_row.append(InlineKeyboardButton(text="➡️ Next Video", callback_data="next"))
     else:
-        nav_row.append(InlineKeyboardButton(text="✅ Ready for Quiz", callback_data="quiz_yes"))
+        nav_row.append(InlineKeyboardButton(text="✅ Ready for Task", callback_data="ready_for_task"))
     
     if nav_row:
         buttons.append(nav_row)

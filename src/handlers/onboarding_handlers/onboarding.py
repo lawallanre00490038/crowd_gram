@@ -94,7 +94,7 @@ async def show_user_type_selection(message: Message):
 
 async def send_tutorial(message: Message, state: FSMContext, index: int = 0):
     data = await state.get_data()
-    index = data.get("tutorial_index", 0)
+    
     await state.update_data(tutorial_index=index)
     await message.answer(tutorial_videos[index], reply_markup=tutorial_nav_kb(index))
 
