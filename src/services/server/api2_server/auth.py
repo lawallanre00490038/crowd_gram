@@ -51,6 +51,9 @@ async def user_login(user_data: LoginModel) -> LoginResponseDict:
                 else:
                     logger.error(
                         f"HTTP error during login: {response.status} - {login_result}")
+                    logger.trace(
+                        f"Url: {url}, Params: {params}"
+                    )
                     return {'success': False, 'error': login_result.get('message', 'Unknown error'), 'base_info': None}
         except Exception as e:
             logger.error(f"Exception during login: {str(e)}")
