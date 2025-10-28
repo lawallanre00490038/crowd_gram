@@ -3,7 +3,9 @@ from aiogram.filters import Command
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from loguru import logger
+from typing import Union
 
+from src.handlers.onboarding_handlers.onboarding import send_tutorial
 from src.responses.auth_response import EXIT, LOGIN_MSG, LOGOUT
 from src.responses.onboarding_response import TUTORIAL_MSG, WELCOME_MESSAGE, QUIZ_MSG
 from src.states.onboarding import Tutorial
