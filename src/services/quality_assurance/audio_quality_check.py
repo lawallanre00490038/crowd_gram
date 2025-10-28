@@ -85,10 +85,10 @@ def check_audio_quality(
     sr: Optional[int] = None,
     try_enhance: int = 2,
     min_snr_value: float = 40,
-    min_snr_value_edit: float = 30,
-    min_speech_level: float = -40,
-    max_speech_level: float = -15,
-    min_noise_level: float = -40
+    min_snr_value_edit: float = 25,
+    min_speech_level: float = -35,
+    max_speech_level: float = -10,
+    min_noise_level: float = -25
 ) -> Tuple[np.ndarray, Dict[str, float | str]]:
     """
     Evaluates the quality of an audio signal and attempts enhancement if necessary.

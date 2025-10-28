@@ -228,8 +228,6 @@ if __name__ == "__main__":
     import sys
     from loguru import logger
 
-    logging.basicConfig(level=logging.INFO)
-
     tests = {
         "1": "Check audio file format",
         "2": "Check audio file length",
