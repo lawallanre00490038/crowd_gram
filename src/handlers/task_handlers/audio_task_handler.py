@@ -217,7 +217,7 @@ async def handle_api2_audio_submission(task_info, file_id, user_id, bot):
         f"Audio check result for user {user_id}: {response.is_valid}, errors: {response.errors}, {quality_response}")
 
     if response.is_valid and (quality_response["message"] == "Approved"):
-        return True, APPROVED_TASK_MESSAGE
+        return True, new_path, APPROVED_TASK_MESSAGE
     else:
         errors = ""
 
@@ -228,6 +228,22 @@ async def handle_api2_audio_submission(task_info, file_id, user_id, bot):
         errors = ERROR_MESSAGE.format(errors=errors)
 
         logger.info(f"Audio submission failed for user {user_id}: {errors}")
-        logger.debug(f"Audio submission file path: {new_path}")
 
-        return False, errors
+        import os
+        import shutil
+
+        # Target directory
+        target_dir = "logs/failed_submissions/"
+
+        # Create the directory if it doesn't exist
+        os.makedirs(target_dir, exist_ok=True)
+
+        # Build the destination file path
+        destination = os.path.join(target_dir, os.path.basename(new_path))
+
+        # Move the file
+        shutil.move(new_path, destination)
+
+        logger.info(f"Failed Audio submission file path: {destination}")
+
+        return False, new_path, errors

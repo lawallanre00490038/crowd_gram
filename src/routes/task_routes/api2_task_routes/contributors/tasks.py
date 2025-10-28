@@ -95,7 +95,7 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
         email = user_data.get("user_email")
         task_msg = user_data.get("task", "")
 
-        response, out_message = await handle_api2_audio_submission(task_info={}, file_id=message.voice.file_id if message.voice else message.audio.file_id, user_id=message.from_user.id, bot=message.bot)
+        response, new_path, out_message = await handle_api2_audio_submission(task_info={}, file_id=message.voice.file_id if message.voice else message.audio.file_id, user_id=message.from_user.id, bot=message.bot)
         if not response:
             await message.answer(out_message or "Failed to process audio submission. Please try again.")
             await message.answer(task_msg)
@@ -106,7 +106,7 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
             await message.answer("Session data missing. Please restart the task using /start.")
             return
 
-        file_info = await message.bot.get_file(message.voice.file_id if message.voice else message.audio.file_id)
+        # file_info = await message.bot.get_file(message.voice.file_id if message.voice else message.audio.file_id)
         # file_url = f"https://api.telegram.org/file/bot{message.bot.token}/{file_info.file_path}"
 
         submission = SubmissionModel(
@@ -118,7 +118,8 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
             payload_text="",
             telegram_file_id=file_id,
         )
-        submission_response = await create_submission(submission)
+
+        submission_response = await create_submission(submission, file_path=new_path)
         if not submission_response:
             await message.answer("Failed to submit your work. Please try again.")
             return
