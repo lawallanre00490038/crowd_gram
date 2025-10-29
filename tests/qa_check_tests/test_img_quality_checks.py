@@ -13,6 +13,7 @@ from tests.qa_check_tests.utils import create_image, create_corrupted_image, cre
 # Parametrized Unit Tests
 # -----------------------------
 
+
 @pytest.mark.parametrize("noise, threshold, expected", [
     (False, 500, True),   # blurry
     (True, 50, False),    # sharp
@@ -22,8 +23,9 @@ def test_is_blurry(tmp_path, noise, threshold, expected):
     create_image(path, noise=noise)
 
     image = cv2.imread(path)
-    
+
     assert is_blurry(image, threshold=threshold) == expected
+
 
 @pytest.mark.parametrize("noise, min_entropy", [
     (False, 0.0),
@@ -38,6 +40,7 @@ def test_image_entropy_levels(tmp_path, noise, min_entropy):
 
     assert entropy_val >= min_entropy
 
+
 @pytest.mark.parametrize("noise", [True, False])
 def test_niqe_score_output_type(tmp_path, noise):
     path = tmp_path / f"niqe_{noise}.jpg"
@@ -46,7 +49,7 @@ def test_niqe_score_output_type(tmp_path, noise):
     image = cv2.imread(path)
     score = calculate_niqe_score(image)
 
-    print(score)
+    logger.info(score)
 
     assert isinstance(score, (float, np.floating))
     assert score > 0
@@ -54,6 +57,7 @@ def test_niqe_score_output_type(tmp_path, noise):
 # -----------------------------
 # Integration Test
 # -----------------------------
+
 
 def test_run_image_quality_checks(tmp_path):
     path = tmp_path / "full_check.jpg"
@@ -69,6 +73,7 @@ def test_run_image_quality_checks(tmp_path):
 # Corrupted Image Tests
 # -----------------------------
 
+
 def test_is_blurry_corrupted(tmp_path):
     path = tmp_path / "corrupt.jpg"
     create_corrupted_image(path)
@@ -76,13 +81,15 @@ def test_is_blurry_corrupted(tmp_path):
     image = cv2.imread(path)
     assert is_blurry(image) is True
 
+
 def test_image_entropy_corrupted(tmp_path):
     path = tmp_path / "corrupt.jpg"
-    
+
     create_corrupted_image(path)
     image = cv2.imread(path)
 
     assert image_entropy(image) == 0.0
+
 
 def test_niqe_score_corrupted(tmp_path):
     path = tmp_path / "corrupt.jpg"
@@ -90,6 +97,7 @@ def test_niqe_score_corrupted(tmp_path):
 
     image = cv2.imread(path)
     assert calculate_niqe_score(image) == float("inf")
+
 
 def test_run_image_quality_checks_corrupted(tmp_path):
     path = tmp_path / "corrupt.jpg"
@@ -105,18 +113,20 @@ def test_run_image_quality_checks_corrupted(tmp_path):
 # Unreadable Format Tests
 # -----------------------------
 
+
 def test_image_entropy_unreadable_format(tmp_path):
     path = tmp_path / "fake.jpg"
     create_unreadable_text_file(path)
-    
+
     image = cv2.imread(path)
 
     assert image_entropy(image) == 0.0
 
+
 def test_niqe_score_unreadable_format(tmp_path):
     path = tmp_path / "fake.jpg"
     create_unreadable_text_file(path)
-    
+
     image = cv2.imread(path)
 
     assert calculate_niqe_score(image) == float("inf")
@@ -124,6 +134,7 @@ def test_niqe_score_unreadable_format(tmp_path):
 # -----------------------------
 # Missing File Safety Tests
 # -----------------------------
+
 
 def test_missing_file_safe_handling():
     fake_path = "nonexistent_image.jpg"

@@ -1,12 +1,9 @@
-import logging
+from loguru import logger
 from typing import Optional
 import aiohttp
 
 from src.config import BASE_URL_V2
 from src.models.api2_models.task import TaskModel, TaskListResponseModel, TaskAllocation, PromptInfoModel, SubmissionInfoModel, ReviewInfoModel
-
-
-logger = logging.getLogger(__name__)
 
 
 async def get_task(task_id: str) -> Optional[TaskModel]:
@@ -28,12 +25,14 @@ async def get_task(task_id: str) -> Optional[TaskModel]:
                 if response.status == 200:
                     return TaskModel.model_validate(task_result['data'])
                 else:
-                    logger.error(f"Failed to fetch task: {task_result.get('message', 'Unknown error')}")
+                    logger.error(
+                        f"Failed to fetch task: {task_result.get('message', 'Unknown error')}")
                     return None
     except Exception as e:
         logger.error(f"Exception during fetching task: {str(e)}")
         return None
-    
+
+
 async def get_all_tasks() -> Optional[TaskListResponseModel]:
     """Fetch all tasks.
 
@@ -50,12 +49,14 @@ async def get_all_tasks() -> Optional[TaskListResponseModel]:
                 if response.status == 200:
                     return TaskListResponseModel.model_validate(tasks_result['data'])
                 else:
-                    logger.error(f"Failed to fetch tasks: {tasks_result.get('message', 'Unknown error')}")
+                    logger.error(
+                        f"Failed to fetch tasks: {tasks_result.get('message', 'Unknown error')}")
                     return None
     except Exception as e:
         logger.error(f"Exception during fetching tasks: {str(e)}")
         return None
-    
+
+
 async def update_task(task_data: dict) -> Optional[TaskModel]:
     """Update a task.
 
@@ -75,9 +76,9 @@ async def update_task(task_data: dict) -> Optional[TaskModel]:
                 if response.status == 200:
                     return TaskModel.model_validate(update_result['data'])
                 else:
-                    logger.error(f"Failed to update task: {update_result.get('message', 'Unknown error')}")
+                    logger.error(
+                        f"Failed to update task: {update_result.get('message', 'Unknown error')}")
                     return None
     except Exception as e:
         logger.error(f"Exception during updating task: {str(e)}")
         return None
-    

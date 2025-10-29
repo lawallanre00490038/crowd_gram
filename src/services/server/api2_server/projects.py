@@ -1,12 +1,10 @@
-import logging
+from loguru import logger
 from typing import Optional
 import aiohttp
 
 from src.config import BASE_URL_V2
-from src.models.api2_models.projects import ( Project, ProjectListResponseModel,ProjectUpdateModel, 
-                                            ProjectTaskDetailsResponseModel, ProjectTaskRequestModel )
-
-logger = logging.getLogger(__name__)
+from src.models.api2_models.projects import (Project, ProjectListResponseModel, ProjectUpdateModel,
+                                             ProjectTaskDetailsResponseModel, ProjectTaskRequestModel)
 
 
 async def get_projects(project_data: dict) -> Optional[Project]:
@@ -19,21 +17,23 @@ async def get_projects(project_data: dict) -> Optional[Project]:
         Optional[Project]: The fetched project or None if not found.
     """
     url = f"{BASE_URL_V2}/project/get/project"
-    
+
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(url, json=project_data) as response:
                 project_result = await response.json()
-                
+
                 if response.status == 200:
                     return Project.model_validate(project_result)
                 else:
-                    logger.error(f"Failed to fetch project: {project_result.get('message', 'Unknown error')}")
+                    logger.error(
+                        f"Failed to fetch project: {project_result.get('message', 'Unknown error')}")
                     return None
     except Exception as e:
         logger.error(f"Exception during fetching project: {str(e)}")
         return None
-    
+
+
 async def get_all_projects() -> Optional[ProjectListResponseModel]:
     """Fetch all projects.
 
@@ -41,22 +41,24 @@ async def get_all_projects() -> Optional[ProjectListResponseModel]:
         Optional[ProjectListResponseModel]: The list of all projects or None if an error occurs.
     """
     url = f"{BASE_URL_V2}/project/list/projects"
-    
+
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 projects_result = await response.json()
-                
+
                 if response.status == 200:
                     return ProjectListResponseModel.model_validate(projects_result)
                 else:
-                    logger.error(f"Failed to fetch projects: {projects_result.get('message', 'Unknown error')}")
+                    logger.error(
+                        f"Failed to fetch projects: {projects_result.get('message', 'Unknown error')}")
                     return None
     except Exception as e:
         logger.error(f"Exception during fetching projects: {str(e)}")
         return None
-    
-async def update_project(project_data: ProjectUpdateModel) -> Optional[Project]:    
+
+
+async def update_project(project_data: ProjectUpdateModel) -> Optional[Project]:
     """Update a project.
 
     Args:
@@ -66,23 +68,22 @@ async def update_project(project_data: ProjectUpdateModel) -> Optional[Project]:
         Optional[Project]: The updated project or None if an error occurs.
     """
     url = f"{BASE_URL_V2}/project/update/project"
-    
+
     try:
         async with aiohttp.ClientSession() as session:
             data = project_data.model_dump()
             async with session.put(url, json=data) as response:
                 update_result = await response.json()
-                
+
                 if response.status == 200:
                     return Project.model_validate(update_result)
                 else:
-                    logger.error(f"Failed to update project: {update_result.get('message', 'Unknown error')}")
+                    logger.error(
+                        f"Failed to update project: {update_result.get('message', 'Unknown error')}")
                     return None
     except Exception as e:
         logger.error(f"Exception during updating project: {str(e)}")
         return None
-    
-
 
     """Fetch assigned tasks for a specific project.
 
@@ -102,13 +103,12 @@ async def update_project(project_data: ProjectUpdateModel) -> Optional[Project]:
                 if response.status == 200:
                     return ProjectTaskAllocationResponseModel.model_validate(tasks_result)
                 else:
-                    logger.error(f"Failed to fetch assigned tasks: {tasks_result.get('message', 'Unknown error')}")
+                    logger.error(
+                        f"Failed to fetch assigned tasks: {tasks_result.get('message', 'Unknown error')}")
                     return None
     except Exception as e:
         logger.error(f"Exception during fetching assigned tasks: {str(e)}")
         return None
-
-
 
     """
     Fetch task details for a specific project.
@@ -129,13 +129,13 @@ async def update_project(project_data: ProjectUpdateModel) -> Optional[Project]:
                 if response.status == 200:
                     return ProjectTaskDetailsResponseModel.model_validate(tasks_result)
                 else:
-                    logger.error(f"Failed to fetch project task details: {tasks_result.get('message', 'Unknown error')}")
+                    logger.error(
+                        f"Failed to fetch project task details: {tasks_result.get('message', 'Unknown error')}")
                     return None
     except Exception as e:
-        logger.error(f"Exception during fetching project task details: {str(e)}")
+        logger.error(
+            f"Exception during fetching project task details: {str(e)}")
         return None
-
-
 
     """Fetch task details for a specific project.
 
@@ -155,12 +155,14 @@ async def update_project(project_data: ProjectUpdateModel) -> Optional[Project]:
                 if response.status == 200:
                     return ReviewerProjectAssignedTasksResponseModel.model_validate(tasks_result)
                 else:
-                    logger.error(f"Failed to fetch reviewer project task details: {tasks_result.get('message', 'Unknown error')}")
+                    logger.error(
+                        f"Failed to fetch reviewer project task details: {tasks_result.get('message', 'Unknown error')}")
                     return None
     except Exception as e:
-        logger.error(f"Exception during fetching reviewer project task details: {str(e)}")
+        logger.error(
+            f"Exception during fetching reviewer project task details: {str(e)}")
         return None
-    
+
 
 async def get_projects_details_by_user_email(user_email: str) -> Optional[ProjectListResponseModel]:
     """Fetch projects associated with a specific user email.
@@ -181,12 +183,15 @@ async def get_projects_details_by_user_email(user_email: str) -> Optional[Projec
                 if response.status == 200:
                     return ProjectListResponseModel.model_validate(projects_result)
                 else:
-                    logger.error(f"Failed to fetch projects by user email: {projects_result.get('message', 'Unknown error')}")
+                    logger.error(
+                        f"Failed to fetch projects by user email: {projects_result.get('message', 'Unknown error')}")
                     return None
     except Exception as e:
-        logger.error(f"Exception during fetching projects by user email: {str(e)}")
+        logger.error(
+            f"Exception during fetching projects by user email: {str(e)}")
         return None
-    
+
+
 async def get_project_tasks_assigned_to_user(task_details: ProjectTaskRequestModel) -> Optional[ProjectTaskDetailsResponseModel]:
     """Fetch project task allocations assigned to a specific user.
 
@@ -207,11 +212,14 @@ async def get_project_tasks_assigned_to_user(task_details: ProjectTaskRequestMod
                 if response.status == 200:
                     return ProjectTaskDetailsResponseModel.model_validate(tasks_result)
                 else:
-                    logger.error(f"Failed to fetch project tasks allocations by user: {tasks_result}")
+                    logger.error(
+                        f"Failed to fetch project tasks allocations by user: {tasks_result}")
                     return None
     except Exception as e:
-        logger.error(f"Exception during fetching project tasks allocations by user: {str(e)}")
+        logger.error(
+            f"Exception during fetching project tasks allocations by user: {str(e)}")
         return None
+
 
 async def get_projects_details(user_email: str) -> list[dict]:
     """Fetch all project details by calling get_projects_details_by_user_email method.
@@ -225,7 +233,7 @@ async def get_projects_details(user_email: str) -> list[dict]:
 
     try:
         projects = await get_projects_details_by_user_email(user_email)
-        
+
         if projects:
             return [proj.model_dump() for proj in projects.root]
         else:
@@ -233,24 +241,25 @@ async def get_projects_details(user_email: str) -> list[dict]:
     except Exception as e:
         logger.error(f"Exception during fetching project names: {str(e)}")
         return []
-    
+
+
 async def get_project_review_parameters(project_id: str) -> Optional[list[str]]:
     """Fetch review parameters for a specific project."""
     url = f"{BASE_URL_V2}/project/project/{project_id}/review-parameters"
-    
+
     # Add logging to see the exact URL being called
     logger.info(f"Fetching review parameters from: {url}")
-    
+
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 # Log the response status and content
                 logger.info(f"Response status: {response.status}")
-                
+
                 if response.status == 200:
                     params_result = await response.json()
                     logger.info(f"Review parameters received: {params_result}")
-                    
+
                     # Handle different possible response structures
                     if isinstance(params_result, list):
                         return params_result
@@ -259,12 +268,15 @@ async def get_project_review_parameters(project_id: str) -> Optional[list[str]]:
                     elif isinstance(params_result, dict) and 'parameters' in params_result:
                         return params_result['parameters']
                     else:
-                        logger.warning(f"Unexpected response structure: {params_result}")
+                        logger.warning(
+                            f"Unexpected response structure: {params_result}")
                         return list(params_result.keys()) if isinstance(params_result, dict) else []
                 else:
                     error_text = await response.text()
-                    logger.error(f"Failed to fetch project review parameters. Status: {response.status}, Response: {error_text}")
+                    logger.error(
+                        f"Failed to fetch project review parameters. Status: {response.status}, Response: {error_text}")
                     return None
     except Exception as e:
-        logger.error(f"Exception during fetching project review parameters: {str(e)}")
+        logger.error(
+            f"Exception during fetching project review parameters: {str(e)}")
         return None

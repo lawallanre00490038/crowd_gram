@@ -1,10 +1,8 @@
 import os
-import logging
+from loguru import logger
 import tempfile
 
 from aiogram import Bot
-
-logger = logging.getLogger(__name__)
 
 
 # Save to a temporary file
@@ -20,5 +18,6 @@ async def download_telegram(file_id, bot: Bot) -> str:
         await bot.download_file(file.file_path, tmp_file)
         temp_file_path = tmp_file.name  # Save the path to return or use
 
-    logger.info(f"File: {file.file_path} downloaded to temporary path: {temp_file_path}")
+    logger.info(
+        f"File: {file.file_path} downloaded to temporary path: {temp_file_path}")
     return temp_file_path  # You can return it if needed later

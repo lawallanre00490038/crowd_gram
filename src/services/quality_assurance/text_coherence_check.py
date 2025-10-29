@@ -1,18 +1,19 @@
 import math
 import torch
 import numpy as np
-import logging
-from transformers import  XLMWithLMHeadModel,XLMRobertaTokenizerFast,AutoTokenizer, AutoModelForSeq2SeqLM
+from loguru import logger
+from transformers import XLMWithLMHeadModel, XLMRobertaTokenizerFast, AutoTokenizer, AutoModelForSeq2SeqLM
 from sentence_transformers import SentenceTransformer
 import unicodedata
 
 # Setup logging
 # logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+
 
 # -------- Load Models --------
 try:
-    embedder = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+    embedder = SentenceTransformer(
+        "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 except Exception as e:
     logger.error(f"Failed to load SentenceTransformer: {e}")
     raise
@@ -55,7 +56,8 @@ def calculate_perplexity(text: str, max_length: int = 64) -> float:
     if not text or not isinstance(text, str) or not text.strip():
         return float("inf")
     try:
-        inputs = tokenizer(text.strip(), return_tensors="pt", truncation=True, max_length=max_length)
+        inputs = tokenizer(text.strip(), return_tensors="pt",
+                           truncation=True, max_length=max_length)
         input_ids = inputs["input_ids"]
         with torch.no_grad():
             outputs = model(input_ids=input_ids, labels=input_ids)
@@ -66,6 +68,8 @@ def calculate_perplexity(text: str, max_length: int = 64) -> float:
         return float("inf")
 
 # -------- Embedding Entropy --------
+
+
 def embedding_entropy(text: str) -> float:
     """
     Calculate the entropy of a sentence embedding vector to estimate semantic richness.
@@ -73,11 +77,11 @@ def embedding_entropy(text: str) -> float:
     """
     try:
         vec = embedder.encode([text], convert_to_tensor=False)[0]
-        vec = np.abs(np.array(vec)) 
-        prob_vec = vec / np.sum(vec)  
+        vec = np.abs(np.array(vec))
+        prob_vec = vec / np.sum(vec)
 
         entropy = -np.sum(prob_vec * np.log(prob_vec + 1e-10))
-        return  float (round(entropy, 3))
+        return float(round(entropy, 3))
     except Exception as e:
         logger.warning(f"Embedding entropy failed: {e}")
         return 0.0
@@ -108,8 +112,6 @@ def check_coherence(
     """
     results = {}
 
-   
-
     # Fluency
     ppl = calculate_perplexity(text)
     results["perplexity"] = ppl
@@ -118,9 +120,10 @@ def check_coherence(
     entropy = embedding_entropy(text)
     results["entropy"] = entropy
 
-    print(f"Perplexity: {ppl}, Entropy: {entropy}")
+    logger.info(f"Perplexity: {ppl}, Entropy: {entropy}")
 
-     # Coherence check  
-    results["coherence_ok"] = True if is_amharic(text) else  (ppl < perplexity_threshold and entropy > entropy_threshold)
+    # Coherence check
+    results["coherence_ok"] = True if is_amharic(text) else (
+        ppl < perplexity_threshold and entropy > entropy_threshold)
 
     return results

@@ -1,5 +1,5 @@
 from typing import Dict, Any, List
-import logging
+from loguru import logger
 
 import cv2 as cv
 from .img_quality_checks import (
@@ -8,9 +8,10 @@ from .img_quality_checks import (
     calculate_niqe_score,
 )
 
-from .img_size_check import check_image_file_size_and_resolution 
+from .img_size_check import check_image_file_size_and_resolution
 
 logger = logging.getLogger("image_validator")
+
 
 def validate_image_input(image_path: str,
                          entropy_threshold: float = 3.5,
@@ -48,7 +49,8 @@ def validate_image_input(image_path: str,
         entropy = image_entropy(image)
         metadata["entropy"] = entropy
         if entropy < entropy_threshold:
-            fail_reasons.append(f"Image entropy too low ({entropy:.2f} < {entropy_threshold}).")
+            fail_reasons.append(
+                f"Image entropy too low ({entropy:.2f} < {entropy_threshold}).")
     except Exception as e:
         logger.warning(f"Entropy check failed: {e}")
 
@@ -57,7 +59,8 @@ def validate_image_input(image_path: str,
         niqe = calculate_niqe_score(image)
         metadata["niqe_score"] = niqe
         if niqe > niqe_threshold:
-            fail_reasons.append(f"NIQE score too high ({niqe:.2f} > {niqe_threshold}).")
+            fail_reasons.append(
+                f"NIQE score too high ({niqe:.2f} > {niqe_threshold}).")
     except Exception as e:
         logger.warning(f"NIQE check failed: {e}")
 

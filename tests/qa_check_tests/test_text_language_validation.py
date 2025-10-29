@@ -1,11 +1,10 @@
+from src.services.quality_assurance.text_language_validation import detect_message_language
+import pandas as pd
+import pytest
 import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))
-
-import pytest
-import pandas as pd
-from src.services.quality_assurance.text_language_validation import detect_message_language
 
 
 # --------------------------
@@ -19,8 +18,9 @@ from src.services.quality_assurance.text_language_validation import detect_messa
 ])
 def test_detect_message_language(text, expected_code):
     result = detect_message_language(text)
-    print(f"Detected: {result['code']} ({result['code']}) with a confidence of {result['confidence']:.2%} script: {result['script']}")
-    
+    logger.info(
+        f"Detected: {result['code']} ({result['code']}) with a confidence of {result['confidence']:.2%} script: {result['script']}")
+
     assert result["code"] == expected_code
     assert isinstance(result["confidence"], float)
     assert 0.0 <= result["confidence"] <= 1.0
@@ -28,6 +28,8 @@ def test_detect_message_language(text, expected_code):
 # --------------------------
 # Simulated Batch Detection Test
 # --------------------------
+
+
 @pytest.mark.parametrize("texts,expected_codes", [
     (
         ["Habari yako", "Jina langu ni Tunu"],

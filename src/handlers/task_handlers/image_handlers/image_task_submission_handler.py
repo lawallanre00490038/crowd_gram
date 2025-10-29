@@ -1,5 +1,6 @@
-import logging
+from loguru import logger
 from PIL import Image, ImageEnhance
+
 from src.services.quality_assurance.image_validation import validate_image_input
 from src.services.quality_assurance.img_quality_checks import run_image_quality_checks
 from src.services.quality_assurance.img_size_check import check_image_file_size_and_resolution
@@ -7,9 +8,6 @@ from src.services.task_distributor import assign_task, get_full_task_detail, Tas
 from src.utils.downloader import download_telegram
 from src.utils.image_processing import process_image
 from src.constant.auth_constants import TOKEN_LOCATION
-
-logger = logging.getLogger(__name__)
-
 
 
 async def handle_image_submission(task_info, file_id, user_id, bot):
@@ -21,10 +19,9 @@ async def handle_image_submission(task_info, file_id, user_id, bot):
     """
     task_info = Task(**task_info)
     task_full_details = await get_full_task_detail(task_info.task_id, user_id)
-    
+
     file_path = await download_telegram(file_id, bot=bot)
-    
-    
+
     # Validate image input
     is_valid, validation_msg = validate_image_input(image_path=file_path)
     if not is_valid:
@@ -32,7 +29,8 @@ async def handle_image_submission(task_info, file_id, user_id, bot):
         return {"status": "error", "message": f"Image validation failed: {validation_msg}"}
 
     # Check image file size and resolution
-    size_ok, size_msg = check_image_file_size_and_resolution(image_path=file_path)
+    size_ok, size_msg = check_image_file_size_and_resolution(
+        image_path=file_path)
     if not size_ok:
         logger.warning(f"Image size/resolution check failed: {size_msg}")
         return {"status": "error", "message": f"Image size/resolution check failed: {size_msg}"}
@@ -44,12 +42,12 @@ async def handle_image_submission(task_info, file_id, user_id, bot):
         return {"status": "error", "message": f"Image quality check failed: {quality_msg}"}
 
     image = Image.open(file_path)
-    
+
     new_image = process_image(image)
-    
+
     new_path = file_path.replace(".jpg", "_enhanced.jpg")
     new_image.save(new_path)
     logger.info(f"New image saved at {new_path}")
-    
+
     logger.info("Image passed all checks.")
     return {"status": "success", "message": "Image accepted and passed all checks."}

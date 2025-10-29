@@ -1,14 +1,13 @@
 import librosa
-import logging
+from loguru import logger
 from typing import Literal, List, Optional, Union
 from pydantic import BaseModel, Field
-
-logger = logging.getLogger(__name__)
 
 
 class AudioCheckResult(BaseModel):
     is_valid: bool
     errors: List[str] = []
+
 
 class TaskParameterModel(BaseModel):
     min_duration: float  # or int, depending on your data type
@@ -17,11 +16,14 @@ class TaskParameterModel(BaseModel):
     expected_format: str = "oga"
     sample_rate: int = 42000
     bit_depth: int = 32
-    try_enhance: Optional[int] = None  # Optional, default to None if not provided
+    # Optional, default to None if not provided
+    try_enhance: Optional[int] = None
+
 
 def check_audio_file_format(
-    file_path: str, 
-    expected_format: Union[Literal['mp3', 'wav', 'flac', 'm4a', 'ogg', 'aac', 'oga'], None] = None
+    file_path: str,
+    expected_format: Union[Literal['mp3', 'wav', 'flac',
+                                   'm4a', 'ogg', 'aac', 'oga'], None] = None
 ) -> dict:
     """
     Check if the audio file format is supported and matches the expected format.
@@ -83,16 +85,20 @@ def check_audio_file_length(file_path: str, min_length: float = 0.5, max_length:
         }
     """
     try:
-        y, sr = librosa.load(file_path, sr=None)  # Load the audio file to check its length
-        duration = librosa.get_duration(y=y, sr=sr)  # Get the duration in seconds
+        # Load the audio file to check its length
+        y, sr = librosa.load(file_path, sr=None)
+        # Get the duration in seconds
+        duration = librosa.get_duration(y=y, sr=sr)
 
-        logger.info(f"Checking audio file length for {file_path} between {min_length} and {max_length} seconds. Actual length: {duration} seconds.")
+        logger.info(
+            f"Checking audio file length for {file_path} between {min_length} and {max_length} seconds. Actual length: {duration} seconds.")
 
         is_valid = min_length <= duration <= max_length
         return {'is_valid': is_valid, 'actual_length': duration}
     except Exception as e:
-        print(f"Error checking audio length: {e}")
+        logger.info(f"Error checking audio length: {e}")
         return {'is_valid': False, 'actual_length': None}
+
 
 def check_audio_sample_rate(file_path: str, expected_sample_rate: int = 16000) -> dict:
     """
@@ -113,7 +119,7 @@ def check_audio_sample_rate(file_path: str, expected_sample_rate: int = 16000) -
         is_valid = sr == expected_sample_rate
         return {'is_valid': is_valid, 'actual_sample_rate': sr}
     except Exception as e:
-        print(f"Error checking sample rate: {e}")
+        logger.info(f"Error checking sample rate: {e}")
         return {'is_valid': False, 'actual_sample_rate': None}
 
 
@@ -155,16 +161,17 @@ def check_audio_bit_depth(file_path: str, expected_bit_depth: int = 16) -> dict:
         return {'is_valid': is_valid, 'actual_bit_depth': actual_bit_depth}
 
     except Exception as e:
-        print(f"Error checking audio bit depth: {e}")
+        logger.info(f"Error checking audio bit depth: {e}")
         return {'is_valid': False, 'actual_bit_depth': None}
+
 
 def check_audio_parameter(path: str, parameters: TaskParameterModel) -> AudioCheckResult:
     no_error = True
     errors = []
 
     file_length_result = check_audio_file_length(
-        file_path=path, 
-        min_length=parameters.min_duration, 
+        file_path=path,
+        min_length=parameters.min_duration,
         max_length=parameters.max_duration
     )
 
@@ -176,7 +183,7 @@ def check_audio_parameter(path: str, parameters: TaskParameterModel) -> AudioChe
         )
 
     file_format_result = check_audio_file_format(
-        file_path=path, 
+        file_path=path,
         expected_format=parameters.expected_format
     )
     if not file_format_result['is_valid']:
@@ -187,8 +194,9 @@ def check_audio_parameter(path: str, parameters: TaskParameterModel) -> AudioChe
         )
 
     sample_rate_result = check_audio_sample_rate(
-        file_path=path, 
-        expected_sample_rate=parameters.sample_rate  # fixed from your code, was mistakenly parameters.expected_format
+        file_path=path,
+        # fixed from your code, was mistakenly parameters.expected_format
+        expected_sample_rate=parameters.sample_rate
     )
     if not sample_rate_result['is_valid']:
         no_error = False
@@ -198,8 +206,9 @@ def check_audio_parameter(path: str, parameters: TaskParameterModel) -> AudioChe
         )
 
     audio_bit_depth_result = check_audio_bit_depth(
-        file_path=path, 
-        expected_bit_depth=parameters.bit_depth  # assuming your parameter name is bit_rate not bit_depth
+        file_path=path,
+        # assuming your parameter name is bit_rate not bit_depth
+        expected_bit_depth=parameters.bit_depth
     )
     if not audio_bit_depth_result['is_valid']:
         no_error = False
@@ -212,14 +221,12 @@ def check_audio_parameter(path: str, parameters: TaskParameterModel) -> AudioChe
         is_valid=no_error,
         errors=errors,
     )
-   
+
 
 if __name__ == "__main__":
     import os
     import sys
-    import logging
-
-    logging.basicConfig(level=logging.INFO)
+    from loguru import logger
 
     tests = {
         "1": "Check audio file format",
@@ -228,51 +235,59 @@ if __name__ == "__main__":
         "4": "Check audio bit depth"
     }
 
-    print("Available tests:")
+    logger.trace("Available tests:")
     for key, val in tests.items():
-        print(f"{key}. {val}")
+        logger.trace(f"{key}. {val}")
 
-    choice = input("\nSelect a test by entering the corresponding number: ").strip()
+    choice = input(
+        "\nSelect a test by entering the corresponding number: ").strip()
 
     if choice not in tests:
-        print("Invalid selection.")
+        logger.trace("Invalid selection.")
         sys.exit(1)
 
     file_path = input("Enter the path to the audio file: ").strip()
     if not os.path.exists(file_path):
-        print("File not found.")
+        logger.trace("File not found.")
         sys.exit(1)
 
     if choice == "1":
-        expected_format = input("Enter expected format (mp3, wav, flac, m4a, ogg, aac) or leave blank for any: ").strip().lower()
-        expected_format = expected_format if expected_format in ['mp3', 'wav', 'flac', 'm4a', 'ogg', 'aac'] else None
+        expected_format = input(
+            "Enter expected format (mp3, wav, flac, m4a, ogg, aac) or leave blank for any: ").strip().lower()
+        expected_format = expected_format if expected_format in [
+            'mp3', 'wav', 'flac', 'm4a', 'ogg', 'aac'] else None
         result = check_audio_file_format(file_path, expected_format)
 
     elif choice == "2":
         try:
-            min_length = float(input("Enter minimum length in seconds (default 0.5): ") or 0.5)
-            max_length = float(input("Enter maximum length in seconds (default 60.0): ") or 60.0)
+            min_length = float(
+                input("Enter minimum length in seconds (default 0.5): ") or 0.5)
+            max_length = float(
+                input("Enter maximum length in seconds (default 60.0): ") or 60.0)
         except ValueError:
-            print("Invalid number entered.")
+            logger.info("Invalid number entered.")
             sys.exit(1)
 
-        logger.info(f"Checking audio file length between {min_length} and {max_length} seconds.")
+        logger.info(
+            f"Checking audio file length between {min_length} and {max_length} seconds.")
         result = check_audio_file_length(file_path, min_length, max_length)
 
     elif choice == "3":
         try:
-            expected_sr = int(input("Enter expected sample rate (default 16000): ") or 16000)
+            expected_sr = int(
+                input("Enter expected sample rate (default 16000): ") or 16000)
         except ValueError:
-            print("Invalid number entered.")
+            logger.info("Invalid number entered.")
             sys.exit(1)
         result = check_audio_sample_rate(file_path, expected_sr)
 
     elif choice == "4":
         try:
-            expected_bd = int(input("Enter expected bit depth (16 or 32, default 16): ") or 16)
+            expected_bd = int(
+                input("Enter expected bit depth (16 or 32, default 16): ") or 16)
         except ValueError:
-            print("Invalid number entered.")
+            logger.info("Invalid number entered.")
             sys.exit(1)
         result = check_audio_bit_depth(file_path, expected_bd)
 
-    print(f"\nResult: {'PASS ✅' if result else 'FAIL ❌'}")
+    logger.info(f"\nResult: {'PASS ✅' if result else 'FAIL ❌'}")

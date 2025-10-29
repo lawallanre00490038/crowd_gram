@@ -2,10 +2,10 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
-import logging
+from loguru import logger
 from typing import Union
 
-
+from src.handlers.onboarding_handlers.onboarding import send_tutorial
 from src.responses.auth_response import EXIT, LOGIN_MSG, LOGOUT
 from src.responses.onboarding_response import TUTORIAL_MSG, WELCOME_MESSAGE, QUIZ_MSG
 from src.states.onboarding import Tutorial
@@ -14,13 +14,9 @@ from src.services.server.api2_server.auth import user_login
 from src.services.server.api2_server.projects import get_projects_details
 from src.models.api2_models.telegram import LoginModel
 from src.states.authentication import Authentication
-from src.data.video_tutorials import tutorial_videos
-from src.keyboards.inline import project_selection_kb, new_api_login_type_inline, tutorial_choice_kb, ready_kb
-from src.handlers.onboarding_handlers.onboarding import send_tutorial
-
+from src.keyboards.inline import project_selection_kb, new_api_login_type_inline
 
 router = Router()
-logger = logging.getLogger(__name__)
 
 
 @router.message(Command("start"))
@@ -47,6 +43,7 @@ async def handle_exit(message: Message, state: FSMContext):
 @router.callback_query(Authentication.set_login_type, F.data.in_(["login", "register"]))
 async def handle_login_type(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
+    logger.trace("Supplying")
     if callback.data == "login":
         await callback.message.answer(LOGIN_MSG["enter_email"])
         await state.set_state(Authentication.api_login_email)
@@ -80,14 +77,14 @@ async def handle_login_password(message: Message, state: FSMContext):
 
         await state.clear()
 
-        await state.set_data({'user_email': email, "name": name, "role": role.lower(), "telegram_id": telegram_id })
-        
-        await message.answer(TUTORIAL_MSG["intro"], reply_markup=tutorial_choice_kb())
+        await state.set_data({'user_email': email, "name": name, "role": role.lower(), "telegram_id": telegram_id})
+
+        await handle_user_projects(message, state)
     else:
         await state.clear()
         await message.answer(LOGIN_MSG["fail"], reply_markup=new_api_login_type_inline)
         await state.set_state(Authentication.set_login_type)
-        
+
 
 @router.message(Command("projects"))
 @router.callback_query(F.data.in_(["ready_for_task"]))
@@ -98,10 +95,10 @@ async def handle_user_projects(event: Union[Message, CallbackQuery], state: FSMC
         message = event.message
     else:
         message = event
-    
+
     user_data = await state.get_data()
     email = user_data.get("user_email")
-    
+
     if not email:
         await message.answer("You need to log in first. Use /start to log in.")
         return
@@ -114,7 +111,8 @@ async def handle_user_projects(event: Union[Message, CallbackQuery], state: FSMC
     await state.update_data({"projects_details": projects_details})
     await message.answer(
         "Please select a project to continue:",
-        reply_markup=project_selection_kb([proj["name"] for proj in projects_details])
+        reply_markup=project_selection_kb(
+            [proj["name"] for proj in projects_details])
     )
 
 
@@ -122,16 +120,18 @@ async def handle_user_projects(event: Union[Message, CallbackQuery], state: FSMC
 async def handle_tutorial_choice(callback: CallbackQuery, state: FSMContext):
     logger.info(f"🔍 [DEBUG] Tutorial choice: {callback.data}")
     await callback.answer()
-    
+
     if callback.data == "tutorial_yes":
         await callback.message.answer(TUTORIAL_MSG["intro"])
         await state.set_state(Tutorial.watching)
         await send_tutorial(callback.message, state, index=0)
-     
+
     elif callback.data == "skip_tutorials":
         await handle_user_projects(callback, state)
 
 # --- Handle navigation (next/back/ready) ---
+
+
 @router.callback_query(F.data.in_(["next", "prev", "ready", "skip_videos"]))
 async def tutorial_navigation(callback: CallbackQuery, state: FSMContext):
     await callback.answer()

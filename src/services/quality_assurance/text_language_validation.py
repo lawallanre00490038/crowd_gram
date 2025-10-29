@@ -1,6 +1,6 @@
 import os
 import langid
-import logging
+from loguru import logger
 import pycountry
 import pandas as pd
 from typing import Dict, Any
@@ -9,21 +9,21 @@ from transformers import pipeline
 
 abs_path = os.path.dirname(os.path.abspath(__file__))
 
-# Setup logging
-# logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("afrolid")
-
 # Load AfroLID model globally
 try:
-    afrolid_model = pipeline("text-classification", model="UBC-NLP/afrolid_1.5")
+    afrolid_model = pipeline("text-classification",
+                             model="UBC-NLP/afrolid_1.5")
 except Exception as e:
     logger.error(f"Failed to load AfroLID model: {e}")
     raise
 
-# Load supported languages CSV file 
+# Load supported languages CSV file
+
+
 def load_iso_mapping(filepath="./supported-languages.csv"):
     try:
-        filepath = os.path.join(abs_path, "..","..", "data", "supported-languages.csv")
+        filepath = os.path.join(abs_path, "..", "..",
+                                "data", "supported-languages.csv")
         df = pd.read_csv(filepath)
         mapping = {
             row["isocode"]: {"name": row["language"], "script": row["script"]}
@@ -33,6 +33,7 @@ def load_iso_mapping(filepath="./supported-languages.csv"):
     except Exception as e:
         logger.error(f"Failed to load mapping file: {e}")
         return {}
+
 
 # Mapping loaded once
 mapping = load_iso_mapping()
@@ -73,13 +74,14 @@ def langid_fallback(text: str) -> Dict[str, Any]:
     else:
         # Fallback to pycountry
         lang_name = get_language_name_from_iso(fallback_code)
-        print("language name",get_language_name_from_iso("En"))
+        logger.info("language name", get_language_name_from_iso("En"))
         meta = {
             "name": lang_name,
             "script": "unknown"
         }
 
-    logger.info(f"[langid fallback] {fallback_code} ({meta['name']}) | Confidence: {round(fallback_conf, 3)}")
+    logger.info(
+        f"[langid fallback] {fallback_code} ({meta['name']}) | Confidence: {round(fallback_conf, 3)}")
 
     return {
         "code": fallback_code,
@@ -88,7 +90,6 @@ def langid_fallback(text: str) -> Dict[str, Any]:
         "confidence": round(fallback_conf, 3),
         "source": "langid"
     }
-
 
 
 def detect_message_language(text: str, confidence_threshold: float = 0.75) -> Dict[str, Any]:
@@ -110,7 +111,8 @@ def detect_message_language(text: str, confidence_threshold: float = 0.75) -> Di
         meta = mapping.get(code, {"name": code, "script": "unknown"})
 
         if confidence >= confidence_threshold:
-            logger.info(f"[AfroLID] {code} ({meta['name']}) | Confidence: {confidence}")
+            logger.info(
+                f"[AfroLID] {code} ({meta['name']}) | Confidence: {confidence}")
             return {
                 "code": code,
                 "language": meta["name"],
@@ -119,14 +121,16 @@ def detect_message_language(text: str, confidence_threshold: float = 0.75) -> Di
                 "source": "afrolid"
             }
         else:
-            logger.warning(f"[AfroLID] Low confidence ({confidence}). Falling back to langid.")
+            logger.warning(
+                f"[AfroLID] Low confidence ({confidence}). Falling back to langid.")
     except Exception as e:
-        logger.warning(f"[AfroLID] Detection failed: {e}. Falling back to langid.")
+        logger.warning(
+            f"[AfroLID] Detection failed: {e}. Falling back to langid.")
 
     # Step 2: Fallback to langid
     try:
         return langid_fallback(text)
-      
+
     except Exception as e:
         logger.error(f"[Fallback] langid failed: {e}")
         return _unknown_response()

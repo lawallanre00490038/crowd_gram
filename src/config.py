@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-import logging
+from loguru import logger
 
 
 load_dotenv()
@@ -16,6 +16,6 @@ MONGO_DB_URI = os.getenv("MONGO_DB_URI", "mongodb://localhost:27017")
 MONGODB_DB_NAME = os.getenv("MONGODB_DB_NAME", "crowd_telegram")
 
 try:
-    USE_MONGO_DB = bool(os.getenv("USE_MONGO_DB", "False"))
-except: 
+    USE_MONGO_DB = os.getenv("USE_MONGO_DB") == "True"
+except:
     raise ValueError("Please USE_MONGO_DB is supposed to be a boolean")

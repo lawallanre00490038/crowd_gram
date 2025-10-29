@@ -1,4 +1,3 @@
-import logging
 import json
 from src.services.quality_assurance.video_parameter_check import (
     check_video_file_format,
@@ -12,8 +11,7 @@ from src.services.quality_assurance.video_quality_check import (
 )
 from src.services.task_distributor import assign_task, get_full_task_detail, Task
 from src.utils.downloader import download_telegram
-
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 
 async def handle_video_submission(task_info, file_id, user_id, bot):
@@ -32,9 +30,8 @@ async def handle_video_submission(task_info, file_id, user_id, bot):
     # Download video from Telegram
     file_path = await download_telegram(file_id, bot=bot)
 
-    
     # Parameter checks
-    
+
     if not check_video_file_format(file_path, expected_format="mp4"):
         logger.warning("Invalid video format.")
         return {"status": "error", "message": "Invalid video format. Only MP4 is supported."}
