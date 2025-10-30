@@ -1,9 +1,11 @@
 import time
-import sys
+import psutil
+import asyncio
 from loguru import logger
 from aiogram import BaseMiddleware
 from aiogram.types import Message, CallbackQuery
 from typing import Callable, Dict, Any, Awaitable
+from aiogram.types import Update
 
 # Set up Loguru logging (log to file and console)
 logger.add("logs/bot_logs.log", rotation="1 day",
@@ -54,3 +56,26 @@ class LoggingMiddleware(BaseMiddleware):
                 f"✅ Response sent for callback: {endpoint} in {response_time:.2f} seconds to {user_info}")
 
         return result
+
+
+class LatencyMiddleware(BaseMiddleware):
+    async def __call__(
+        self,
+        handler: Callable[[Update, Dict[str, Any]], Awaitable[Any]],
+        event: Update,
+        data: Dict[str, Any]
+    ) -> Any:
+        start_time = time.perf_counter()
+        result = await handler(event, data)
+        latency = time.perf_counter() - start_time
+        logger.info(f"[Latency] {event.event_type}: {latency*1000:.2f} ms")
+        return result
+
+
+async def monitor_resources(interval=5):
+    process = psutil.Process()
+    while True:
+        cpu = process.cpu_percent()
+        mem = process.memory_info().rss / (1024 ** 2)
+        logger.info(f"[Resources] CPU: {cpu:.2f}% | Memory: {mem:.2f} MB")
+        await asyncio.sleep(interval)
