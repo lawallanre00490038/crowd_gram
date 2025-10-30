@@ -43,14 +43,15 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
         task_list = allocations.tasks if hasattr(allocations, 'tasks') else []
 
         if task_list:
-            ## REWRITE THIS PART TO HANDLE DIFFERENT TASK TYPES (LIKE IMAGE, VIDEO, ETC)
+            # REWRITE THIS PART TO HANDLE DIFFERENT TASK TYPES (LIKE IMAGE, VIDEO, ETC)
             first_task = task_list[0]
             if allocations.project_name == "TextTask":
                 type = "Text"
             elif first_task.prompt.category == "speech":
                 type = "Audio"
             else:
-                logger.error(f"Unknown task category: {first_task.prompt.category}")
+                logger.error(
+                    f"Unknown task category: {first_task.prompt.category}")
 
             task_text = first_task.prompt.sentence_text
             first_task_msg = TASK_MSG['intro'].format(
@@ -64,6 +65,8 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
     except Exception as e:
         logger.error(f"Error in start_task: {str(e)}")
         await callback.message.answer("Error occurred, please try again.")
+
+    return
 
 
 async def handle_task_submission(message: Message, state: FSMContext):
@@ -85,15 +88,16 @@ async def handle_task_submission(message: Message, state: FSMContext):
         logger.error(f"Error in handle_task_submission: {str(e)}")
         await message.answer("Error occurred, please try again.")
 
+    return
+
 
 @router.message(TaskState.waiting_for_text)
 async def handle_text_input(message: Message, state: FSMContext):
     text = message.text.strip()
     user_data = await state.get_data()
-    
+
     result = validate_text_input(
         text, task_lang=None, exp_task_script=None)
-
 
     submission = SubmissionModel.model_validate(user_data)
     submission.payload_text = text
@@ -107,12 +111,15 @@ async def handle_text_input(message: Message, state: FSMContext):
         if not submission_response:
             await message.answer("Failed to submit your work. Please try again.")
             return
-        await message.answer("Your audio submission has been received and recorded successfully. Thank you!")
+        await message.answer("Your text submission has been received and recorded successfully. Thank you!")
         await message.answer("Begin the next task.", reply_markup=next_agent_task_inline_kb())
     else:
         errors = "\n".join(result["fail_reasons"])
         errors = ERROR_MESSAGE.format(errors=errors)
         await message.answer(errors)
+
+    return
+
 
 @router.message(TaskState.waiting_for_audio)
 async def handle_audio_task_submission(message: Message, state: FSMContext):
@@ -132,8 +139,8 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
         sentence_id = user_data.get("sentence_id")
         email = user_data.get("user_email")
         task_msg = user_data.get("task", "")
-        
-        ## REWRITE TO GET THE TASK INFO FROM STATE DATA
+
+        # REWRITE TO GET THE TASK INFO FROM STATE DATA
         response, new_path, out_message = await handle_api2_audio_submission(task_info={}, file_id=message.voice.file_id if message.voice else message.audio.file_id, user_id=message.from_user.id, bot=message.bot)
         if not response:
             await message.answer(out_message or "Failed to process audio submission. Please try again.")
@@ -167,3 +174,5 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
     except Exception as e:
         logger.error(f"Error in handle_audio_task_submission: {str(e)}")
         await message.answer("Error occurred, please try again.")
+
+    return
