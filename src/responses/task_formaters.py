@@ -78,7 +78,7 @@ Guide: {question}
 Example: {example}\n
 Your {target_lang} description:
 """
-        
+
 
 IMAGE_SUBMISSION_RECEIVED_MESSAGE = """
 ✅ Image received!
@@ -151,7 +151,7 @@ REVIEWER_TASK_MSG = {
         "📜 Review Instructions: <b>{reviewer_instruction}</b>\n"
         "───────────────────────────────────────────\n"
         "🗒️ Task Prompt: {payload_text}\n\n"
-        " Task Submission: {file_section} \n"
+        " Task Submission: {submission} \n"
         "───────────────────────────────────────────\n\n\n"
         "Please evaluate the submission carefully and choose an appropriate action."
     ),
@@ -201,4 +201,3 @@ REVIEWER_TASK_MSG = {
         "Please try again or contact support if the issue persists."
     ),
 }
-
