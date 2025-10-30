@@ -77,5 +77,5 @@ async def monitor_resources(interval=5):
     while True:
         cpu = process.cpu_percent()
         mem = process.memory_info().rss / (1024 ** 2)
-        logger.info(f"[Resources] CPU: {cpu:.2f}% | Memory: {mem:.2f} MB")
+        logger.trace(f"[Resources] CPU: {cpu:.2f}% | Memory: {mem:.2f} MB")
         await asyncio.sleep(interval)
