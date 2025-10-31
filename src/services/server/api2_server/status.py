@@ -52,6 +52,7 @@ async def get_reviewer_status(reviewer_data: StatusModel) -> StatusReviewerRespo
                 response_text = await response.text()
                 if response.status == 200:
                     data = await response.json()
+                    logger.trace(f"Reviewer info: {data}")
                     return StatusReviewerResponseModel(**data)
                 else:
                     logger.error(

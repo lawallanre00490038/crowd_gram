@@ -30,7 +30,7 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
         project_id = user_data.get("projects_details")[project_index]['id']
         project_name = user_data.get("projects_details")[project_index]['name']
         reviewer_instruction = user_data.get("projects_details")[project_index].get(
-            'reviewer_instruction', 'No specific instructions provided.')
+            'reviewer_instructions', 'No specific instructions provided.')
 
         if not email or not project_id:
             await callback.message.answer("Please select a project first using /start.")
@@ -39,6 +39,8 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
         task_details = ProjectTaskRequestModel(
             project_id=project_id, email=email, status="pending")
         allocations = await get_project_tasks_assigned_to_user(task_details)
+
+        logger.trace(f"Allocation: {allocations}")
 
         if not allocations:
             await callback.message.answer("No tasks available at the moment. Please check back later.")
@@ -62,17 +64,21 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
                 await callback.message.answer("No submissions available for review at the moment. Please check back later.")
                 return
 
-            task_text = first_task.submission.payload_text
+            task_text = first_task.prompt.sentence_text
             submission_type = first_task.submission.type
             submission_file_url = first_task.submission.file_url
 
+            if first_task.submission.type == "text":
+                submission = first_task.submission.payload_text
+            else:
+                submission = build_file_section(
+                    submission_type, submission_file_url)
             await callback.message.answer(
                 REVIEWER_TASK_MSG['intro'].format(
                     project_name=project_name,
                     submission_type=submission_type,
                     payload_text=task_text,
-                    file_section=build_file_section(
-                        submission_type, submission_file_url),
+                    submission=submission,
                     reviewer_instruction=reviewer_instruction
                 ),
                 reply_markup=review_task_kb()
@@ -96,6 +102,8 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
     except Exception as e:
         logger.error(f"Error in start_reviewer_task: {str(e)}")
         await callback.message.answer("Error occurred, please try again.")
+
+    return
 
 
 @router.callback_query(F.data == "review_task")
@@ -135,6 +143,8 @@ async def start_review(callback: CallbackQuery, state: FSMContext):
 
     await ask_next_param(callback.message, state)
 
+    return
+
 
 async def ask_next_param(message: Message, state: FSMContext):
     """Ask user to rate the next parameter"""
@@ -152,6 +162,8 @@ async def ask_next_param(message: Message, state: FSMContext):
         await state.set_state(TaskState.scoring)
     else:
         await show_summary(message, state)
+
+    return
 
 
 @router.callback_query(F.data.startswith("score:"))
@@ -172,6 +184,8 @@ async def handle_score(callback: CallbackQuery, state: FSMContext):
     await state.update_data(scores=scores, index=param_index + 1)
     await ask_next_param(callback.message, state)
 
+    return
+
 
 async def show_summary(message: Message, state: FSMContext):
     """Display review summary"""
@@ -188,6 +202,8 @@ async def show_summary(message: Message, state: FSMContext):
         reply_markup=summary_kb()
     )
     await state.set_state(TaskState.summary)
+
+    return
 
 
 @router.callback_query(F.data == "submit_review")
@@ -230,6 +246,8 @@ async def submit_review(callback: CallbackQuery, state: FSMContext):
 
     await callback.message.answer("Begin the next review task.", reply_markup=next_reviewer_task_inline_kb())
 
+    return
+
 
 @router.callback_query(F.data == "restart_review")
 async def restart_review(callback: CallbackQuery, state: FSMContext):
@@ -237,3 +255,5 @@ async def restart_review(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await state.update_data(scores={}, index=0)
     await ask_next_param(callback.message, state)
+
+    return

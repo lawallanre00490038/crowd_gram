@@ -7,7 +7,7 @@ class TaskModel(BaseModel):
     id: str
     project_id: str
     prompt_id: str
-    type: str 
+    type: str
     domain: str
     category: str
     status: str
@@ -18,12 +18,11 @@ class TaskModel(BaseModel):
     rejected_count: int
     created_at: datetime
     updated_at: datetime
-    
-    
+
 
 class TaskListResponseModel(BaseModel):
     data: List[TaskModel]
-    
+
 
 class TaskAllocation(BaseModel):
     task_id: str
@@ -35,6 +34,7 @@ class TaskAllocation(BaseModel):
     assigned_at: datetime
     status: str
 
+
 class PromptInfoModel(BaseModel):
     prompt_id: str
     sentence_id: str
@@ -45,20 +45,22 @@ class PromptInfoModel(BaseModel):
     max_reuses: int
     current_reuses: int
 
+
 class SubmissionInfoModel(BaseModel):
     submission_id: str
     user_id: str
     user_email: str
     type: str
     payload_text: str
-    file_url: str
+    file_url: Optional[str]
     status: str
     created_at: datetime
     updated_at: datetime
 
+
 class ReviewInfoModel(BaseModel):
     reviewers: List[dict]
-    
+
 
 class TaskDetailResponseModel(BaseModel):
     task_id: str
