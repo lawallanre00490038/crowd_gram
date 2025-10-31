@@ -21,10 +21,14 @@ async def create_submission(submission_data: SubmissionModel, file_path: str | N
     url = f"{BASE_URL_V2}/submission/projects/{submission_data.project_id}/agent"
     form = aiohttp.FormData()
 
+    logger.trace("Create Submission Trace Part 1")
+
     # Add text fields
     for key, value in submission_data.model_dump(exclude={"file"}).items():
         if value is not None:
             form.add_field(key, str(value))
+
+    logger.trace("Create Submission Trace Part 2")
 
     # Add file if provided
     if file_path and Path(file_path).exists():
@@ -36,19 +40,22 @@ async def create_submission(submission_data: SubmissionModel, file_path: str | N
             logger.error(f"Error opening file {file_path}: {e}")
             return None
 
+    logger.trace("Create Submission Trace Part 3")
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(url, data=form) as response:
                 if response.status == 200:
                     data = await response.json()
+                    logger.trace("Create Submission Trace Part 4")
                     return SubmissionResponseModel.model_validate(data)
                 else:
+                    logger.debug(f"url: {url}, form data keys: {form._fields}")
                     error_message = await response.text()
                     logger.error(
                         f"Failed to create submission: {error_message}")
                     return None
         except Exception as e:
-            logger.debug(f"url: {url}, form data keys: {list(form.keys())}")
+            logger.debug(f"url: {url}, form data keys: {form._fields}")
             logger.error(f"Exception during submission creation: {e}")
             return None
 
