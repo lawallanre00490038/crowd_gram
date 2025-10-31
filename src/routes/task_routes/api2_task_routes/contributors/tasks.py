@@ -27,6 +27,7 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
         project_id = user_data.get("projects_details")[project_index]['id']
         agent_instruction = user_data.get("projects_details")[project_index].get(
             "agent_instructions", "Please translate carefully.")
+        return_type = user_data.get("projects_details")[project_index]['return_type']
         if not email or not project_id:
             await callback.message.answer("Please select a project first using /start.")
             return
@@ -45,9 +46,9 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
         if task_list:
             # REWRITE THIS PART TO HANDLE DIFFERENT TASK TYPES (LIKE IMAGE, VIDEO, ETC)
             first_task = task_list[0]
-            if allocations.project_name == "TextTask":
+            if return_type == "text":
                 type = "Text"
-            elif first_task.prompt.category == "speech":
+            elif return_type == "audio":
                 type = "Audio"
             else:
                 logger.error(

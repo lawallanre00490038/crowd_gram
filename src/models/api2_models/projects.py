@@ -27,6 +27,7 @@ class Project(BaseModel):
     review_threshold_percent: int
     total_prompts: int
     total_tasks: int
+    return_type: str
     total_submissions: int
     num_redo: Optional[int]
     created_at: datetime
