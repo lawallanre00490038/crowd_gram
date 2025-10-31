@@ -94,8 +94,6 @@ def check_length_and_truncation(source, translation, min_ratio=0.2, max_ratio=3.
     src_len = len(source.strip().split())
     tgt_len = len(translation.strip().split())
 
-    
-
     ratio = tgt_len / src_len
 
     if ratio < min_ratio:

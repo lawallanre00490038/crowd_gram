@@ -27,17 +27,23 @@ async def handle_start(message: Message, state: FSMContext):
     await message.answer(LOGIN_MSG["welcome_back"], reply_markup=new_api_login_type_inline)
     await state.set_state(Authentication.set_login_type)
 
+    return
+
 
 @router.message(Command("logout"))
 async def handle_logout(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(LOGOUT["logout"])
 
+    return
+
 
 @router.message(Command("exit"))
 async def handle_exit(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(EXIT["exit"])
+
+    return
 
 
 @router.callback_query(Authentication.set_login_type, F.data.in_(["login", "register"]))
@@ -51,6 +57,8 @@ async def handle_login_type(callback: CallbackQuery, state: FSMContext):
         await callback.message.answer(LOGIN_MSG["register"])
         await state.set_state(Authentication.api_register_type)
 
+    return
+
 
 @router.message(Authentication.api_login_email)
 async def handle_login_email(message: Message, state: FSMContext):
@@ -58,6 +66,8 @@ async def handle_login_email(message: Message, state: FSMContext):
     await state.update_data(login_identifier=email)
     await message.answer("🔒 Please enter your password:")
     await state.set_state(Authentication.api_login_password)
+
+    return
 
 
 @router.message(Authentication.api_login_password)
@@ -85,6 +95,8 @@ async def handle_login_password(message: Message, state: FSMContext):
         await message.answer(LOGIN_MSG["fail"], reply_markup=new_api_login_type_inline)
         await state.set_state(Authentication.set_login_type)
 
+    return
+
 
 @router.message(Command("projects"))
 @router.callback_query(F.data.in_(["ready_for_task"]))
@@ -104,6 +116,7 @@ async def handle_user_projects(event: Union[Message, CallbackQuery], state: FSMC
         return
 
     projects_details = await get_projects_details(user_email=email)
+    logger.trace(f"Fetched projects details: {projects_details}")
     if not projects_details:
         await message.answer("No projects found for your account.")
         return
@@ -114,6 +127,8 @@ async def handle_user_projects(event: Union[Message, CallbackQuery], state: FSMC
         reply_markup=project_selection_kb(
             [proj["name"] for proj in projects_details])
     )
+
+    return
 
 
 @router.callback_query(F.data.in_(["tutorial_yes", "skip_tutorials"]))
@@ -129,6 +144,8 @@ async def handle_tutorial_choice(callback: CallbackQuery, state: FSMContext):
     elif callback.data == "skip_tutorials":
         await handle_user_projects(callback, state)
 
+    return
+
 # --- Handle navigation (next/back/ready) ---
 
 
@@ -139,9 +156,11 @@ async def tutorial_navigation(callback: CallbackQuery, state: FSMContext):
     index = data.get("tutorial_index", 0)
     if callback.data == "skip_videos":
         await handle_user_projects(callback.message, state)
-    elif callback.data == "next" and index < len(tutorial_videos) - 1:
+    elif callback.data == "next":
         index += 1
         await send_tutorial(callback.message, state, index)
     elif callback.data == "prev" and index > 0:
         index -= 1
         await send_tutorial(callback.message, state, index)
+
+    return

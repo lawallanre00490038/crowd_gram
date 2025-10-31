@@ -2,11 +2,12 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
 
+
 class StatusModel(BaseModel):
     email: str
     start: Optional[datetime] = None
     end: Optional[datetime] = None
-    
+
 
 class ProjectStats(BaseModel):
     project_id: str
@@ -20,6 +21,7 @@ class ProjectStats(BaseModel):
     total_coins_earned: int
     total_amount_earned: float
 
+
 class ProjectReviewStats(BaseModel):
     project_id: str
     project_name: str
@@ -31,22 +33,23 @@ class ProjectReviewStats(BaseModel):
     total_coins_earned: int
     total_amount_earned: float
 
+
 class StatusContributorResponseModel(BaseModel):
     user_email: str
     approved: int
     pending: int
     rejected: int
     per_project: List[ProjectStats] = []
-    
+
 
 class StatusReviewerResponseModel(BaseModel):
     reviewer_email: str
-    total_reviews: int
+    total_reviewed: int
     approved_reviews: int
     rejected_reviews: int
     pending_reviews: int
     per_project: List[ProjectReviewStats] = []
-    
+
 
 class AnalyticsResponseModel(BaseModel):
     total_users: int

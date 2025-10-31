@@ -8,4 +8,4 @@ router = Router()
 @router.errors()
 async def error_handler(event: ErrorEvent):
     # Log and notify
-    logger.trace(f"Error: {event.exception}")
+    logger.trace(f"Error: {event.exception} in update: {event.update}")

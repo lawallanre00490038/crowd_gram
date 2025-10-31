@@ -1,8 +1,7 @@
-from aiogram_dialog import Dialog, DialogManager, Window
 from src.states.tasks import TaskState
 
 
-async def on_score_click(callback, button, dialog_manager: DialogManager):
+async def on_score_click(callback, button, dialog_manager):
     score = int(button.widget_id.split("_"[1]))
     data = dialog_manager.dialog_data
     index = data.get('index', 0)
@@ -20,8 +19,6 @@ async def on_score_click(callback, button, dialog_manager: DialogManager):
             await dialog_manager.switch_to(TaskState.scoring)
         else:
             await dialog_manager.switch_to(TaskState.summary)
-            
-
 
 def get_submission_info(data, info_type):
     reviewers_list = data.get("reviewers_list", [])

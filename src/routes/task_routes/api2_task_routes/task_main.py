@@ -54,3 +54,5 @@ async def handle_project_selection(callback: CallbackQuery, state: FSMContext):
     except Exception as e:
         logger.error(f"Error in handle_project_selection: {str(e)}")
         await callback.answer("Error occurred, please try again")
+
+    return

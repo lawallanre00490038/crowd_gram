@@ -48,6 +48,7 @@ async def create_submission(submission_data: SubmissionModel, file_path: str | N
                         f"Failed to create submission: {error_message}")
                     return None
         except Exception as e:
+            logger.debug(f"url: {url}, form data keys: {list(form.keys())}")
             logger.error(f"Exception during submission creation: {e}")
             return None
 

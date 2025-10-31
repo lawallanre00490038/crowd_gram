@@ -1,6 +1,4 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram_dialog.widgets.kbd import Row, Button
-from aiogram_dialog.widgets.text import Format, Const
 from src.data.video_tutorials import tutorial_videos
 from src.utils.submission_utils import on_score_click
 

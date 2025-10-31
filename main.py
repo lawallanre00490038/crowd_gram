@@ -1,7 +1,7 @@
 import asyncio
 from loguru import logger
 
-from src.middlewares.logging import LoggingMiddleware
+from src.middlewares.logging import LatencyMiddleware, LoggingMiddleware, monitor_resources
 from src.routes.admin_routes import admin
 from src.routes.auth_routes import auth_new_api
 from src.routes.community_routes import community, support
@@ -44,7 +44,9 @@ async def bot_main():
     loggingmiddleware = LoggingMiddleware()
     dp.message.middleware(loggingmiddleware)
     dp.callback_query.middleware(loggingmiddleware)
+    dp.message.middleware(LatencyMiddleware())
 
+    asyncio.create_task(monitor_resources())
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 # Run everything
