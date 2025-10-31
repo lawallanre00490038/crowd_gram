@@ -2,6 +2,7 @@ from loguru import logger
 from typing import Optional
 import aiohttp
 from pathlib import Path
+import json
 
 from src.config import BASE_URL_V2
 
@@ -24,18 +25,22 @@ async def create_submission(submission_data: SubmissionModel, file_path: str | N
     logger.trace("Create Submission Trace Part 1")
 
     # Add text fields
-    for key, value in submission_data.model_dump(exclude={"file"}).items():
-        if value is not None:
-            form.add_field(key, str(value))
+    for key, value in submission_data.model_dump(exclude_none=True, exclude={"file"}).items():
+        form.add_field(key, json.dumps(value) if isinstance(value, (dict, list)) else str(value))
 
     logger.trace("Create Submission Trace Part 2")
 
     # Add file if provided
     if file_path and Path(file_path).exists():
         try:
-            with open(file_path, 'rb') as f:
-                form.add_field('file', f, filename=file_path.split(
-                    '/')[-1], content_type='application/octet-stream')
+            with open(file_path, "rb") as f:
+                file_bytes = f.read()  
+            form.add_field(
+                "file",
+                file_bytes,
+                filename=Path(file_path).name,
+                content_type="application/octet-stream",
+            )
         except Exception as e:
             logger.error(f"Error opening file {file_path}: {e}")
             return None
@@ -51,8 +56,7 @@ async def create_submission(submission_data: SubmissionModel, file_path: str | N
                 else:
                     logger.debug(f"url: {url}, form data keys: {form._fields}")
                     error_message = await response.text()
-                    logger.error(
-                        f"Failed to create submission: {error_message}")
+                    logger.error(f"Failed to create submission: {error_message}")
                     return None
         except Exception as e:
             logger.debug(f"url: {url}, form data keys: {form._fields}")
