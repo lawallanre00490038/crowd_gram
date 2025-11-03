@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional
 from aiogram.types import Message, InlineKeyboardMarkup
 from aiogram.fsm.context import FSMContext
+from loguru import logger
 
 from src.handlers.onboarding_handlers.onboarding import get_languages, get_saved_languages, get_selected_languages, update_selected_languages
 from src.keyboards.onboarding_keyboard import load_inline_keyboard, load_languages_kb
