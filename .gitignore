@@ -27,3 +27,5 @@ ENV/
 .vscode/
 
 logs/
+
+ai-guideline.pem

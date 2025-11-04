@@ -1,12 +1,12 @@
 from typing import Dict, List, Optional
-from aiogram.types import Message, InlineKeyboardMarkup
+from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from loguru import logger
 
 from src.handlers.onboarding_handlers.onboarding import get_languages, get_saved_languages, get_selected_languages, update_selected_languages
 from src.keyboards.onboarding_keyboard import load_inline_keyboard, load_languages_kb
 from src.keyboards.reply import task_type_kb
-from src.models.onboarding_models import BaseLanguage, Language
+from src.models.onboarding_models import Language
 from src.services.server.getters_api import get_languages_from_api
 from src.responses.onboarding_response import LANGUAGE_MSG, DIALECT_MSG
 from src.services.task_type_service import TaskTypeService
