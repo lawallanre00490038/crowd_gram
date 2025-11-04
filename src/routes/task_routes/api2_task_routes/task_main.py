@@ -30,8 +30,6 @@ async def handle_project_selection(callback: CallbackQuery, state: FSMContext):
                 welcome_message = PROJECT_FULL_WELCOME_MSG.format(
                     project_name=selected_project.get(
                         "name", "Unknown Project"),
-                    project_instruction=selected_project.get(
-                        "agent_instructions", "No instructions provided."),
                     user_type=user_type,
                     user_coin=agent_coin,
                     total_tasks=selected_project.get("total_tasks", 0)
@@ -43,8 +41,6 @@ async def handle_project_selection(callback: CallbackQuery, state: FSMContext):
                 welcome_message = PROJECT_FULL_WELCOME_MSG.format(
                     project_name=selected_project.get(
                         "name", "Unknown Project"),
-                    project_instruction=selected_project.get(
-                        "reviewer_instructions", "No instructions provided."),
                     user_type=user_type,
                     user_coin=reviewer_coin
                 )
