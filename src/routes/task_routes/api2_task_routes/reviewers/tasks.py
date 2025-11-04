@@ -156,7 +156,7 @@ async def ask_next_param(message: Message, state: FSMContext):
     if index < len(review_params):
         param = review_params[index]
         await message.answer(
-            f"🎯 Rate <b><i>{param.upper()}</i></b> (0–{scale})",
+            f"🎯 Rate for <b><i>{param.upper()}</i></b> (0–{scale})",
             reply_markup=create_score_kb(index, scale)
         )
         await state.set_state(TaskState.scoring)
