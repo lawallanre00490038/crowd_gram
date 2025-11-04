@@ -9,6 +9,7 @@ class TaskState(StatesGroup):
     waiting_for_video = State()
     reviewing = State()
     scoring = State()
+    commenting = State()
     summary = State()
 
 

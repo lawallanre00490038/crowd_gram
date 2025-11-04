@@ -161,7 +161,11 @@ async def ask_next_param(message: Message, state: FSMContext):
         )
         await state.set_state(TaskState.scoring)
     else:
-        await show_summary(message, state)
+        await message.answer(
+            "✍️ Leave a comment for this review (send text)."
+        )
+        await state.update_data(awaiting_comment=True)
+        await state.set_state(TaskState.commenting)
 
     return
 
@@ -186,23 +190,42 @@ async def handle_score(callback: CallbackQuery, state: FSMContext):
 
     return
 
+@router.message()
+async def handle_comment_message(message: Message, state: FSMContext):
+    data = await state.get_data()
+    if not data.get("awaiting_comment"):
+        return  # ignore messages that are not comment inputs
+
+    text = (message.text or "").strip()
+    if not text:
+        await message.answer("❗ Comment cannot be empty. Please send your comment.")
+        return
+
+    # save comment and proceed to summary
+    await state.update_data(comments=text, awaiting_comment=False)
+    await show_summary(message, state)
+    return
 
 async def show_summary(message: Message, state: FSMContext):
     """Display review summary"""
     data = await state.get_data()
     scores = data.get("scores", {})
     scale = data.get("review_scale", 5)
+    comments = data.get("comments", "")
 
     summary_lines = [
         f"• {param.upper()}:  {score}/{scale}" for param, score in scores.items()]
     summary_text = "\n".join(summary_lines)
+    comment_section = f"\n\n💬 Comment:\n{comments}" if comments else ""
 
     await message.answer(
-        f"📊 Review Summary:\n\n{summary_text}\n\n✅ Ready to submit?",
+        f"📊 Review Summary:\n\n{summary_text}{comment_section}\n\n✅ Ready to submit?",
         reply_markup=summary_kb()
     )
     await state.set_state(TaskState.summary)
-
+    # clear awaiting_comment flag if present
+    await state.update_data(awaiting_comment=False)
+    
     return
 
 
