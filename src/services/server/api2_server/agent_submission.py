@@ -26,7 +26,8 @@ async def create_submission(submission_data: SubmissionModel, file_path: str | N
 
     # Add text fields
     for key, value in submission_data.model_dump(exclude_none=True, exclude={"file"}).items():
-        form.add_field(key, json.dumps(value) if isinstance(value, (dict, list)) else str(value))
+        form.add_field(key, json.dumps(value) if isinstance(
+            value, (dict, list)) else str(value))
 
     logger.trace("Create Submission Trace Part 2")
 
@@ -34,7 +35,7 @@ async def create_submission(submission_data: SubmissionModel, file_path: str | N
     if file_path and Path(file_path).exists():
         try:
             with open(file_path, "rb") as f:
-                file_bytes = f.read()  
+                file_bytes = f.read()
             form.add_field(
                 "file",
                 file_bytes,
@@ -56,7 +57,8 @@ async def create_submission(submission_data: SubmissionModel, file_path: str | N
                 else:
                     logger.debug(f"url: {url}, form data keys: {form._fields}")
                     error_message = await response.text()
-                    logger.error(f"Failed to create submission: {error_message}")
+                    logger.error(
+                        f"Failed to create submission: {error_message}")
                     return None
         except Exception as e:
             logger.debug(f"url: {url}, form data keys: {form._fields}")

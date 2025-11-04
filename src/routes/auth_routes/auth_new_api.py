@@ -28,7 +28,7 @@ async def handle_start(message: Message, state: FSMContext):
     await message.answer(LOGIN_MSG["welcome_back"], reply_markup=new_api_login_type_inline)
     await state.set_state(Authentication.set_login_type)
 
-    return
+    logger.trace("Great Trace Part 4")
 
 
 @router.message(Command("logout"))
@@ -57,7 +57,6 @@ async def handle_login_type(callback: CallbackQuery, state: FSMContext):
     elif callback.data == "register":
         await callback.message.answer(LOGIN_MSG["register"])
         await state.set_state(Authentication.api_register_type)
-
     return
 
 
