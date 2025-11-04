@@ -14,7 +14,8 @@ from src.services.server.api2_server.auth import user_login
 from src.services.server.api2_server.projects import get_projects_details
 from src.models.api2_models.telegram import LoginModel
 from src.states.authentication import Authentication
-from src.keyboards.inline import project_selection_kb, new_api_login_type_inline
+from src.data.video_tutorials import tutorial_videos
+from src.keyboards.inline import project_selection_kb, new_api_login_type_inline, tutorial_choice_kb
 
 router = Router()
 
@@ -89,7 +90,8 @@ async def handle_login_password(message: Message, state: FSMContext):
 
         await state.set_data({'user_email': email, "name": name, "role": role.lower(), "telegram_id": telegram_id})
 
-        await handle_user_projects(message, state)
+        await message.answer(TUTORIAL_MSG["intro"], reply_markup=tutorial_choice_kb())
+        # await handle_user_projects(message, state)
     else:
         await state.clear()
         await message.answer(LOGIN_MSG["fail"], reply_markup=new_api_login_type_inline)
