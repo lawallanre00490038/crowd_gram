@@ -23,6 +23,7 @@ router = Router()
 @router.message(Command("start"))
 async def handle_start(message: Message, state: FSMContext):
     """Send welcome message and prompt login/signup"""
+    logger.trace("Great Trace Part 1")
     await state.clear()
     await message.answer(WELCOME_MESSAGE)
     await message.answer(LOGIN_MSG["welcome_back"], reply_markup=new_api_login_type_inline)

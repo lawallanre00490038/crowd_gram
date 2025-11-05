@@ -18,6 +18,7 @@ async def handle_project_selection(callback: CallbackQuery, state: FSMContext):
         await callback.answer()
         project_index = int(callback.data.split("_")[1])
         user_data = await state.get_data()
+        logger.trace(f"User data in state: {user_data}")
         projects_details = user_data.get("projects_details", [])
         role = user_data.get('role')
 

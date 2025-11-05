@@ -11,6 +11,7 @@ from src.states.tasks import TaskState
 from src.services.server.api2_server.projects import get_project_tasks_assigned_to_user
 from src.services.server.api2_server.agent_submission import create_submission
 from src.handlers.task_handlers.audio_task_handler import handle_api2_audio_submission
+from src.handlers.task_handlers.utils import _extract_project_info, _fetch_user_tasks, _get_first_task, _build_task_message, _update_state_with_task
 from src.responses.task_formaters import APPROVED_TASK_MESSAGE, SUBMISSION_RECIEVED_MESSAGE, TASK_MSG
 from src.models.api2_models.projects import ProjectTaskRequestModel
 
@@ -18,56 +19,66 @@ from src.models.api2_models.projects import ProjectTaskRequestModel
 router = Router()
 
 
-@router.callback_query(F.data == "start_agent_task")
+@router.callback_query(F.data == "start_agent_redo_task")
 async def start_task(callback: CallbackQuery, state: FSMContext):
     try:
         user_data = await state.get_data()
-        email = user_data.get("user_email")
-        project_index = user_data.get("project_index")
-        project_id = user_data.get("projects_details")[project_index]['id']
-        agent_instruction = user_data.get("projects_details")[project_index].get(
-            "agent_instructions", "Please translate carefully.")
-        return_type = user_data.get("projects_details")[project_index]['return_type']
-        if not email or not project_id:
+        project_info = _extract_project_info(user_data)
+        if not project_info:
             await callback.message.answer("Please select a project first using /start.")
             return
 
-        task_details = ProjectTaskRequestModel(
-            project_id=project_id, email=email, status="assigned")
-        allocations = await get_project_tasks_assigned_to_user(task_details)
-        logger.trace(allocations)
+        allocations = await _fetch_user_tasks(project_info)
         if not allocations:
-            logger.trace(allocations)
             await callback.message.answer("No tasks available at the moment. Please check back later.")
             return
 
-        task_list = allocations.tasks if hasattr(allocations, 'tasks') else []
-
-        if task_list:
-            # REWRITE THIS PART TO HANDLE DIFFERENT TASK TYPES (LIKE IMAGE, VIDEO, ETC)
-            first_task = task_list[0]
-            if return_type == "text":
-                type = "Text"
-            elif return_type == "audio":
-                type = "Audio"
-            else:
-                logger.error(
-                    f"Unknown task category: {first_task.prompt.category}")
-
-            task_text = first_task.prompt.sentence_text
-            first_task_msg = TASK_MSG['intro'].format(
-                task_type=type, task_instruction=agent_instruction, task_text=task_text)
-            await callback.message.answer(first_task_msg)
-            await state.update_data(project_id=project_id, task_id=first_task.task_id, assignment_id=first_task.assignment_id, prompt_id=first_task.prompt.prompt_id, sentence_id=first_task.prompt.sentence_id, task_type=type, task=first_task_msg)
-            await state.set_state(TaskState.working_on_task)
-            await handle_task_submission(callback.message, state)
-        else:
+        first_task = _get_first_task(allocations)
+        if not first_task:
             await callback.message.answer("No tasks available at the moment. Please check back later.")
+            return
+
+        task_msg, task_type = _build_task_message(
+            first_task, project_info["instruction"], project_info["return_type"])
+        await callback.message.answer(task_msg)
+
+        await _update_state_with_task(state, project_info, first_task, task_type, task_msg)
+        await handle_task_submission(callback.message, state)
+
     except Exception as e:
         logger.error(f"Error in start_task: {str(e)}")
         await callback.message.answer("Error occurred, please try again.")
 
-    return
+
+@router.callback_query(F.data == "start_agent_task")
+async def start_task(callback: CallbackQuery, state: FSMContext):
+    try:
+        user_data = await state.get_data()
+        project_info = _extract_project_info(user_data)
+        if not project_info:
+            await callback.message.answer("Please select a project first using /start.")
+            return
+
+        allocations = await _fetch_user_tasks(project_info)
+        if not allocations:
+            await callback.message.answer("No tasks available at the moment. Please check back later.")
+            return
+
+        first_task = _get_first_task(allocations)
+        if not first_task:
+            await callback.message.answer("No tasks available at the moment. Please check back later.")
+            return
+
+        task_msg, task_type = _build_task_message(
+            first_task, project_info["instruction"], project_info["return_type"])
+        await callback.message.answer(task_msg)
+
+        await _update_state_with_task(state, project_info, first_task, task_type, task_msg)
+        await handle_task_submission(callback.message, state)
+
+    except Exception as e:
+        logger.error(f"Error in start_task: {str(e)}")
+        await callback.message.answer("Error occurred, please try again.")
 
 
 async def handle_task_submission(message: Message, state: FSMContext):

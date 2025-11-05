@@ -41,8 +41,11 @@ class LoggingMiddleware(BaseMiddleware):
             logger.warning(f"Unknown event type: {type(event)}")
             return await handler(event, data)
 
+        logger.debug(f"Processing endpoint: {endpoint}")
         # Process the update by calling the next handler
         result = await handler(event, data)
+
+        logger.trace(f"Result of processing: {result}")
 
         # Calculate the response time
         response_time = time.perf_counter() - start_time
