@@ -16,12 +16,25 @@ def build_file_section(submission_type: str, file_url: str | None) -> str:
 
     match submission_type:
         case "audio":
-            return f"🎧 [Listen to submission]({file_url})\n\n"
+            return f'🎧 <a href="{file_url}">Listen to submission</a>  \n\n'
         case "video":
-            return f"🎥 [Watch submission]({file_url})\n\n"
+            return f'🎥 <a href="{file_url}">Watch submission</a>  \n\n'
         case "image":
-            return f"🖼️ [View image]({file_url})\n\n"
+            return f'🖼️ <a href="{file_url}">View image</a> \n\n'
         case "document" | "pdf":
-            return f"📄 [Open document]({file_url})\n\n"
+            return f'📄 <a href="{file_url}">Open document</a> \n\n'
         case _:
-            return f"📁 [View file]({file_url})\n\n"
+            return f'📁 <a href="{file_url}">View file</a> \n\n'
+
+
+def formdata_to_dict(form_data_keys):
+    result = {}
+    for item in form_data_keys:
+        multidict, _, value = item
+        key = multidict.get('name')
+        # For files, take the filename if it exists
+        if 'filename' in multidict:
+            result[key] = multidict['filename']
+        else:
+            result[key] = value
+    return result
