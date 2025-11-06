@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import List, Optional
+from pydantic import BaseModel, EmailStr, UUID4
+from typing import Dict, List, Literal, Optional
 from datetime import datetime
 
 
@@ -58,8 +58,18 @@ class SubmissionInfoModel(BaseModel):
     updated_at: datetime
 
 
+class ReviewModel(BaseModel):
+    reviewer_id: UUID4
+    reviewer_email: EmailStr
+    review_scores: Dict[str, int]
+    review_total_score: int
+    review_decision: Literal["accept", "redo", "reject"]
+    review_comments: str
+    total_coins_earned: int
+
+
 class ReviewInfoModel(BaseModel):
-    reviewers: List[dict]
+    reviewers: List[ReviewModel]
 
 
 class TaskDetailResponseModel(BaseModel):

@@ -7,6 +7,7 @@ import json
 from src.config import BASE_URL_V2
 
 from src.models.api2_models.agent import SubmissionModel, SubmissionResponseModel, SubmissionListResponseModel, SubmissionFilterModel
+from src.utils.file_url_handlers import formdata_to_dict
 
 
 async def create_submission(submission_data: SubmissionModel, file_path: str | None = None) -> Optional[SubmissionResponseModel]:
@@ -22,14 +23,10 @@ async def create_submission(submission_data: SubmissionModel, file_path: str | N
     url = f"{BASE_URL_V2}/submission/projects/{submission_data.project_id}/agent"
     form = aiohttp.FormData()
 
-    logger.trace("Create Submission Trace Part 1")
-
     # Add text fields
     for key, value in submission_data.model_dump(exclude_none=True, exclude={"file"}).items():
         form.add_field(key, json.dumps(value) if isinstance(
             value, (dict, list)) else str(value))
-
-    logger.trace("Create Submission Trace Part 2")
 
     # Add file if provided
     if file_path and Path(file_path).exists():
@@ -46,22 +43,22 @@ async def create_submission(submission_data: SubmissionModel, file_path: str | N
             logger.error(f"Error opening file {file_path}: {e}")
             return None
 
-    logger.trace("Create Submission Trace Part 3")
+    output = formdata_to_dict(form._fields)
+
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(url, data=form) as response:
                 if response.status == 200:
                     data = await response.json()
-                    logger.trace("Create Submission Trace Part 4")
                     return SubmissionResponseModel.model_validate(data)
                 else:
-                    logger.debug(f"url: {url}, form data keys: {form._fields}")
+                    logger.debug(f"url: {url}, form data keys: {output}")
                     error_message = await response.text()
                     logger.error(
                         f"Failed to create submission: {error_message}")
                     return None
         except Exception as e:
-            logger.debug(f"url: {url}, form data keys: {form._fields}")
+            logger.debug(f"url: {url}, form data keys: {output}")
             logger.error(f"Exception during submission creation: {e}")
             return None
 

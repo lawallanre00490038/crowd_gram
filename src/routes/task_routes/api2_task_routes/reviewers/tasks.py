@@ -190,6 +190,7 @@ async def handle_score(callback: CallbackQuery, state: FSMContext):
 
     return
 
+
 @router.message()
 async def handle_comment_message(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -205,6 +206,7 @@ async def handle_comment_message(message: Message, state: FSMContext):
     await state.update_data(comments=text, awaiting_comment=False)
     await show_summary(message, state)
     return
+
 
 async def show_summary(message: Message, state: FSMContext):
     """Display review summary"""
@@ -225,7 +227,7 @@ async def show_summary(message: Message, state: FSMContext):
     await state.set_state(TaskState.summary)
     # clear awaiting_comment flag if present
     await state.update_data(awaiting_comment=False)
-    
+
     return
 
 

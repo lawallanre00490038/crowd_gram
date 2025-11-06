@@ -106,6 +106,19 @@ TASK_MSG = {
         "📝 Please follow the instructions carefully and submit your work when done."
     ),
 
+    "redo_task": (
+        "🔁 <b>Redo Required</b>\n\n"
+        "🆕 Your task is a <b>{task_type}</b> task that needs revision.\n\n"
+        "Instructions: <i>{task_instruction}</i>\n\n"
+        "───────────────────────────────────────────\n"
+        "Task Prompt: <b>{task_text}</b>\n"
+        "───────────────────────────────────────────\n\n"
+        "🧾 <b>Your Previous Submission:</b>\n<blockquote>{previous_submission}</blockquote>\n\n"
+        "⚠️ <b>You scored the following:</b>\n{failed_sections}\n\n"
+        "💬 <b>Reviewer Comments:</b>\n{reviewer_comment}\n\n"
+        "📝 Please revise your work according to the feedback above and resubmit when ready."
+    ),
+
     "reminder": (
         "🔔 Reminder: This is a <b>{task_type}</b> task.\n"
         "Ensure your submission matches the expected format."
