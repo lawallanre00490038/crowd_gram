@@ -81,6 +81,7 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
                     submission=submission,
                     reviewer_instruction=reviewer_instruction
                 ),
+                parse_mode="HTML",
                 reply_markup=review_task_kb()
             )
 

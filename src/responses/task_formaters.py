@@ -163,7 +163,7 @@ REVIEWER_TASK_MSG = {
         "🧠 Task Type: {submission_type}\n\n\n"
         "📜 Review Instructions: <b>{reviewer_instruction}</b>\n"
         "───────────────────────────────────────────\n"
-        "🗒️ Task Prompt: <b>{payload_text}<b>\n\n"
+        "🗒️ Task Prompt: <b>{payload_text}</b>\n\n"
         " Task Submission: {submission} \n"
         "───────────────────────────────────────────\n\n\n"
         "Please evaluate the submission carefully and choose an appropriate action."
