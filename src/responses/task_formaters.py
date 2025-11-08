@@ -213,4 +213,11 @@ REVIEWER_TASK_MSG = {
         "⚠️ Oops! Something went wrong while processing your review.\n"
         "Please try again or contact support if the issue persists."
     ),
+    
+    "review_summary": (
+        "📝 <b>Review Summary:</b>\n\n"
+        "{comments}\n\n"
+        "✅ Ready to submit?"
+    )
+
 }
