@@ -1,8 +1,9 @@
+from pathlib import Path
 from loguru import logger
 from typing import Optional
-import aiohttp
-from pathlib import Path
 import json
+import aiohttp
+import mimetypes
 
 from src.config import BASE_URL_V2
 
@@ -30,6 +31,8 @@ async def create_submission(submission_data: SubmissionModel, file_path: str | N
 
     # Add file if provided
     if file_path and Path(file_path).exists():
+        mime_type, _ = mimetypes.guess_type(file_path)
+
         try:
             with open(file_path, "rb") as f:
                 file_bytes = f.read()
@@ -37,7 +40,7 @@ async def create_submission(submission_data: SubmissionModel, file_path: str | N
                 "file",
                 file_bytes,
                 filename=Path(file_path).name,
-                content_type="application/octet-stream",
+                content_type=mime_type or "application/octet-stream",
             )
         except Exception as e:
             logger.error(f"Error opening file {file_path}: {e}")
