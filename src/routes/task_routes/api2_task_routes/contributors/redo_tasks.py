@@ -15,7 +15,6 @@ from src.handlers.task_handlers.utils import extract_project_info, fetch_user_ta
 from src.responses.task_formaters import SUBMISSION_RECIEVED_MESSAGE
 
 
-
 router = Router()
 
 
@@ -119,7 +118,7 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
             user_email=email,
             type=task_type,
             payload_text="",
-            telegram_file_id=file_id,
+            telegram_file_id=None,
         )
 
         submission_response = await create_submission(submission, file_path=new_path)

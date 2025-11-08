@@ -42,7 +42,8 @@ def format_reviewer_status(data: dict) -> str:
 🪶 Total Reviewed: <b>{data.get('total_reviewed', 0)}</b>
 ✅ Approved: <b>{data.get('approved_reviews', 0)}</b>
 ❌ Rejected: <b>{data.get('rejected_reviews', 0)}</b>
-🕓 Redo: <b>{data.get('pending_reviews', 0)}</b>
+🕓 Pending Reviews: <b>{data.get('pending_reviews', 0)}</b>
+🕓 Redo Reviews: <b>{data.get('redo', 0)}</b>
 
 ─────────────────────────────
 📁 <b>Project Breakdown</b>
@@ -53,7 +54,8 @@ def format_reviewer_status(data: dict) -> str:
 • Tasks Assigned: <b>{project.get('number_assigned', 0)}</b>
 • Total Reviewed: <b>{project.get('total_reviewed', 0)}</b>
 • ✅ Approved: <b>{project.get('approved', 0)}</b>
-• 🕓 Redo: <b>{project.get('pending', 0)}</b>
+• 🕓 Redo: <b>{project.get('redo', 0)}</b>
+• 🕓 Pending Reviews: <b>{project.get('pending_review', 0)}</b>
 • ❌ Rejected: <b>{project.get('rejected', 0)}</b>
 
 💰 Coins Earned: <b>{project.get('total_coins_earned', 0)}</b>
