@@ -17,7 +17,9 @@ class ProjectStats(BaseModel):
     total_submissions: int
     approved: int
     rejected: int
-    pending: int
+    submitted_but_not_yet_assigned_to_a_reviewer: int
+    pending_review: int
+    redo: int
     total_coins_earned: int
     total_amount_earned: float
 
@@ -39,6 +41,7 @@ class StatusContributorResponseModel(BaseModel):
     approved: int
     pending: int
     rejected: int
+    redo: int
     per_project: List[ProjectStats] = []
 
 

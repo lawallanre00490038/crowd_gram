@@ -6,7 +6,8 @@ def format_agent_status(data: dict) -> str:
 
 📦 <b>Overall Summary:</b>
 ✅ Approved: <b>{data['approved']}</b>
-🕓 Redo: <b>{data['pending']}</b>
+🕓 Pending: <b>{data['pending']}</b>
+🕓 Redo: <b>{data['redo']}</b>
 ❌ Rejected: <b>{data['rejected']}</b>
 
 ─────────────────────────────
@@ -18,7 +19,8 @@ def format_agent_status(data: dict) -> str:
 • Assigned Tasks: <b>{project['number_assigned']}</b>
 • Total Submissions: <b>{project['total_submissions']}</b>
 • ✅ Approved: <b>{project['approved']}</b>
-• 🕓 Redo: <b>{project['pending']}</b>
+• 🕓 Pending Review: <b>{project['pending_review']}</b>
+• 🕓 Redo: <b>{project['redo']}</b>
 • ❌ Rejected: <b>{project['rejected']}</b>
 
 💰 Coins Earned: <b>{project['total_coins_earned']}</b>
