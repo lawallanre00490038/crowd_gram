@@ -116,7 +116,7 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
             user_email=email,
             type=task_type,
             payload_text="",
-            telegram_file_id=None,
+            telegram_file_id=file_id,
         )
 
         submission_response = await create_submission(submission, file_path=new_path)
