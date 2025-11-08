@@ -10,8 +10,6 @@ from .audio_parameter_check import (
 
 from .audio_quality_check import check_audio_quality
 
-logger = logging.getLogger("audio_validator")
-
 
 def validate_audio_input(
     audio_path: str,
@@ -91,3 +89,40 @@ def validate_audio_input(
         "fail_reasons": fail_reasons,
         "metadata": metadata,
     }
+
+
+if __name__ == "__main__":
+    import pandas as pd
+    import requests
+    import os
+    from urllib.parse import urlparse
+    import time
+    import random
+
+    df = pd.read_csv("c:/Users/The_Wind/Downloads/submissions (1).csv")
+
+    def download_temp_file(sample_audio):
+        # Create a temp directory if it doesn't exist
+        temp_dir = "temp_audio_files"
+        os.makedirs(temp_dir, exist_ok=True)
+
+        response = requests.get(sample_audio)
+        response.raise_for_status()  # Raise an exception for bad status codes
+
+        # Extract file extension from the URL
+        parsed_url = urlparse(sample_audio)
+        file_extension = os.path.splitext(parsed_url.path)[1]
+        if not file_extension:
+            file_extension = '.mp3'  # Default extension if none found
+
+        # Create unique filename using timestamp and random number
+        unique_name = f"{int(time.time())}_{random.randint(1000, 9999)}{file_extension}"
+        temp_file_path = os.path.join(temp_dir, unique_name)
+
+        # Save the file
+        with open(temp_file_path, 'wb') as f:
+            f.write(response.content)
+
+        return temp_file_path
+
+    print(df.head())
