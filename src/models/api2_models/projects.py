@@ -9,9 +9,6 @@ from typing import List, Optional
 from pydantic import BaseModel, Field, RootModel, field_validator
 from typing import List, Optional, Any
 from pydantic import BaseModel, RootModel
-<< << << < HEAD
-== == == =
->>>>>> > 79e8a98c121465f8c6e17c55248d702a1b32bfe9
 
 
 class Project(BaseModel):
