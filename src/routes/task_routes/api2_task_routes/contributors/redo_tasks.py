@@ -3,6 +3,7 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from loguru import logger
 
+from src.constant.task_constants import ContributorTaskStatus
 from src.models.api2_models.agent import SubmissionModel
 from src.keyboards.inline import next_task_inline_kb
 from src.routes.task_routes.task_formaters import ERROR_MESSAGE
@@ -10,14 +11,15 @@ from src.services.quality_assurance.text_validation import validate_text_input
 from src.states.tasks import TaskState
 from src.services.server.api2_server.agent_submission import create_submission
 from src.handlers.task_handlers.audio_task_handler import handle_api2_audio_submission
-from src.handlers.task_handlers.utils import extract_project_info, fetch_user_tasks, get_first_task, build_task_message, set_task_state_by_type, update_state_with_task
+from src.handlers.task_handlers.utils import extract_project_info, fetch_user_tasks, get_first_task, set_task_state_by_type, update_state_with_task, build_redo_task_message
 from src.responses.task_formaters import SUBMISSION_RECIEVED_MESSAGE
+
 
 
 router = Router()
 
 
-@router.callback_query(F.data == "start_agent_task")
+@router.callback_query(F.data == "start_agent_redo_task")
 async def start_task(callback: CallbackQuery, state: FSMContext):
     try:
         user_data = await state.get_data()
@@ -26,17 +28,18 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
             await callback.message.answer("Please select a project first using /start.")
             return
 
-        allocations = await fetch_user_tasks(project_info)
+        allocations = await fetch_user_tasks(project_info, status=ContributorTaskStatus.REDO)
         if not allocations:
-            await callback.message.answer("No tasks available at the moment. Please check back later.")
+            await callback.message.answer("No tasks to REDO at the moment...")
             return
 
         first_task = get_first_task(allocations)
+        logger.trace(f"First redo task: {first_task}")
         if not first_task:
-            await callback.message.answer("No tasks available at the moment. Please check back later.")
+            await callback.message.answer("No tasks to REDO at the moment...")
             return
 
-        task_msg, task_type = build_task_message(
+        task_msg, task_type = build_redo_task_message(
             first_task, project_info["instruction"], project_info["return_type"])
         await callback.message.answer(task_msg)
 
@@ -69,7 +72,7 @@ async def handle_text_input(message: Message, state: FSMContext):
             await message.answer("Failed to submit your work. Please try again.")
             return
         await message.answer("Your text submission has been received and recorded successfully. Thank you!")
-        await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='task'))
+        await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='redo'))
     else:
         errors = "\n".join(result["fail_reasons"])
         errors = ERROR_MESSAGE.format(errors=errors)
@@ -116,7 +119,7 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
             user_email=email,
             type=task_type,
             payload_text="",
-            telegram_file_id=None,
+            telegram_file_id=file_id,
         )
 
         submission_response = await create_submission(submission, file_path=new_path)
@@ -124,7 +127,7 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
             await message.answer("Failed to submit your work. Please try again.")
             return
         await message.answer("Your audio submission has been received and recorded successfully. Thank you!")
-        await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='task'))
+        await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='redo'))
     except Exception as e:
         logger.error(f"Error in handle_audio_task_submission: {str(e)}")
         await message.answer("Error occurred, please try again.")

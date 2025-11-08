@@ -12,6 +12,7 @@ from src.routes.onboarding_routes import onboarding, quiz
 from src.routes.payment_routes import payments
 from src.routes.task_routes.api2_task_routes import task_main
 from src.routes.task_routes.api2_task_routes.contributors import tasks as contributor_tasks
+from src.routes.task_routes.api2_task_routes.contributors import redo_tasks as contributor_redo_tasks
 from src.routes.task_routes.api2_task_routes.reviewers import tasks as reviewer_tasks
 from src.routes.status import status
 
@@ -29,6 +30,7 @@ async def bot_main():
     dp.include_router(auth_new_api.router)
     dp.include_router(task_main.router)
     dp.include_router(contributor_tasks.router)
+    dp.include_router(contributor_redo_tasks.router)
     dp.include_router(reviewer_tasks.router)
     dp.include_router(onboarding.router)
     dp.include_router(quiz.quiz_router)
