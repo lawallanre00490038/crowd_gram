@@ -114,8 +114,7 @@ TASK_MSG = {
         "Task Prompt: <b>{task_text}</b>\n"
         "───────────────────────────────────────────\n\n"
         "🧾 <b>Your Previous Submission:</b>\n<blockquote>{previous_submission}</blockquote>\n\n"
-        "⚠️ <b>You scored the following:</b>\n{failed_sections}\n\n"
-        "💬 <b>Reviewer Comments:</b>\n{reviewer_comment}\n\n"
+        "💬 <b>Your Audio contains:</b>\n{reviewer_comment}\n\n"
         "📝 Please revise your work according to the feedback above and resubmit when ready."
     ),
 
@@ -213,7 +212,7 @@ REVIEWER_TASK_MSG = {
         "⚠️ Oops! Something went wrong while processing your review.\n"
         "Please try again or contact support if the issue persists."
     ),
-    
+
     "review_summary": (
         "📝 <b>Review Summary:</b>\n\n"
         "{comments}\n\n"

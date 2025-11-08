@@ -93,18 +93,14 @@ def build_redo_task_message(task: TaskDetailResponseModel, instruction, return_t
         logger.error(f"Unknown task type for return_type={return_type}")
         raise
 
-    scores = ""
-    for rev in task.review.reviewers:
-        scores = "\n".join([f"{param} {score}" for param,
-                           score in rev.review_scores.items()])
-
     task_msg = TASK_MSG["redo_task"].format(
         task_type=task_type,
         task_instruction=instruction,
         task_text=task_text,
         previous_submission=submission,
-        failed_sections=scores,
-        reviewer_comment=rev.review_comments)
+        reviewer_comment="\n".join(
+            task.review.reviewers[0].reviewer_comments) or "No comments provided."
+    )
 
     return task_msg, task_type
 

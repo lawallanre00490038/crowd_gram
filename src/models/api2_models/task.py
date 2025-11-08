@@ -61,10 +61,11 @@ class SubmissionInfoModel(BaseModel):
 class ReviewModel(BaseModel):
     reviewer_id: UUID4
     reviewer_email: EmailStr
-    review_scores: Dict[str, int]
+    # review_scores: Dict[str, int]
     review_total_score: int
-    review_decision: Literal["accept", "redo", "reject"]
-    review_comments: str
+    review_decision: Literal["accept", "redo", "rejected"]
+    reviewer_comments: Optional[List[str]] = None
+    predefined_comments: Optional[List[str]] = None
     total_coins_earned: int
 
 

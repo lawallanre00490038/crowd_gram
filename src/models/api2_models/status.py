@@ -30,7 +30,8 @@ class ProjectReviewStats(BaseModel):
     total_reviewed: int
     approved: int
     rejected: int
-    pending: int
+    pending_review: int
+    redo: int
     number_assigned: int
     total_coins_earned: int
     total_amount_earned: float
@@ -51,6 +52,7 @@ class StatusReviewerResponseModel(BaseModel):
     approved_reviews: int
     rejected_reviews: int
     pending_reviews: int
+    redo_reviews: int
     per_project: List[ProjectReviewStats] = []
 
 

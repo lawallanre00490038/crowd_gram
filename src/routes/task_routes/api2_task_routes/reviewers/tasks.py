@@ -107,6 +107,7 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
 
     return
 
+
 @router.callback_query(F.data == "accept")
 async def handle_accept(callback: CallbackQuery, state: FSMContext):
     """Handle task acceptance by reviewer"""
@@ -124,7 +125,7 @@ async def handle_accept(callback: CallbackQuery, state: FSMContext):
             submission_id = (first_task.get("submission")).get("submission_id")
 
         reviewer_email = data.get('user_email')
-        
+
         review_data = ReviewModel(
             submission_id=submission_id,
             project_id=project_id,
@@ -132,7 +133,7 @@ async def handle_accept(callback: CallbackQuery, state: FSMContext):
             decision=decision,
             reviewer_comments=data.get("comments", []),
         )
-        
+
         logger.trace(review_data)
 
         result: Optional[ReviewSubmissionResponse] = await submit_review_details(review_data)
@@ -150,28 +151,29 @@ async def handle_accept(callback: CallbackQuery, state: FSMContext):
 
     return
 
+
 @router.callback_query(F.data == "reject")
 async def handle_reject(callback: CallbackQuery, state: FSMContext):
     """Handle task rejection by reviewer"""
     await callback.answer()
     data = await state.get_data()
-    
+
     try:
         project_id = data.get("project_id")
         options: list[str] = await get_project_review_parameters(project_id=project_id)
-        
+
         logger.trace(f"Predefined comments options: {options}")
-        
+
         await state.update_data(all_comments=options, selected_comments=[])
         await callback.message.answer(
-        "🗒️ Select the reason(s) for rejection:",
-        reply_markup=build_predefined_comments_kd(options)
-    )
+            "🗒️ Select the reason(s) for rejection:",
+            reply_markup=build_predefined_comments_kd(options)
+        )
         await state.set_state(ReviewStates.choosing_comments)
     except Exception as e:
         logger.error(f"Error in handle_reject: {str(e)}")
         await callback.message.answer("Error occurred, please try again.")
-    
+
 
 @router.callback_query(F.data.startswith("toggle_comment:"))
 async def toggle_comment_handler(callback: CallbackQuery, state: FSMContext):
@@ -192,6 +194,7 @@ async def toggle_comment_handler(callback: CallbackQuery, state: FSMContext):
     )
     await callback.answer()
 
+
 @router.callback_query(F.data == "confirm_comments")
 async def confirm_comments_handler(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -206,6 +209,7 @@ async def confirm_comments_handler(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
     return
+
 
 @router.message(ReviewStates.typing_extra_comment)
 async def handle_extra_comment(message: Message, state: FSMContext):
@@ -222,7 +226,8 @@ async def handle_extra_comment(message: Message, state: FSMContext):
 async def show_comment_summary(message: Message, state: FSMContext):
     data = await state.get_data()
     selected_comments = data.get("selected_comments", [])
-    comments_text = "\n".join([f"• {comment}" for comment in selected_comments]) if selected_comments else "No comments provided."
+    comments_text = "\n".join([f"• {comment}" for comment in selected_comments]
+                              ) if selected_comments else "No comments provided."
 
     await message.answer(
         REVIEWER_TASK_MSG['review_summary'].format(
@@ -233,6 +238,7 @@ async def show_comment_summary(message: Message, state: FSMContext):
     )
     await state.set_state(ReviewStates.summary)
     return
+
 
 @router.callback_query(F.data == "submit_review")
 async def confirm_comment_submission(callback: CallbackQuery, state: FSMContext):
@@ -251,7 +257,7 @@ async def confirm_comment_submission(callback: CallbackQuery, state: FSMContext)
             submission_id = (first_task.get("submission")).get("submission_id")
 
         reviewer_email = data.get('user_email')
-        
+
         review_data = ReviewModel(
             submission_id=submission_id,
             project_id=project_id,
@@ -259,7 +265,7 @@ async def confirm_comment_submission(callback: CallbackQuery, state: FSMContext)
             decision=decision,
             reviewer_comments=selected_comments,
         )
-        
+
         logger.trace(review_data)
 
         result: Optional[ReviewSubmissionResponse] = await submit_review_details(review_data)
@@ -282,5 +288,5 @@ async def confirm_comment_submission(callback: CallbackQuery, state: FSMContext)
 async def restart_comment_submission(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("🔁 Let's start again. Please select your comments.")
     await start_reviewer_task(callback, state)
-    
+
     return
