@@ -1,5 +1,5 @@
 from pydantic import BaseModel, RootModel
-from typing import List, Optional
+from typing import List, Optional, Any
 from datetime import datetime
 from src.models.api2_models.task import TaskDetailResponseModel
 from src.models.api2_models.reviewer import ReviewerTaskResponseModel
@@ -10,33 +10,35 @@ class Project(BaseModel):
     name: str
     description: str
     agent_quota: int
-    reviewer_quota: int 
-    reuse_count: int 
-    agent_coin: float 
-    reviewer_coin: float 
-    super_reviewer_coin: float 
-    agent_amount: float 
-    reviewer_amount: float 
-    super_reviewer_amount: float 
+    reviewer_quota: int
+    reuse_count: int
+    agent_coin: float
+    reviewer_coin: float
+    super_reviewer_coin: float
+    agent_amount: float
+    reviewer_amount: float
+    super_reviewer_amount: float
     is_public: bool
-    review_parameters: List[str]
     agent_instructions: str
     reviewer_instructions: str
     super_reviewer_instructions: Optional[str] = None
-    review_scale: int 
+    review_scale: int
     review_threshold_percent: int
     total_prompts: int
     total_tasks: int
     return_type: str
     total_submissions: int
-    num_redo: Optional[int]
+    num_redo: int = 0
+    is_auto_review: bool
+    review_decisions: Optional[Any] = None
+    predefined_comments: Optional[Any] = None
     created_at: datetime
     updated_at: datetime
-    
+
 
 class ProjectListResponseModel(RootModel[List[Project]]):
     pass
-    
+
 
 class ProjectUpdateModel(BaseModel):
     name: str
@@ -51,6 +53,7 @@ class ProjectTaskRequestModel(BaseModel):
     email: str
     status: Optional[str] = None
     prompt_id: Optional[str] = None
+
 
 class ProjectTaskDetailsResponseModel(BaseModel):
     project_id: str
