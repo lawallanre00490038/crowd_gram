@@ -38,9 +38,7 @@ def start_reviewer_task_inline_kb():
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(
-                text="Start Task", callback_data="start_reviewer_task")],
-            [InlineKeyboardButton(
-                text="Redo Task", callback_data="start_reviewer_redo_task")]
+                text="Start Task", callback_data="start_reviewer_task")]
         ]
     )
 
@@ -49,7 +47,9 @@ def next_agent_task_inline_kb():
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(
-                text="Next Task", callback_data="start_agent_task")]
+                text="Next Task", callback_data="start_agent_task")],
+            [InlineKeyboardButton(
+                text="Next REDO Task", callback_data="start_agent_redo_task")]
         ]
     )
 

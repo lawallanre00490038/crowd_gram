@@ -31,13 +31,13 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
 
         allocations = await fetch_user_tasks(project_info, status=ContributorTaskStatus.REDO)
         if not allocations:
-            await callback.message.answer("No tasks available at the moment. Please check back later.")
+            await callback.message.answer("No tasks to REDO at the moment...")
             return
 
         first_task = get_first_task(allocations)
         logger.trace(f"First redo task: {first_task}")
         if not first_task:
-            await callback.message.answer("No tasks available at the moment. Please check back later.")
+            await callback.message.answer("No tasks to REDO at the moment...")
             return
 
         task_msg, task_type = build_redo_task_message(
