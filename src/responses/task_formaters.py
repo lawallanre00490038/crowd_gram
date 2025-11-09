@@ -106,6 +106,18 @@ TASK_MSG = {
         "📝 Please follow the instructions carefully and submit your work when done."
     ),
 
+    "redo_task": (
+        "🔁 <b>Redo Required</b>\n\n"
+        "🆕 Your task is a <b>{task_type}</b> task that needs revision.\n\n"
+        "Instructions: <i>{task_instruction}</i>\n\n"
+        "───────────────────────────────────────────\n"
+        "Task Prompt: <b>{task_text}</b>\n"
+        "───────────────────────────────────────────\n\n"
+        "🧾 <b>Your Previous Submission:</b>\n<blockquote>{previous_submission}</blockquote>\n\n"
+        "💬 <b>Your Audio contains:</b>\n{reviewer_comment}\n\n"
+        "📝 Please revise your work according to the feedback above and resubmit when ready."
+    ),
+
     "reminder": (
         "🔔 Reminder: This is a <b>{task_type}</b> task.\n"
         "Ensure your submission matches the expected format."
@@ -150,7 +162,7 @@ REVIEWER_TASK_MSG = {
         "🧠 Task Type: {submission_type}\n\n\n"
         "📜 Review Instructions: <b>{reviewer_instruction}</b>\n"
         "───────────────────────────────────────────\n"
-        "🗒️ Task Prompt: {payload_text}\n\n"
+        "🗒️ Task Prompt: <b>{payload_text}</b>\n\n"
         " Task Submission: {submission} \n"
         "───────────────────────────────────────────\n\n\n"
         "Please evaluate the submission carefully and choose an appropriate action."
@@ -200,4 +212,11 @@ REVIEWER_TASK_MSG = {
         "⚠️ Oops! Something went wrong while processing your review.\n"
         "Please try again or contact support if the issue persists."
     ),
+
+    "review_summary": (
+        "📝 <b>Review Summary:</b>\n\n"
+        "{comments}\n\n"
+        "✅ Ready to submit?"
+    )
+
 }

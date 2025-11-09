@@ -24,7 +24,7 @@ class LoggingMiddleware(BaseMiddleware):
         data: Dict[str, Any]
     ) -> Any:
         # Get the start time to calculate response time
-        start_time = time.time()
+        start_time = time.perf_counter()
 
         user_info = f"{event.from_user.username} ({event.from_user.id})"
 
@@ -41,34 +41,23 @@ class LoggingMiddleware(BaseMiddleware):
             logger.warning(f"Unknown event type: {type(event)}")
             return await handler(event, data)
 
+        logger.debug(f"Processing endpoint: {endpoint}")
         # Process the update by calling the next handler
         result = await handler(event, data)
 
+        logger.trace(f"Result of processing: {result}")
+
         # Calculate the response time
-        response_time = time.time() - start_time
+        response_time = time.perf_counter() - start_time
 
         # Log the response time and the endpoint
         if isinstance(event, Message):
             logger.info(
-                f"✅ Response sent for message: {endpoint} in {response_time:.2f} seconds to {user_info}")
+                f"✅ Response sent for message: {endpoint} to {user_info} [Latency] {response_time*1000:.2f} ms")
         elif isinstance(event, CallbackQuery):
             logger.info(
-                f"✅ Response sent for callback: {endpoint} in {response_time:.2f} seconds to {user_info}")
+                f"✅ Response sent for callback: {endpoint} to {user_info} [Latency] {response_time*1000:.2f} ms")
 
-        return result
-
-
-class LatencyMiddleware(BaseMiddleware):
-    async def __call__(
-        self,
-        handler: Callable[[Update, Dict[str, Any]], Awaitable[Any]],
-        event: Update,
-        data: Dict[str, Any]
-    ) -> Any:
-        start_time = time.perf_counter()
-        result = await handler(event, data)
-        latency = time.perf_counter() - start_time
-        logger.info(f"[Latency] {event.event_type}: {latency*1000:.2f} ms")
         return result
 
 

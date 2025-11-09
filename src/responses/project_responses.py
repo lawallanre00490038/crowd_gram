@@ -2,7 +2,7 @@ PROJECT_SELECTION_MESSAGE = "Please select a project to work on:"
 
 PROJECT_WELCOME_MSG = {
     "intro": (
-        "👋 Welcome to the <b>{project_name}</b> project!\n\n\n"
+        "👋 Welcome to the <b>{project_name}</b> project!\n\n"
         "🎯 You’re about to contribute valuable data to this initiative."
     ),
 
@@ -41,4 +41,3 @@ PROJECT_FULL_WELCOME_MSG = (
     + "\n\n"
     + PROJECT_WELCOME_MSG['ready']
 )
-

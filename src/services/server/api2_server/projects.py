@@ -243,7 +243,7 @@ async def get_projects_details(user_email: str) -> list[dict]:
         return []
 
 
-async def get_project_review_parameters(project_id: str) -> Optional[list[str]]:
+async def get_project_review_parameters(project_id: str) -> list[str]:
     """Fetch review parameters for a specific project."""
     url = f"{BASE_URL_V2}/project/project/{project_id}/review-parameters"
 
@@ -275,8 +275,8 @@ async def get_project_review_parameters(project_id: str) -> Optional[list[str]]:
                     error_text = await response.text()
                     logger.error(
                         f"Failed to fetch project review parameters. Status: {response.status}, Response: {error_text}")
-                    return None
+                    return []
     except Exception as e:
         logger.error(
             f"Exception during fetching project review parameters: {str(e)}")
-        return None
+        return []

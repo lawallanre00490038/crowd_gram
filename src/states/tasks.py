@@ -28,6 +28,6 @@ class VideoTaskSubmission(StatesGroup):
     waiting_for_video = State()
 
 
-class ReviewState(StatesGroup):
-    waiting_for_score = State()
-    finished = State()
+class ReviewStates(StatesGroup):
+    choosing_comments = State()
+    typing_extra_comment = State()
