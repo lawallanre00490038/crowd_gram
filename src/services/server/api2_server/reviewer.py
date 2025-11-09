@@ -4,7 +4,7 @@ import aiohttp
 
 from src.config import BASE_URL_V2
 
-from src.models.api2_models.reviewer import ReviewScores, ReviewerModel, UploadReviewModel, ReviewModel, UpdateReviewModel, ReviewerTaskResponseModel, ReviewFilterModel, ReviewFilterResponseModel, ReviewerHistoryRequestModel, ReviewerHistoryResponseListModel
+from src.models.api2_models.reviewer import ReviewScores, ReviewSubmissionResponse, UploadReviewModel, ReviewModel, UpdateReviewModel, ReviewFilterModel, ReviewFilterResponseModel, ReviewerHistoryRequestModel, ReviewerHistoryResponseListModel
 
 
 async def assign_submission_to_reviewer(reviewer_data: ReviewModel) -> str:
@@ -53,7 +53,7 @@ async def upload_review_file(review_data: UploadReviewModel) -> str:
         return f"Error occurred: {str(e)}"
 
 
-async def submit_review_details(review_data: ReviewModel) -> str:
+async def submit_review_details(review_data: ReviewModel) -> Optional[ReviewSubmissionResponse]:
     """Submits a review to the server.
 
     Args:
@@ -68,24 +68,25 @@ async def submit_review_details(review_data: ReviewModel) -> str:
     params = {
         "project_id": review_data.project_id,
         "reviewer_identifier": review_data.reviewer_identifier,
-        "comments": review_data.comments or ""
     }
 
-    if isinstance(review_data.scores, ReviewScores):
-        body = review_data.scores.model_dump()
-    else:
-        body = review_data.scores
-
+    body = {
+        "decision": review_data.decision,
+        "reviewer_comments": review_data.reviewer_comments,
+    }
+    
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(url, json=body, params=params) as response:
                 response_text = await response.text()
                 if response.status == 200:
-                    return "Review submitted successfully."
+                    return ReviewSubmissionResponse(**await response.json())
                 else:
-                    return f"Failed to submit review ({response.status}): {response_text}"
+                    logger.error(f"Failed to submit review ({response.status}): {response_text}")
+                    return None
     except Exception as e:
-        return f"Error occurred: {str(e)}"
+        logger.error(f"Error occurred: {str(e)}")
+        return None
 
 
 async def update_review(review_data: UpdateReviewModel) -> str:

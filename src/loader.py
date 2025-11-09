@@ -1,10 +1,7 @@
 from loguru import logger
 
-from src.middlewares.logging import LoggingMiddleware
-
 from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
-from aiogram.client.session.aiohttp import AiohttpSession, TCPConnector
 from aiogram.fsm.storage.mongo import MongoStorage
 from aiogram.fsm.storage.memory import MemoryStorage
 from motor.motor_asyncio import AsyncIOMotorClient  # async MongoDB driver

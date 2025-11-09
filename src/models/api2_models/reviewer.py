@@ -22,8 +22,8 @@ class ReviewModel(BaseModel):
     submission_id: str
     project_id: str
     reviewer_identifier: str
-    comments: Optional[str] = None
-    scores: ReviewScores
+    decision: str
+    reviewer_comments: Optional[List[str]] = None
     
 class ReviewFilterModel(BaseModel):
     reviewer_identifier: Optional[str] = None
@@ -66,3 +66,12 @@ class ReviewerHistoryResponseModel(BaseModel):
 
 class ReviewerHistoryResponseListModel(RootModel[List[ReviewerHistoryResponseModel]]):
     pass
+
+class ReviewSubmissionResponse(BaseModel):
+    submission_status: str
+    total_score: float
+    approved: bool
+    project_review_threshold: float
+    predefined_comments: Optional[List[str]] = None
+    reviewer_comments: Optional[List[str]] = None
+    scored_percent: float

@@ -24,6 +24,7 @@ async def get_contributor_status(contributor_data: StatusModel) -> StatusContrib
                 response_text = await response.text()
                 if response.status == 200:
                     data = await response.json()
+                    logger.debug(f"Contributor info: {data}")
                     return StatusContributorResponseModel(**data)
                 else:
                     logger.error(

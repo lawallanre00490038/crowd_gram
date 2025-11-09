@@ -3,7 +3,7 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from loguru import logger
 
-from src.keyboards.inline import start_agent_task_inline_kb, start_reviewer_task_inline_kb
+from src.keyboards.inline import start_task_inline_kb
 from src.responses.project_responses import PROJECT_FULL_WELCOME_MSG
 
 from src.states.tasks import TaskState
@@ -18,6 +18,7 @@ async def handle_project_selection(callback: CallbackQuery, state: FSMContext):
         await callback.answer()
         project_index = int(callback.data.split("_")[1])
         user_data = await state.get_data()
+        logger.trace(f"User data in state: {user_data}")
         projects_details = user_data.get("projects_details", [])
         role = user_data.get('role')
 
@@ -34,7 +35,7 @@ async def handle_project_selection(callback: CallbackQuery, state: FSMContext):
                     user_coin=agent_coin,
                     total_tasks=selected_project.get("total_tasks", 0)
                 )
-                await callback.message.answer(welcome_message, reply_markup=start_agent_task_inline_kb())
+                await callback.message.answer(welcome_message, reply_markup=start_task_inline_kb(user_type=user_type))
             elif role == "reviewer":
                 user_type = "Reviewer"
                 reviewer_coin = selected_project.get("reviewer_coin", 0.0)
@@ -44,7 +45,7 @@ async def handle_project_selection(callback: CallbackQuery, state: FSMContext):
                     user_type=user_type,
                     user_coin=reviewer_coin
                 )
-                await callback.message.answer(welcome_message, reply_markup=start_reviewer_task_inline_kb())
+                await callback.message.answer(welcome_message, reply_markup=start_task_inline_kb(user_type=user_type))
         else:
             await callback.message.answer("Invalid project selection. Please try again.")
     except Exception as e:

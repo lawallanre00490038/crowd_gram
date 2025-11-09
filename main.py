@@ -1,7 +1,8 @@
 import asyncio
 from loguru import logger
 
-from src.middlewares.logging import LatencyMiddleware, LoggingMiddleware, monitor_resources
+from src.middlewares.logging import LoggingMiddleware, monitor_resources
+from src.middlewares.response import ResponseMiddleware
 from src.routes.admin_routes import admin
 from src.routes.auth_routes import auth_new_api
 from src.routes.community_routes import community, support
@@ -11,6 +12,7 @@ from src.routes.onboarding_routes import onboarding, quiz
 from src.routes.payment_routes import payments
 from src.routes.task_routes.api2_task_routes import task_main
 from src.routes.task_routes.api2_task_routes.contributors import tasks as contributor_tasks
+from src.routes.task_routes.api2_task_routes.contributors import redo_tasks as contributor_redo_tasks
 from src.routes.task_routes.api2_task_routes.reviewers import tasks as reviewer_tasks
 from src.routes.status import status
 
@@ -28,6 +30,7 @@ async def bot_main():
     dp.include_router(auth_new_api.router)
     dp.include_router(task_main.router)
     dp.include_router(contributor_tasks.router)
+    dp.include_router(contributor_redo_tasks.router)
     dp.include_router(reviewer_tasks.router)
     dp.include_router(onboarding.router)
     dp.include_router(quiz.quiz_router)
@@ -44,7 +47,7 @@ async def bot_main():
     loggingmiddleware = LoggingMiddleware()
     dp.message.middleware(loggingmiddleware)
     dp.callback_query.middleware(loggingmiddleware)
-    dp.message.middleware(LatencyMiddleware())
+    dp.callback_query.middleware(ResponseMiddleware())
 
     asyncio.create_task(monitor_resources())
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
