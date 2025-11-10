@@ -151,67 +151,84 @@ async def handle_reject(callback: CallbackQuery, state: FSMContext):
     """Handle task rejection by reviewer"""
     await callback.answer()
     data = await state.get_data()
-    
+
     try:
         project_id = data.get("project_id")
         options: list[str] = await get_project_review_parameters(project_id=project_id)
-        
+
         logger.trace(f"Predefined comments options: {options}")
-        
+
         await state.update_data(all_comments=options, selected_comments=[])
         await callback.message.answer(
-        "🗒️ Select the reason(s) for rejection:",
-        reply_markup=build_predefined_comments_kd(options)
-    )
+            "🗒️ Select the reason(s) for rejection:",
+            reply_markup=build_predefined_comments_kd(options, [])
+        )
         await state.set_state(ReviewStates.choosing_comments)
     except Exception as e:
         logger.error(f"Error in handle_reject: {str(e)}")
         await callback.message.answer("Error occurred, please try again.")
-    
+
 
 @router.callback_query(F.data.startswith("toggle_comment:"))
 async def toggle_comment_handler(callback: CallbackQuery, state: FSMContext):
     option = callback.data.split(":", 1)[1]
     data = await state.get_data()
-    selected = set(data.get("selected_comments", []))
+
+    selected = data.get("selected_comments", [])
     all_options = data.get("all_comments", [])
 
-    # Toggle the selected option
     if option in selected:
         selected.remove(option)
     else:
-        selected.add(option)
+        selected.append(option)
 
-    await state.update_data(selected_comments=list(selected))
+    await state.update_data(selected_comments=selected)
+
     await callback.message.edit_reply_markup(
         reply_markup=build_predefined_comments_kd(all_options, selected)
     )
+
     await callback.answer()
+
+
 
 @router.callback_query(F.data == "confirm_comments")
 async def confirm_comments_handler(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
-    selected = set(data.get("selected_comments", []))
+    selected = data.get("selected_comments", [])
 
+    # 🛑 Validation: No comments selected
+    if not selected:
+        await callback.answer("Please select or write at least one comment before confirming.", show_alert=True)
+        return
+
+    # Check if 'other' was selected — then ask for extra input
     if "other" in selected:
-        await callback.message.answer("✏️ Please type your additional comments:")
+        await callback.message.answer("✏️ Please type your additional comment(s):")
         await state.set_state(ReviewStates.typing_extra_comment)
     else:
-        await callback.message.answer(f"✅ Comments selected: {', '.join(selected) or 'None'}")
         await show_comment_summary(callback.message, state)
 
     await callback.answer()
+    
     return
+
 
 @router.message(ReviewStates.typing_extra_comment)
 async def handle_extra_comment(message: Message, state: FSMContext):
     extra_comment = message.text.strip()
+    
+    # 🛑 Validation: Must not be empty
+    if not extra_comment:
+        await message.answer("⚠️ Please enter a valid comment (cannot be empty).")
+        return
+    
     data = await state.get_data()
     selected = set(data.get("selected_comments", []))
-
     selected.add(extra_comment)
+
     await show_comment_summary(message, state)
-    state.update_data("selected_comments", list(selected))
+    await state.update_data(selected_comments=list(selected))
     return
 
 
@@ -230,24 +247,29 @@ async def show_comment_summary(message: Message, state: FSMContext):
     await state.set_state(ReviewStates.summary)
     return
 
+
 @router.callback_query(F.data == "submit_review")
 async def confirm_comment_submission(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     decision = "reject"
     data = await state.get_data()
+    selected_comments = data.get("selected_comments", [])
+    
+    # 🛑 Final validation before sending to backend
+    if not selected_comments:
+        await callback.message.answer("⚠️ You must select or write at least one comment before submitting.")
+        return
 
     try:
-        selected_comments = data.get("selected_comments", [])
         project_id = data.get("project_id")
         reviewers_list = data.get("reviewers_list", [])
-
         submission_id = data.get("submission_id")
         if not submission_id:
             first_task = reviewers_list[0].get("tasks", [{}])[0]
             submission_id = (first_task.get("submission")).get("submission_id")
 
         reviewer_email = data.get('user_email')
-        
+
         review_data = ReviewModel(
             submission_id=submission_id,
             project_id=project_id,
@@ -255,7 +277,7 @@ async def confirm_comment_submission(callback: CallbackQuery, state: FSMContext)
             decision=decision,
             reviewer_comments=selected_comments,
         )
-        
+
         logger.trace(review_data)
 
         result: Optional[ReviewSubmissionResponse] = await submit_review_details(review_data)
@@ -278,5 +300,5 @@ async def confirm_comment_submission(callback: CallbackQuery, state: FSMContext)
 async def restart_comment_submission(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("🔁 Let's start again. Please select your comments.")
     await start_reviewer_task(callback, state)
-    
+
     return
