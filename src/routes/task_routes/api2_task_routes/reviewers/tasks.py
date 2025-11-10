@@ -160,8 +160,10 @@ async def handle_reject(callback: CallbackQuery, state: FSMContext):
 
     try:
         project_id = data.get("project_id")
-        options: list[str] = await get_project_review_parameters(project_id=project_id)
-
+        for details in data['projects_details']:
+            if details['id'] == project_id:
+                options: list[str] = details.get('predefined_comments', [])
+                break
         logger.trace(f"Predefined comments options: {options}")
 
         await state.update_data(all_comments=options, selected_comments=[])
@@ -197,7 +199,6 @@ async def toggle_comment_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-
 @router.callback_query(F.data == "confirm_comments")
 async def confirm_comments_handler(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -229,7 +230,8 @@ async def handle_extra_comment(message: Message, state: FSMContext):
 async def show_comment_summary(message: Message, state: FSMContext):
     data = await state.get_data()
     selected_comments = data.get("selected_comments", [])
-    comments_text = "\n".join([f"• {comment}" for comment in selected_comments]) if selected_comments else "No comments provided."
+    comments_text = "\n".join([f"• {comment}" for comment in selected_comments]
+                              ) if selected_comments else "No comments provided."
 
     await message.answer(
         REVIEWER_TASK_MSG['review_summary'].format(
