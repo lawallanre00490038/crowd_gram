@@ -79,30 +79,42 @@ def build_redo_task_message(task: TaskDetailResponseModel, instruction, return_t
         logger.error(f"Unknown task type for return_type={return_type}")
         task_type = "Unknown"
 
-    task_text = getattr(task.prompt, "sentence_text",
-                        "No task content provided.")
+    task_text = getattr(task.prompt, "sentence_text", "No task content provided.")
 
-    submission = ""
+    # Handle submission type
     if task.submission.type == "text":
         submission = task.submission.payload_text
     else:
-        submission = build_file_section(
-            task.submission.type, task.submission.file_url)
+        submission = build_file_section(task.submission.type, task.submission.file_url)
 
-    if task.review == None:
-        logger.error(f"Unknown task type for return_type={return_type}")
-        raise
+    # Handle missing review object
+    if task.review is None or not task.review.reviewers:
+        logger.error(f"Task review data missing for return_type={return_type}")
+        reviewer_comment = "No reviewer comments available."
+    else:
+        reviewer_data = task.review.reviewers[0]
+        reviewer_comments = reviewer_data.reviewer_comments
+
+        # Ensure reviewer_comments is iterable
+        if not reviewer_comments:
+            reviewer_comment = "No comments provided."
+        elif isinstance(reviewer_comments, str):
+            reviewer_comment = reviewer_comments
+        elif isinstance(reviewer_comments, (list, set, tuple)):
+            reviewer_comment = "\n".join(str(c) for c in reviewer_comments)
+        else:
+            reviewer_comment = str(reviewer_comments)
 
     task_msg = TASK_MSG["redo_task"].format(
         task_type=task_type,
         task_instruction=instruction,
         task_text=task_text,
         previous_submission=submission,
-        reviewer_comment="\n".join(
-            task.review.reviewers[0].reviewer_comments) or "No comments provided."
+        reviewer_comment=reviewer_comment
     )
 
     return task_msg, task_type
+
 
 
 async def update_state_with_task(state, project_info, task, task_type, task_msg):

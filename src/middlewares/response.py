@@ -26,7 +26,8 @@ class ResponseMiddleware(BaseMiddleware):
                         resp = mkk.text
         resp_text = event.message.text + f"\n\n<b>Selected</b>: {resp}"
 
-        await event.message.edit_text(resp_text)
+        if not (resp.startswith("❌") or resp.startswith("✅")):
+            await event.message.edit_text(resp_text)
 
         result = await handler(event, data)
         return result
