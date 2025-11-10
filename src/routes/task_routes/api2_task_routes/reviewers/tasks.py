@@ -208,9 +208,11 @@ async def confirm_comments_handler(callback: CallbackQuery, state: FSMContext):
     if not selected:
         await callback.answer("Please select or write at least one comment before confirming.", show_alert=True)
         return
-
+    
+    
+    logger.trace(selected)
     # Check if 'other' was selected — then ask for extra input
-    if "other" in selected:
+    if "other" in selected or "Other" in selected:
         await callback.message.answer("✏️ Please type your additional comment(s):")
         await state.set_state(ReviewStates.typing_extra_comment)
     else:
@@ -234,14 +236,18 @@ async def handle_extra_comment(message: Message, state: FSMContext):
     selected = set(data.get("selected_comments", []))
     selected.add(extra_comment)
 
-    await show_comment_summary(message, state)
     await state.update_data(selected_comments=list(selected))
+    await show_comment_summary(message, state)
     return
 
 
 async def show_comment_summary(message: Message, state: FSMContext):
     data = await state.get_data()
     selected_comments = data.get("selected_comments", [])
+    if 'other' in selected_comments:
+        selected_comments.remove('other')
+    if 'Other' in selected_comments:
+        selected_comments.remove('Other')
     comments_text = "\n".join([f"• {comment}" for comment in selected_comments]
                               ) if selected_comments else "No comments provided."
 
@@ -252,6 +258,7 @@ async def show_comment_summary(message: Message, state: FSMContext):
         parse_mode="HTML",
         reply_markup=summary_kb()
     )
+    await state.update_data(selected_comments=selected_comments)
     await state.set_state(ReviewStates.summary)
     return
 

@@ -203,7 +203,7 @@ async def confirm_comments_handler(callback: CallbackQuery, state: FSMContext):
         return
 
     # Check if 'other' was selected — then ask for extra input
-    if "other" in selected:
+    if "other" in selected or "Other" in selected:
         await callback.message.answer("✏️ Please type your additional comment(s):")
         await state.set_state(ReviewStates.typing_extra_comment)
     else:
