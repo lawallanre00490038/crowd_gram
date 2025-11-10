@@ -10,7 +10,8 @@ def task_inline_keyboard():
             [InlineKeyboardButton(text="Reject", callback_data="reject")]
         ]
     )
-    
+
+
 def review_task_inline_kb():
     return InlineKeyboardMarkup(
         inline_keyboard=[
@@ -23,23 +24,22 @@ def review_task_inline_kb():
 def start_task_inline_kb(user_type: str):
     if user_type.lower() == "agent":
         return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(
-                text="Start Task", callback_data="start_agent_task")],
-            [InlineKeyboardButton(
-                text="Redo Task", callback_data="start_agent_redo_task")]
-        ]
-    )
+            inline_keyboard=[
+                [InlineKeyboardButton(
+                    text="Start Task", callback_data="start_agent_task")],
+                [InlineKeyboardButton(
+                    text="Redo Task", callback_data="start_agent_redo_task")]
+            ]
+        )
     elif user_type.lower() == "reviewer":
         return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(
-                text="Start Task", callback_data="start_reviewer_task"),
-             InlineKeyboardButton(
+            inline_keyboard=[
+                [InlineKeyboardButton(
+                    text="Start Task", callback_data="start_reviewer_task"),
+                    InlineKeyboardButton(
                  text="Redo Task", callback_data="start_reviewer_redo_task")]
-        ]
-    )
-
+            ]
+        )
 
 
 def next_task_inline_kb(user_type: str, task_type: str):
@@ -63,13 +63,13 @@ def next_task_inline_kb(user_type: str, task_type: str):
     elif user_type.lower() == "reviewer":
         if task_type.lower() == "redo":
             return InlineKeyboardMarkup(
-            inline_keyboard=[
-                [InlineKeyboardButton(
-                    text="Next REDO Task", callback_data="start_reviewer_redo_task")],
-                [InlineKeyboardButton(
-                    text="Start Task", callback_data="start_reviewer_task")]
-            ]
-        )
+                inline_keyboard=[
+                    [InlineKeyboardButton(
+                        text="Next REDO Task", callback_data="start_reviewer_redo_task")],
+                    [InlineKeyboardButton(
+                        text="Start Task", callback_data="start_reviewer_task")]
+                ]
+            )
         else:
             return InlineKeyboardMarkup(
                 inline_keyboard=[
@@ -283,19 +283,23 @@ def retry_keyboard():
     ])
 
 
-def build_predefined_comments_kd(options: list[str], selected: set[str] | None = None) -> InlineKeyboardMarkup:
-    """Builds an inline keyboard to toggle multiple predefined comment options."""
-    selected = selected or set()
-    builder = InlineKeyboardBuilder()
+def build_predefined_comments_kd(options: list[str], selected: list[str] = None) -> InlineKeyboardMarkup:
+    selected = selected or []
+    keyboard = []
 
     for option in options:
-        status = "✅" if option in selected else "❌"
-        label = option.replace("_", " ").title()
-        builder.button(
-            text=f"{status} {label}",
-            callback_data=f"toggle_comment:{option}"
-        )
+        is_selected = "✅" if option in selected else "❌"
+        keyboard.append([
+            InlineKeyboardButton(
+                text=f"{is_selected} {option}",
+                callback_data=f"toggle_comment:{option}"
+            )
+        ])
 
-    builder.button(text="✅ Done", callback_data="confirm_comments")
-    builder.adjust(1)  # one per row
-    return builder.as_markup()
+    # Add a confirm button
+    keyboard.append([
+        InlineKeyboardButton(
+            text="✅ Confirm", callback_data="confirm_comments")
+    ])
+
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)

@@ -5,24 +5,20 @@ from typing import Optional
 
 from loguru import logger
 
-from src.models.api2_models.agent import SubmissionModel
 from src.keyboards.inline import next_task_inline_kb, build_predefined_comments_kd, review_task_inline_kb, create_score_kb, summary_kb
-from src.states.tasks import TaskState, ReviewStates
+from src.states.tasks import ReviewStates
 from src.services.server.api2_server.projects import get_project_review_parameters, get_project_tasks_assigned_to_user
 from src.services.server.api2_server.reviewer import submit_review_details
-from src.services.server.api2_server.agent_submission import create_submission
-from src.handlers.task_handlers.audio_task_handler import handle_api2_audio_submission
 from src.responses.task_formaters import REVIEWER_TASK_MSG
 from src.models.api2_models.projects import ProjectTaskRequestModel
 from src.utils.file_url_handlers import build_file_section
-from src.utils.submission_utils import get_submission_info
 from src.models.api2_models.reviewer import ReviewModel, ReviewSubmissionResponse
 
 
 router = Router()
 
 
-@router.callback_query(F.data == "start_reviewer_task")
+@router.callback_query(F.data == "start_reviewer_redo_task")
 async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
     try:
         user_data = await state.get_data()
@@ -38,13 +34,13 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
             return
 
         task_details = ProjectTaskRequestModel(
-            project_id=project_id, email=email, status="pending")
+            project_id=project_id, email=email, status="redo")
         allocations = await get_project_tasks_assigned_to_user(task_details)
 
         logger.trace(f"Allocation: {allocations}")
 
         if not allocations:
-            await callback.message.answer("No tasks available at the moment. Please check back later.")
+            await callback.message.answer("No tasks to REDO at the moment...")
             return
 
         reviewers_list = allocations.reviewers if hasattr(
@@ -55,7 +51,7 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
 
             # Check if reviewer has tasks
             if not first_reviewer.tasks or len(first_reviewer.tasks) == 0:
-                await callback.message.answer("No review tasks available at the moment. Please check back later.")
+                await callback.message.answer("No review tasks to REDO at the moment...")
                 return
 
             first_task = first_reviewer.tasks[0]
@@ -107,7 +103,6 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
 
     return
 
-
 @router.callback_query(F.data == "accept")
 async def handle_accept(callback: CallbackQuery, state: FSMContext):
     """Handle task acceptance by reviewer"""
@@ -125,7 +120,7 @@ async def handle_accept(callback: CallbackQuery, state: FSMContext):
             submission_id = (first_task.get("submission")).get("submission_id")
 
         reviewer_email = data.get('user_email')
-
+        
         review_data = ReviewModel(
             submission_id=submission_id,
             project_id=project_id,
@@ -133,7 +128,7 @@ async def handle_accept(callback: CallbackQuery, state: FSMContext):
             decision=decision,
             reviewer_comments=data.get("comments", []),
         )
-
+        
         logger.trace(review_data)
 
         result: Optional[ReviewSubmissionResponse] = await submit_review_details(review_data)
@@ -151,7 +146,6 @@ async def handle_accept(callback: CallbackQuery, state: FSMContext):
 
     return
 
-
 @router.callback_query(F.data == "reject")
 async def handle_reject(callback: CallbackQuery, state: FSMContext):
     """Handle task rejection by reviewer"""
@@ -160,10 +154,8 @@ async def handle_reject(callback: CallbackQuery, state: FSMContext):
 
     try:
         project_id = data.get("project_id")
-        for details in data['projects_details']:
-            if details['id'] == project_id:
-                options: list[str] = details.get('predefined_comments', [])
-                break
+        options: list[str] = await get_project_review_parameters(project_id=project_id)
+
         logger.trace(f"Predefined comments options: {options}")
 
         await state.update_data(all_comments=options, selected_comments=[])
@@ -199,6 +191,7 @@ async def toggle_comment_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
+
 @router.callback_query(F.data == "confirm_comments")
 async def confirm_comments_handler(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -208,9 +201,7 @@ async def confirm_comments_handler(callback: CallbackQuery, state: FSMContext):
     if not selected:
         await callback.answer("Please select or write at least one comment before confirming.", show_alert=True)
         return
-    
-    
-    logger.trace(selected)
+
     # Check if 'other' was selected — then ask for extra input
     if "other" in selected or "Other" in selected:
         await callback.message.answer("✏️ Please type your additional comment(s):")
@@ -236,20 +227,15 @@ async def handle_extra_comment(message: Message, state: FSMContext):
     selected = set(data.get("selected_comments", []))
     selected.add(extra_comment)
 
-    await state.update_data(selected_comments=list(selected))
     await show_comment_summary(message, state)
+    await state.update_data(selected_comments=list(selected))
     return
 
 
 async def show_comment_summary(message: Message, state: FSMContext):
     data = await state.get_data()
     selected_comments = data.get("selected_comments", [])
-    if 'other' in selected_comments:
-        selected_comments.remove('other')
-    if 'Other' in selected_comments:
-        selected_comments.remove('Other')
-    comments_text = "\n".join([f"• {comment}" for comment in selected_comments]
-                              ) if selected_comments else "No comments provided."
+    comments_text = "\n".join([f"• {comment}" for comment in selected_comments]) if selected_comments else "No comments provided."
 
     await message.answer(
         REVIEWER_TASK_MSG['review_summary'].format(
@@ -258,7 +244,6 @@ async def show_comment_summary(message: Message, state: FSMContext):
         parse_mode="HTML",
         reply_markup=summary_kb()
     )
-    await state.update_data(selected_comments=selected_comments)
     await state.set_state(ReviewStates.summary)
     return
 
