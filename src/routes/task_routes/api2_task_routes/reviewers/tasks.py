@@ -202,26 +202,38 @@ async def toggle_comment_handler(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "confirm_comments")
 async def confirm_comments_handler(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
-    selected = set(data.get("selected_comments", []))
+    selected = data.get("selected_comments", [])
 
+    # 🛑 Validation: No comments selected
+    if not selected:
+        await callback.answer("Please select or write at least one comment before confirming.", show_alert=True)
+        return
+
+    # Check if 'other' was selected — then ask for extra input
     if "other" in selected:
-        await callback.message.answer("✏️ Please type your additional comments:")
+        await callback.message.answer("✏️ Please type your additional comment(s):")
         await state.set_state(ReviewStates.typing_extra_comment)
     else:
-        await callback.message.answer(f"✅ Comments selected: {', '.join(selected) or 'None'}")
         await show_comment_summary(callback.message, state)
 
     await callback.answer()
+    
     return
 
 
 @router.message(ReviewStates.typing_extra_comment)
 async def handle_extra_comment(message: Message, state: FSMContext):
     extra_comment = message.text.strip()
+    
+    # 🛑 Validation: Must not be empty
+    if not extra_comment:
+        await message.answer("⚠️ Please enter a valid comment (cannot be empty).")
+        return
+    
     data = await state.get_data()
     selected = set(data.get("selected_comments", []))
-
     selected.add(extra_comment)
+
     await show_comment_summary(message, state)
     await state.update_data(selected_comments=list(selected))
     return
@@ -249,12 +261,16 @@ async def confirm_comment_submission(callback: CallbackQuery, state: FSMContext)
     await callback.answer()
     decision = "reject"
     data = await state.get_data()
+    selected_comments = data.get("selected_comments", [])
+    
+    # 🛑 Final validation before sending to backend
+    if not selected_comments:
+        await callback.message.answer("⚠️ You must select or write at least one comment before submitting.")
+        return
 
     try:
-        selected_comments = data.get("selected_comments", [])
         project_id = data.get("project_id")
         reviewers_list = data.get("reviewers_list", [])
-
         submission_id = data.get("submission_id")
         if not submission_id:
             first_task = reviewers_list[0].get("tasks", [{}])[0]
