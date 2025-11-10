@@ -306,7 +306,10 @@ async def confirm_comment_submission(callback: CallbackQuery, state: FSMContext)
         logger.error(f"Error in handle_accept: {str(e)}")
         await callback.message.answer("Error occurred, please try again.")
 
-    await callback.message.answer("Begin the next review task.", reply_markup=next_task_inline_kb(user_type="reviewer", task_type="normal"))
+    if data.get("is_redo"):
+        await callback.message.answer("Begin the next redo review task.", reply_markup=next_task_inline_kb(user_type="reviewer", task_type="redo"))
+    else:
+        await callback.message.answer("Begin the next review task.", reply_markup=next_task_inline_kb(user_type="reviewer", task_type="normal"))
 
     return
 
