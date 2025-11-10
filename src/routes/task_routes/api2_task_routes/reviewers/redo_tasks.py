@@ -5,24 +5,20 @@ from typing import Optional
 
 from loguru import logger
 
-from src.models.api2_models.agent import SubmissionModel
 from src.keyboards.inline import next_task_inline_kb, build_predefined_comments_kd, review_task_inline_kb, create_score_kb, summary_kb
-from src.states.tasks import TaskState, ReviewStates
+from src.states.tasks import ReviewStates
 from src.services.server.api2_server.projects import get_project_review_parameters, get_project_tasks_assigned_to_user
 from src.services.server.api2_server.reviewer import submit_review_details
-from src.services.server.api2_server.agent_submission import create_submission
-from src.handlers.task_handlers.audio_task_handler import handle_api2_audio_submission
 from src.responses.task_formaters import REVIEWER_TASK_MSG
 from src.models.api2_models.projects import ProjectTaskRequestModel
 from src.utils.file_url_handlers import build_file_section
-from src.utils.submission_utils import get_submission_info
 from src.models.api2_models.reviewer import ReviewModel, ReviewSubmissionResponse
 
 
 router = Router()
 
 
-@router.callback_query(F.data == "start_reviewer_task")
+@router.callback_query(F.data == "start_reviewer_redo_task")
 async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
     try:
         user_data = await state.get_data()
@@ -38,13 +34,13 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
             return
 
         task_details = ProjectTaskRequestModel(
-            project_id=project_id, email=email, status="pending")
+            project_id=project_id, email=email, status="redo")
         allocations = await get_project_tasks_assigned_to_user(task_details)
 
         logger.trace(f"Allocation: {allocations}")
 
         if not allocations:
-            await callback.message.answer("No tasks available at the moment. Please check back later.")
+            await callback.message.answer("No tasks to REDO at the moment...")
             return
 
         reviewers_list = allocations.reviewers if hasattr(
@@ -55,7 +51,7 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
 
             # Check if reviewer has tasks
             if not first_reviewer.tasks or len(first_reviewer.tasks) == 0:
-                await callback.message.answer("No review tasks available at the moment. Please check back later.")
+                await callback.message.answer("No review tasks to REDO at the moment...")
                 return
 
             first_task = first_reviewer.tasks[0]
@@ -107,7 +103,6 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
 
     return
 
-
 @router.callback_query(F.data == "accept")
 async def handle_accept(callback: CallbackQuery, state: FSMContext):
     """Handle task acceptance by reviewer"""
@@ -125,7 +120,7 @@ async def handle_accept(callback: CallbackQuery, state: FSMContext):
             submission_id = (first_task.get("submission")).get("submission_id")
 
         reviewer_email = data.get('user_email')
-
+        
         review_data = ReviewModel(
             submission_id=submission_id,
             project_id=project_id,
@@ -133,7 +128,7 @@ async def handle_accept(callback: CallbackQuery, state: FSMContext):
             decision=decision,
             reviewer_comments=data.get("comments", []),
         )
-
+        
         logger.trace(review_data)
 
         result: Optional[ReviewSubmissionResponse] = await submit_review_details(review_data)
@@ -151,52 +146,47 @@ async def handle_accept(callback: CallbackQuery, state: FSMContext):
 
     return
 
-
 @router.callback_query(F.data == "reject")
 async def handle_reject(callback: CallbackQuery, state: FSMContext):
     """Handle task rejection by reviewer"""
     await callback.answer()
     data = await state.get_data()
-
+    
     try:
         project_id = data.get("project_id")
         options: list[str] = await get_project_review_parameters(project_id=project_id)
-
+        
         logger.trace(f"Predefined comments options: {options}")
-
+        
         await state.update_data(all_comments=options, selected_comments=[])
         await callback.message.answer(
-            "🗒️ Select the reason(s) for rejection:",
-            reply_markup=build_predefined_comments_kd(options, [])
-        )
+        "🗒️ Select the reason(s) for rejection:",
+        reply_markup=build_predefined_comments_kd(options)
+    )
         await state.set_state(ReviewStates.choosing_comments)
     except Exception as e:
         logger.error(f"Error in handle_reject: {str(e)}")
         await callback.message.answer("Error occurred, please try again.")
-
+    
 
 @router.callback_query(F.data.startswith("toggle_comment:"))
 async def toggle_comment_handler(callback: CallbackQuery, state: FSMContext):
     option = callback.data.split(":", 1)[1]
     data = await state.get_data()
-
-    selected = data.get("selected_comments", [])
+    selected = set(data.get("selected_comments", []))
     all_options = data.get("all_comments", [])
 
+    # Toggle the selected option
     if option in selected:
         selected.remove(option)
     else:
-        selected.append(option)
+        selected.add(option)
 
-    await state.update_data(selected_comments=selected)
-
+    await state.update_data(selected_comments=list(selected))
     await callback.message.edit_reply_markup(
         reply_markup=build_predefined_comments_kd(all_options, selected)
     )
-
     await callback.answer()
-
-
 
 @router.callback_query(F.data == "confirm_comments")
 async def confirm_comments_handler(callback: CallbackQuery, state: FSMContext):
@@ -213,7 +203,6 @@ async def confirm_comments_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     return
 
-
 @router.message(ReviewStates.typing_extra_comment)
 async def handle_extra_comment(message: Message, state: FSMContext):
     extra_comment = message.text.strip()
@@ -222,7 +211,7 @@ async def handle_extra_comment(message: Message, state: FSMContext):
 
     selected.add(extra_comment)
     await show_comment_summary(message, state)
-    await state.update_data(selected_comments=list(selected))
+    state.update_data("selected_comments", list(selected))
     return
 
 
@@ -241,7 +230,6 @@ async def show_comment_summary(message: Message, state: FSMContext):
     await state.set_state(ReviewStates.summary)
     return
 
-
 @router.callback_query(F.data == "submit_review")
 async def confirm_comment_submission(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
@@ -259,7 +247,7 @@ async def confirm_comment_submission(callback: CallbackQuery, state: FSMContext)
             submission_id = (first_task.get("submission")).get("submission_id")
 
         reviewer_email = data.get('user_email')
-
+        
         review_data = ReviewModel(
             submission_id=submission_id,
             project_id=project_id,
@@ -267,7 +255,7 @@ async def confirm_comment_submission(callback: CallbackQuery, state: FSMContext)
             decision=decision,
             reviewer_comments=selected_comments,
         )
-
+        
         logger.trace(review_data)
 
         result: Optional[ReviewSubmissionResponse] = await submit_review_details(review_data)
@@ -290,5 +278,5 @@ async def confirm_comment_submission(callback: CallbackQuery, state: FSMContext)
 async def restart_comment_submission(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("🔁 Let's start again. Please select your comments.")
     await start_reviewer_task(callback, state)
-
+    
     return
