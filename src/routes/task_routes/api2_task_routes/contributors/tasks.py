@@ -124,7 +124,10 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
             await message.answer("Failed to submit your work. Please try again.")
             return
         await message.answer("Your audio submission has been received and recorded successfully. Thank you!")
-        await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='task'))
+        if user_data.get("is_redo"):
+            await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='redo'))
+        else:
+            await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='task'))
     except Exception as e:
         logger.error(f"Error in handle_audio_task_submission: {str(e)}")
         await message.answer("Error occurred, please try again.")
