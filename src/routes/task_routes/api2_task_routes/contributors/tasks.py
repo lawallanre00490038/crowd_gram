@@ -27,7 +27,7 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
             return
 
         allocations = await fetch_user_tasks(project_info)
-        if not allocations:
+        if allocations and getattr(allocations, "tasks", None):
             await callback.message.answer("No tasks available at the moment. Please check back later.")
             return
 
@@ -98,6 +98,7 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
         
         try:
             submission = SubmissionModel.model_validate(user_data)
+            submission.type = "audio"
         except:
             await message.answer("Session data missing. Please restart the task using /start.")
             return

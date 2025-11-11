@@ -30,10 +30,12 @@ def extract_project_info(user_data: dict):
     return {
         "email": email,
         "id": project["id"],
+        "name": project.get('name'),
+        'reviewer_instructions': project.get(
+        'reviewer_instructions', 'No specific instructions provided.'),
         "instruction": project.get("agent_instructions", "Please translate carefully."),
         "return_type": project.get("return_type", "text"),
     }
-
 
 async def fetch_user_tasks(project_info, status=ContributorTaskStatus.ASSIGNED):
     """Retrieve allocated tasks for the user."""
@@ -44,14 +46,26 @@ async def fetch_user_tasks(project_info, status=ContributorTaskStatus.ASSIGNED):
     )
     allocations = await get_project_tasks_assigned_to_user(task_request)
     logger.trace(f"Fetched allocations: {allocations}")
-    return allocations if allocations and getattr(allocations, "tasks", None) else None
-
+    return allocations 
 
 def get_first_task(allocations):
     """Get the first available task from allocations."""
     tasks = getattr(allocations, "tasks", [])
     return tasks[0] if tasks else None
 
+def get_first_reviewer(allocations):
+    if not allocations or not getattr(allocations, 'reviewers', []):
+        return None, None, None
+
+    first_reviewer = allocations.reviewers[0]
+    if not first_reviewer.tasks:
+        return None, None, None
+
+    first_task = first_reviewer.tasks[0]
+    if first_task.submission is None:
+        return None, None, None
+    
+    return first_reviewer, first_task
 
 def build_task_message(task, instruction, return_type):
     """Construct the appropriate message for the task type."""
@@ -70,7 +84,6 @@ def build_task_message(task, instruction, return_type):
         task_text=task_text
     )
     return task_msg, task_type
-
 
 def build_redo_task_message(task: TaskDetailResponseModel, instruction, return_type):
     """Construct the appropriate message for the task type."""
@@ -115,8 +128,6 @@ def build_redo_task_message(task: TaskDetailResponseModel, instruction, return_t
 
     return task_msg, task_type
 
-
-
 async def update_state_with_task(state, project_info, task, task_type, task_msg):
     """Store task info in FSM state."""
     await state.update_data(
@@ -129,7 +140,6 @@ async def update_state_with_task(state, project_info, task, task_type, task_msg)
         task=task_msg
     )
     await state.set_state(TaskState.working_on_task)
-
 
 async def set_task_state_by_type(message: Message, state: FSMContext):
     try:
@@ -151,3 +161,27 @@ async def set_task_state_by_type(message: Message, state: FSMContext):
         await message.answer("Error occurred, please try again.")
 
     return
+
+def format_submission(first_task):
+    """
+    Return the proper submission content based on type.
+    """
+    submission_type = first_task.submission.type
+    if submission_type == "text":
+        return first_task.submission.payload_text
+    return build_file_section(submission_type, first_task.submission.file_url)
+
+def prepare_reviewer_state(first_reviewer):
+    """
+    Convert Pydantic objects to dicts for FSM state storage.
+    """
+    reviewers_list_dict = [reviewer.model_dump() for reviewer in [first_reviewer]]
+    first_task_dict = reviewers_list_dict[0].get("tasks", [{}])[0]
+    submission_dict = first_task_dict.get("submission") or {}
+
+    return {
+        "reviewers_list": reviewers_list_dict,
+        "submission_id": submission_dict.get("submission_id"),
+        "reviewer_id": reviewers_list_dict[0].get("reviewer_id"),
+    }
+
