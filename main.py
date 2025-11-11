@@ -3,13 +3,13 @@ from loguru import logger
 
 from src.middlewares.logging import LoggingMiddleware, monitor_resources
 from src.middlewares.response import ResponseMiddleware
-from src.routes.admin_routes import admin
+# from src.routes.admin_routes import admin
 from src.routes.auth_routes import auth_new_api
-from src.routes.community_routes import community, support
+# from src.routes.community_routes import community, support
 from src.routes.debug import debug_routes
 from src.routes.errors_routes import errors
 from src.routes.onboarding_routes import onboarding, quiz
-from src.routes.payment_routes import payments
+# from src.routes.payment_routes import payments
 from src.routes.task_routes.api2_task_routes import task_main
 from src.routes.task_routes.api2_task_routes.contributors import tasks as contributor_tasks
 from src.routes.task_routes.api2_task_routes.contributors import redo_tasks as contributor_redo_tasks
@@ -36,10 +36,10 @@ async def bot_main():
     dp.include_router(reviewer_redo_tasks.router)
     dp.include_router(onboarding.router)
     dp.include_router(quiz.quiz_router)
-    dp.include_router(payments.router)
-    dp.include_router(community.router)
-    dp.include_router(support.router)
-    dp.include_router(admin.router)
+    # dp.include_router(payments.router)
+    # dp.include_router(community.router)
+    # dp.include_router(support.router)
+    # dp.include_router(admin.router)
     dp.include_router(errors.router)
     dp.include_router(debug_routes.router)
 
