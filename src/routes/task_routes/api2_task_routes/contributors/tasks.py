@@ -23,7 +23,7 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
         user_data = await state.get_data()
         project_info = extract_project_info(user_data)
         if not project_info:
-            await callback.message.answer("Please select a project first using /start.")
+            await callback.message.answer("Please select a project first using /projects.")
             return
 
         allocations = await fetch_user_tasks(project_info)
@@ -46,7 +46,6 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
     except Exception as e:
         logger.error(f"Error in start_task: {str(e)}")
         await callback.message.answer("Error occurred, please try again.")
-
 
 @router.message(TaskState.waiting_for_text)
 async def handle_text_input(message: Message, state: FSMContext):
@@ -87,37 +86,22 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
         await message.answer(SUBMISSION_RECIEVED_MESSAGE)
 
         user_data = await state.get_data()
-        task_id = user_data.get("task_id")
-        project_id = user_data.get("project_id")
-        assignment_id = user_data.get("assignment_id")
-        task_type = user_data.get("task_type").lower()
-        file_id = message.voice.file_id if message.voice else message.audio.file_id
-        prompt_id = user_data.get("prompt_id")
-        sentence_id = user_data.get("sentence_id")
-        email = user_data.get("user_email")
-        task_msg = user_data.get("task", "")
-
-        # REWRITE TO GET THE TASK INFO FROM STATE DATA
+        
+        # REWRITE TO GET THE TASK INFO FROM STATE DATA LIKE AUDIO FILE FORMAT
         response, new_path, out_message = await handle_api2_audio_submission(task_info={}, file_id=message.voice.file_id if message.voice else message.audio.file_id, user_id=message.from_user.id, bot=message.bot)
         if not response:
             await message.answer(out_message or "Failed to process audio submission. Please try again.")
-            await message.answer(task_msg)
+            # task_msg = user_data.get("task", "")
+            # await message.answer(task_msg)
             logger.info("Audio submission failed")
             return
-
-        if not all([task_id, assignment_id, prompt_id, sentence_id, email]):
+        
+        try:
+            submission = SubmissionModel.model_validate(user_data)
+        except:
             await message.answer("Session data missing. Please restart the task using /start.")
             return
 
-        submission = SubmissionModel(
-            project_id=project_id,
-            task_id=task_id,
-            assignment_id=assignment_id,
-            user_email=email,
-            type=task_type,
-            payload_text="",
-            telegram_file_id=None,
-        )
 
         submission_response = await create_submission(submission, file_path=new_path)
         if not submission_response:
