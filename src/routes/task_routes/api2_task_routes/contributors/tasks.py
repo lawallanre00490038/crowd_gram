@@ -27,7 +27,7 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
             return
 
         allocations = await fetch_user_tasks(project_info)
-        if allocations and getattr(allocations, "tasks", None):
+        if not (allocations and getattr(allocations, "tasks", None)):
             await callback.message.answer("No tasks available at the moment. Please check back later.")
             return
 
@@ -80,8 +80,8 @@ async def handle_text_input(message: Message, state: FSMContext):
 @router.message(TaskState.waiting_for_audio)
 async def handle_audio_task_submission(message: Message, state: FSMContext):
     try:
-        if not message.voice and not message.audio:
-            await message.answer("Please submit an audio file or voice message.")
+        if not message.voice:
+            await message.answer("Please record a voice message.")
             return
         await message.answer(SUBMISSION_RECIEVED_MESSAGE)
 

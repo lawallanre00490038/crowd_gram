@@ -29,7 +29,7 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
 
         allocations = await fetch_user_tasks(project_info, status=ContributorTaskStatus.REDO)
     
-        if allocations and getattr(allocations, "tasks", None):
+        if not (allocations and getattr(allocations, "tasks", None)):
             await callback.message.answer("No tasks to REDO at the moment...")
             return
 
