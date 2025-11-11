@@ -22,4 +22,4 @@ def save_librosa_audio_as_mp3(y, sr, output_path, bitrate="256k"):
         frame_rate=sr,
         channels=1 if y.ndim == 1 else y.shape[0]
     )
-    wav_audio.export(output_path, format="mp3", bitrate=bitrate)
+    wav_audio.export(output_path, bitrate=bitrate)
