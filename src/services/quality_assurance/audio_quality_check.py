@@ -128,11 +128,11 @@ def check_audio_quality(
 
     message = ""
     if analysis['signal_power'] > max_speech_level:
-        message = "Move your phone away from your mouth a little"
+        message = f"Move your phone away from your mouth a little SNR {round(analysis['snr'], 2)} \n"
     elif analysis['signal_power'] < min_speech_level:
-        message = "Please speak louder."
+        message = f"Please speak louder. SNR {round(analysis['snr'], 2)} \n"
     elif analysis['noise_power'] > min_noise_level:
-        message = "There is noise where you are."
+        message = f"There is noise where you are. SNR {round(analysis['snr'], 2)} \n"
     elif analysis['snr'] >= min_snr_value:
         message = "Approved"
     elif (analysis['snr'] >= min_snr_value_edit) and (analysis['snr'] < min_snr_value):
@@ -147,11 +147,11 @@ def check_audio_quality(
         if analysis['snr'] >= min_snr_value:
             message = "Approved"
         elif (analysis['snr'] >= min_snr_value_edit) and (analysis['snr'] < min_snr_value):
-            message = f"Almost there—speak a bit louder and clearer. SNR {round(analysis['snr'], 2)}"
+            message = f"Almost there—speak a bit louder and clearer. SNR {round(analysis['snr'], 2)} \n"
         else:
-            message = f"The Audio is noisy, please record where there is less noise. SNR {analysis['snr']}"
+            message = f"The Audio is noisy, please record where there is less noise. SNR {round(analysis['snr'], 2)} \n"
     else:
-        message = f"The Audio is noisy, please record where there is less noise. SNR {analysis['snr']}"
+        message = f"The Audio is noisy, please record where there is less noise. SNR {round(analysis['snr'], 2)} \n"
 
     analysis['message'] = message
     return data, analysis
