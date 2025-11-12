@@ -150,18 +150,30 @@ async def update_state_with_task(state, project_info, task, task_type, task_msg)
     await state.set_state(TaskState.working_on_task)
 
 
-async def set_task_state_by_type(message: Message, state: FSMContext):
+async def set_task_state_by_type(message: Message, state: FSMContext, task_type=None):
     try:
         user_data = await state.get_data()
         type = user_data.get("task_type")
         if type.lower() == "audio":
-            await state.set_state(TaskState.waiting_for_audio)
+            if task_type == "redo":
+                await state.set_state(TaskState.waiting_for_redo_audio)
+            else:
+                await state.set_state(TaskState.waiting_for_audio)
         elif type.lower() == "text":
-            await state.set_state(TaskState.waiting_for_text)
+            if task_type == "redo":
+                await state.set_state(TaskState.waiting_for_redo_text)
+            else:
+                await state.set_state(TaskState.waiting_for_text)
         elif type.lower() == "image":
-            await state.set_state(TaskState.waiting_for_image)
+            if task_type == "redo":
+                await state.set_state(TaskState.waiting_for_redo_image)
+            else:
+                await state.set_state(TaskState.waiting_for_image)
         elif type.lower() == "video":
-            await state.set_state(TaskState.waiting_for_video)
+            if task_type == "redo":
+                await state.set_state(TaskState.waiting_for_redo_video)
+            else:
+                await state.set_state(TaskState.waiting_for_video)
         else:
             logger.error(f"Unknown task type: {type}")
             return

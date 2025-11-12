@@ -5,6 +5,9 @@ from typing import Optional
 
 from loguru import logger
 
+from aiogram.types import URLInputFile
+
+from src.handlers.task_handlers.utils import format_submission
 from src.keyboards.inline import next_task_inline_kb, build_predefined_comments_kd, review_task_inline_kb, create_score_kb, summary_kb
 from src.states.tasks import ReviewStates
 from src.services.server.api2_server.projects import get_project_review_parameters, get_project_tasks_assigned_to_user
@@ -65,22 +68,32 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
             submission_type = first_task.submission.type
             submission_file_url = first_task.submission.file_url
 
-            if first_task.submission.type == "text":
-                submission = first_task.submission.payload_text
-            else:
-                submission = build_file_section(
-                    submission_type, submission_file_url)
-            await callback.message.answer(
-                REVIEWER_TASK_MSG['intro'].format(
-                    project_name=project_name,
-                    submission_type=submission_type,
-                    payload_text=task_text,
-                    submission=submission,
-                    reviewer_instruction=reviewer_instruction
-                ),
-                parse_mode="HTML",
-                reply_markup=review_task_inline_kb()
+            submission = format_submission(first_task)
+
+            caption = REVIEWER_TASK_MSG['intro'].format(
+                project_name=project_name,
+                submission_type=submission_type,
+                payload_text=task_text,
+                submission=submission,
+                reviewer_instruction=reviewer_instruction
             )
+
+            if first_task.submission.type == "audio":
+                audio_file = URLInputFile(first_task.submission.file_url)
+
+                await callback.message.answer_audio(
+                    caption=caption,
+                    audio=audio_file,
+                    parse_mode="HTML",
+                    protect_content=True,
+                    reply_markup=review_task_inline_kb()
+                )
+            else:
+                await callback.message.answer(
+                    caption,
+                    parse_mode="HTML",
+                    reply_markup=review_task_inline_kb()
+                )
 
             # Convert Pydantic objects to dictionaries for state storage
             reviewers_list_dict = [reviewer.model_dump()
@@ -143,7 +156,7 @@ async def handle_accept(callback: CallbackQuery, state: FSMContext):
         logger.error(f"Error in handle_accept: {str(e)}")
         await callback.message.answer("Error occurred, please try again.")
 
-    await callback.message.answer("Begin the next review task.", reply_markup=next_task_inline_kb(user_type="reviewer", task_type="normal"))
+    await callback.message.answer("Begin the next review task.", reply_markup=next_task_inline_kb(user_type="reviewer", task_type="redo"))
 
     return
 
