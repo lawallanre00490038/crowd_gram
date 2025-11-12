@@ -83,7 +83,7 @@ def check_audio_quality(
     file_path: Optional[str] = None,
     data: Optional[np.ndarray] = None,
     sr: Optional[int] = None,
-    try_enhance: int = 2,
+    try_enhance: int = 1,
     min_snr_value: float = 40,
     min_snr_value_edit: float = 15,
     min_speech_level: float = -50,
@@ -147,7 +147,7 @@ def check_audio_quality(
         if analysis['snr'] >= min_snr_value:
             message = "Approved"
         elif (analysis['snr'] >= min_snr_value_edit) and (analysis['snr'] < min_snr_value):
-            message = f"Almost there—speak a bit louder and clearer. SNR {analysis['snr']}"
+            message = f"Almost there—speak a bit louder and clearer. SNR {round(analysis['snr'], 2)}"
         else:
             message = f"The Audio is noisy, please record where there is less noise. SNR {analysis['snr']}"
     else:
