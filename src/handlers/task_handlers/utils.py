@@ -1,5 +1,8 @@
+from typing import List, Optional, Tuple, Union
 from loguru import logger
-from src.models.api2_models.projects import ProjectTaskRequestModel
+from src.models.api2_models.projects import ProjectTaskDetailsResponseModel, ProjectTaskRequestModel
+from src.models.api2_models.reviewer import ReviewerTaskResponseModel
+from src.models.api2_models.reviewer import ReviewerTaskResponseModel
 from src.models.api2_models.task import TaskDetailResponseModel
 from src.responses.task_formaters import TASK_MSG
 from src.services.server.api2_server.projects import get_project_tasks_assigned_to_user
@@ -38,7 +41,7 @@ def extract_project_info(user_data: dict):
     }
 
 
-async def fetch_user_tasks(project_info, status=ContributorTaskStatus.ASSIGNED):
+async def fetch_user_tasks(project_info, status=ContributorTaskStatus.ASSIGNED) -> Optional[ProjectTaskDetailsResponseModel]:
     """Retrieve allocated tasks for the user."""
     task_request = ProjectTaskRequestModel(
         project_id=project_info["id"],
@@ -54,21 +57,6 @@ def get_first_task(allocations):
     """Get the first available task from allocations."""
     tasks = getattr(allocations, "tasks", [])
     return tasks[0] if tasks else None
-
-
-def get_first_reviewer(allocations):
-    if not allocations or not getattr(allocations, 'reviewers', []):
-        return None, None
-
-    first_reviewer = allocations.reviewers[0]
-    if not first_reviewer.tasks:
-        return None, None
-
-    first_task = first_reviewer.tasks[0]
-    if first_task.submission is None:
-        return None, None
-
-    return first_reviewer, first_task
 
 
 def build_task_message(task, instruction, return_type):
@@ -136,7 +124,7 @@ def build_redo_task_message(task: TaskDetailResponseModel, instruction, return_t
     return task_msg, task_type
 
 
-async def update_state_with_task(state, project_info, task, task_type, task_msg):
+async def update_state_with_task(state, project_info, task, task_type, task_msg, redo_task=False):
     """Store task info in FSM state."""
     await state.update_data(
         project_id=project_info["id"],
@@ -145,7 +133,8 @@ async def update_state_with_task(state, project_info, task, task_type, task_msg)
         prompt_id=task.prompt.prompt_id,
         sentence_id=task.prompt.sentence_id,
         task_type=task_type,
-        task=task_msg
+        task=task_msg,
+        redo_task=redo_task
     )
     await state.set_state(TaskState.working_on_task)
 
@@ -155,25 +144,13 @@ async def set_task_state_by_type(message: Message, state: FSMContext, task_type=
         user_data = await state.get_data()
         type = user_data.get("task_type")
         if type.lower() == "audio":
-            if task_type == "redo":
-                await state.set_state(TaskState.waiting_for_redo_audio)
-            else:
-                await state.set_state(TaskState.waiting_for_audio)
+            await state.set_state(TaskState.waiting_for_audio)
         elif type.lower() == "text":
-            if task_type == "redo":
-                await state.set_state(TaskState.waiting_for_redo_text)
-            else:
-                await state.set_state(TaskState.waiting_for_text)
+            await state.set_state(TaskState.waiting_for_text)
         elif type.lower() == "image":
-            if task_type == "redo":
-                await state.set_state(TaskState.waiting_for_redo_image)
-            else:
-                await state.set_state(TaskState.waiting_for_image)
+            await state.set_state(TaskState.waiting_for_image)
         elif type.lower() == "video":
-            if task_type == "redo":
-                await state.set_state(TaskState.waiting_for_redo_video)
-            else:
-                await state.set_state(TaskState.waiting_for_video)
+            await state.set_state(TaskState.waiting_for_video)
         else:
             logger.error(f"Unknown task type: {type}")
             return
@@ -193,18 +170,3 @@ def format_submission(first_task):
         return first_task.submission.payload_text
     return build_file_section(submission_type, first_task.submission.file_url)
 
-
-def prepare_reviewer_state(first_reviewer):
-    """
-    Convert Pydantic objects to dicts for FSM state storage.
-    """
-    reviewers_list_dict = [reviewer.model_dump()
-                           for reviewer in [first_reviewer]]
-    first_task_dict = reviewers_list_dict[0].get("tasks", [{}])[0]
-    submission_dict = first_task_dict.get("submission") or {}
-
-    return {
-        "reviewers_list": reviewers_list_dict,
-        "submission_id": submission_dict.get("submission_id"),
-        "reviewer_id": reviewers_list_dict[0].get("reviewer_id"),
-    }

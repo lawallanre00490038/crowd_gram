@@ -68,14 +68,17 @@ async def handle_text_input(message: Message, state: FSMContext):
             await message.answer("Failed to submit your work. Please try again.")
             return
         await message.answer("Your text submission has been received and recorded successfully. Thank you!")
-        await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='task'))
+        redo_task = user_data.get("redo_task", False)
+        if redo_task:
+            await message.answer("Begin the next REDO task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='redo'))
+        else:
+            await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='task'))
     else:
         errors = "\n".join(result["fail_reasons"])
         errors = ERROR_MESSAGE.format(errors=errors)
         await message.answer(errors)
 
     return
-
 
 @router.message(TaskState.waiting_for_audio)
 async def handle_audio_task_submission(message: Message, state: FSMContext):
@@ -109,7 +112,11 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
             await message.answer("Failed to submit your work. Please try again.")
             return
         await message.answer("Your audio submission has been received and recorded successfully. Thank you!")
-        await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='task'))
+        redo_task = user_data.get("redo_task", False)
+        if redo_task:
+            await message.answer("Begin the next REDO task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='redo'))
+        else:
+            await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='task'))
     except Exception as e:
         logger.error(f"Error in handle_audio_task_submission: {str(e)}")
         await message.answer("Error occurred, please try again.")

@@ -58,93 +58,9 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
                 parse_mode="HTML"
             )
 
-        await update_state_with_task(state, project_info, first_task, task_type, task_msg)
+        await update_state_with_task(state, project_info, first_task, task_type, task_msg, redo_task=True)
         await set_task_state_by_type(callback.message, state)
 
     except Exception as e:
         logger.error(f"Error in start_task: {str(e)}")
         await callback.message.answer("Error occurred, please try again.")
-
-
-@router.message(TaskState.waiting_for_redo_text)
-async def handle_text_input(message: Message, state: FSMContext):
-    text = message.text.strip()
-    user_data = await state.get_data()
-
-    result = validate_text_input(
-        text, task_lang=None, exp_task_script=None)
-
-    submission = SubmissionModel.model_validate(user_data)
-    submission.payload_text = text
-    submission.type = "text"
-
-    logger.debug(f"Text submission validation result: {result}")
-    logger.debug(f"Submission data: {submission}")
-
-    submission_response = await create_submission(submission)
-    if result["success"]:
-        if not submission_response:
-            await message.answer("Failed to submit your work. Please try again.")
-            return
-        await message.answer("Your text submission has been received and recorded successfully. Thank you!")
-        await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='redo'))
-    else:
-        errors = "\n".join(result["fail_reasons"])
-        errors = ERROR_MESSAGE.format(errors=errors)
-        await message.answer(errors)
-
-    return
-
-
-@router.message(TaskState.waiting_for_redo_audio)
-async def handle_audio_task_submission(message: Message, state: FSMContext):
-    try:
-        if not message.voice and not message.audio:
-            await message.answer("Please submit an audio file or voice message.")
-            return
-        await message.answer(SUBMISSION_RECIEVED_MESSAGE)
-
-        user_data = await state.get_data()
-        task_id = user_data.get("task_id")
-        project_id = user_data.get("project_id")
-        assignment_id = user_data.get("assignment_id")
-        task_type = user_data.get("task_type").lower()
-        file_id = message.voice.file_id if message.voice else message.audio.file_id
-        prompt_id = user_data.get("prompt_id")
-        sentence_id = user_data.get("sentence_id")
-        email = user_data.get("user_email")
-        task_msg = user_data.get("task", "")
-
-        # REWRITE TO GET THE TASK INFO FROM STATE DATA
-        response, new_path, out_message = await handle_api2_audio_submission(task_info={}, file_id=message.voice.file_id if message.voice else message.audio.file_id, user_id=message.from_user.id, bot=message.bot)
-        if not response:
-            await message.answer(out_message or "Failed to process audio submission. Please try again.")
-            await message.answer(task_msg)
-            logger.info("Audio submission failed")
-            return
-
-        if not all([task_id, assignment_id, prompt_id, sentence_id, email]):
-            await message.answer("Session data missing. Please restart the task using /start.")
-            return
-
-        submission = SubmissionModel(
-            project_id=project_id,
-            task_id=task_id,
-            assignment_id=assignment_id,
-            user_email=email,
-            type=task_type,
-            payload_text="",
-            telegram_file_id=None,
-        )
-
-        submission_response = await create_submission(submission, file_path=new_path)
-        if not submission_response:
-            await message.answer("Failed to submit your work. Please try again.")
-            return
-        await message.answer("Your audio submission has been received and recorded successfully. Thank you!")
-        await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='redo'))
-    except Exception as e:
-        logger.error(f"Error in handle_audio_task_submission: {str(e)}")
-        await message.answer("Error occurred, please try again.")
-
-    return

@@ -8,7 +8,8 @@ from aiogram.types import URLInputFile
 from loguru import logger
 
 from src.constant.task_constants import ContributorTaskStatus
-from src.handlers.task_handlers.utils import extract_project_info, fetch_user_tasks, format_submission, get_first_reviewer, get_first_task, prepare_reviewer_state
+from src.handlers.task_handlers.reviewer_handler import send_reviewer_task, get_first_reviewer, prepare_reviewer_state
+from src.handlers.task_handlers.utils import extract_project_info, fetch_user_tasks, format_submission
 from src.keyboards.inline import next_task_inline_kb, build_predefined_comments_kd, review_task_inline_kb, create_score_kb, summary_kb
 from src.states.tasks import ReviewStates
 from src.services.server.api2_server.reviewer import submit_review_details
@@ -38,39 +39,9 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
             await callback.message.answer("No submissions available for review at the moment. Please check back later.")
             return
 
-        task_text = first_task.prompt.sentence_text
-
-        submission = format_submission(first_task)
-
-        caption = REVIEWER_TASK_MSG['intro'].format(
-                project_name=project_info["name"],
-                submission_type=first_task.submission.type,
-                payload_text=task_text,
-                submission=submission,
-                reviewer_instruction=project_info["reviewer_instructions"]
-            )
-        
-        logger.trace(f"Task Submission Type: {first_task.submission.type}")
-        
-        if first_task.submission.type == "audio":
-            audio_file = URLInputFile(first_task.submission.file_url)
-
-            await callback.message.answer_audio(
-                caption=caption,
-                audio=audio_file, 
-                parse_mode="HTML",
-                protect_content=True,
-                reply_markup=review_task_inline_kb()
-            )
-        else:
-            await callback.message.answer(
-                caption,
-                parse_mode="HTML",
-                reply_markup=review_task_inline_kb()
-            )
-
+        await send_reviewer_task(callback.message, first_task, project_info)
         # Update state
-        state_data = prepare_reviewer_state(first_reviewer)
+        state_data = prepare_reviewer_state(allocations.reviewers)
         state_data.update({"project_id": project_info["id"]})
         await state.update_data(**state_data)
 
@@ -278,8 +249,12 @@ async def confirm_comment_submission(callback: CallbackQuery, state: FSMContext)
         logger.error(f"Error in handle_accept: {str(e)}")
         await callback.message.answer("Error occurred, please try again.")
 
-    await callback.message.answer("Begin the next review task.", reply_markup=next_task_inline_kb(user_type="reviewer", task_type="normal"))
+    redo_task = data.get("redo_task", False)
 
+    if redo_task:
+        await callback.message.answer("Begin the next redo review task.", reply_markup=next_task_inline_kb(user_type="reviewer", task_type="redo"))
+    else:
+        await callback.message.answer("Begin the next review task.", reply_markup=next_task_inline_kb(user_type="reviewer", task_type="task"))
     return
 
 
