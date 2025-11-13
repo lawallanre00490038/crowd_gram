@@ -1,5 +1,8 @@
+from typing import List, Optional, Tuple, Union
 from loguru import logger
-from src.models.api2_models.projects import ProjectTaskRequestModel
+from src.models.api2_models.projects import ProjectTaskDetailsResponseModel, ProjectTaskRequestModel
+from src.models.api2_models.reviewer import ReviewerTaskResponseModel
+from src.models.api2_models.reviewer import ReviewerTaskResponseModel
 from src.models.api2_models.task import TaskDetailResponseModel
 from src.responses.task_formaters import TASK_MSG
 from src.services.server.api2_server.projects import get_project_tasks_assigned_to_user
@@ -30,12 +33,15 @@ def extract_project_info(user_data: dict):
     return {
         "email": email,
         "id": project["id"],
+        "name": project.get('name'),
+        'reviewer_instructions': project.get(
+            'reviewer_instructions', 'No specific instructions provided.'),
         "instruction": project.get("agent_instructions", "Please translate carefully."),
         "return_type": project.get("return_type", "text"),
     }
 
 
-async def fetch_user_tasks(project_info, status=ContributorTaskStatus.ASSIGNED):
+async def fetch_user_tasks(project_info, status=ContributorTaskStatus.ASSIGNED) -> Optional[ProjectTaskDetailsResponseModel]:
     """Retrieve allocated tasks for the user."""
     task_request = ProjectTaskRequestModel(
         project_id=project_info["id"],
@@ -44,7 +50,7 @@ async def fetch_user_tasks(project_info, status=ContributorTaskStatus.ASSIGNED):
     )
     allocations = await get_project_tasks_assigned_to_user(task_request)
     logger.trace(f"Fetched allocations: {allocations}")
-    return allocations if allocations and getattr(allocations, "tasks", None) else None
+    return allocations
 
 
 def get_first_task(allocations):
@@ -79,13 +85,15 @@ def build_redo_task_message(task: TaskDetailResponseModel, instruction, return_t
         logger.error(f"Unknown task type for return_type={return_type}")
         task_type = "Unknown"
 
-    task_text = getattr(task.prompt, "sentence_text", "No task content provided.")
+    task_text = getattr(task.prompt, "sentence_text",
+                        "No task content provided.")
 
     # Handle submission type
     if task.submission.type == "text":
         submission = task.submission.payload_text
     else:
-        submission = build_file_section(task.submission.type, task.submission.file_url)
+        submission = build_file_section(
+            task.submission.type, task.submission.file_url)
 
     # Handle missing review object
     if task.review is None or not task.review.reviewers:
@@ -116,8 +124,7 @@ def build_redo_task_message(task: TaskDetailResponseModel, instruction, return_t
     return task_msg, task_type
 
 
-
-async def update_state_with_task(state, project_info, task, task_type, task_msg):
+async def update_state_with_task(state, project_info, task, task_type, task_msg, redo_task=False):
     """Store task info in FSM state."""
     await state.update_data(
         project_id=project_info["id"],
@@ -126,12 +133,13 @@ async def update_state_with_task(state, project_info, task, task_type, task_msg)
         prompt_id=task.prompt.prompt_id,
         sentence_id=task.prompt.sentence_id,
         task_type=task_type,
-        task=task_msg
+        task=task_msg,
+        redo_task=redo_task
     )
     await state.set_state(TaskState.working_on_task)
 
 
-async def set_task_state_by_type(message: Message, state: FSMContext):
+async def set_task_state_by_type(message: Message, state: FSMContext, task_type=None):
     try:
         user_data = await state.get_data()
         type = user_data.get("task_type")
@@ -151,3 +159,14 @@ async def set_task_state_by_type(message: Message, state: FSMContext):
         await message.answer("Error occurred, please try again.")
 
     return
+
+
+def format_submission(first_task):
+    """
+    Return the proper submission content based on type.
+    """
+    submission_type = first_task.submission.type
+    if submission_type == "text":
+        return first_task.submission.payload_text
+    return build_file_section(submission_type, first_task.submission.file_url)
+

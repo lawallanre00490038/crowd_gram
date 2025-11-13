@@ -16,7 +16,7 @@ def build_file_section(submission_type: str, file_url: str | None) -> str:
 
     match submission_type:
         case "audio":
-            return f'🎧 [Listen to Submission]{file_url}'
+            return f'Listen to Submission'
         case "video":
             return f'🎥 <a href="{file_url}">Watch submission</a>  \n\n'
         case "image":

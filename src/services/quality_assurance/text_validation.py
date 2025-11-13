@@ -4,9 +4,9 @@ from typing import Dict, List, Union
 from loguru import logger
 
 
-from src.services.quality_assurance.text_language_validation import detect_message_language
+# from src.services.quality_assurance.text_language_validation import detect_message_language
 from src.services.quality_assurance.text_structural_checks import check_junk, has_repeated_chars, check_unicode_script, check_profanity
-from src.services.quality_assurance.text_coherence_check import check_coherence
+# from src.services.quality_assurance.text_coherence_check import check_coherence
 from src.services.quality_assurance.text_length_check import check_length_and_truncation
 
 
@@ -42,20 +42,20 @@ def validate_text_input(text: str, task_lang: str = None, exp_task_script=None) 
         logger.info(f"expected script: {exp_task_script}")
         fail_reasons.append("Text contains unexpected or invalid characters.")
 
-    # 4. Language Detection
-    if task_lang: 
-        lang_result = detect_message_language(text)
-        detected_lang_code = lang_result.get("code")
-        detected_lang = lang_result.get("language", "unknown").upper()
-        lang_confidence = lang_result.get("confidence", 0.0)
-        metadata["language"] = detected_lang
-        metadata["language_code"] = detected_lang_code
-        metadata["language_confidence"] = lang_confidence
+    # # 4. Language Detection
+    # if task_lang: 
+    #     lang_result = detect_message_language(text)
+    #     detected_lang_code = lang_result.get("code")
+    #     detected_lang = lang_result.get("language", "unknown").upper()
+    #     lang_confidence = lang_result.get("confidence", 0.0)
+    #     metadata["language"] = detected_lang
+    #     metadata["language_code"] = detected_lang_code
+    #     metadata["language_confidence"] = lang_confidence
 
-        if detected_lang != task_lang:
-            fail_reasons.append(
-                f"Expected language '{task_lang}', but detected '{detected_lang}' (confidence: {lang_confidence:.2f})."
-            )
+    #     if detected_lang != task_lang:
+    #         fail_reasons.append(
+    #             f"Expected language '{task_lang}', but detected '{detected_lang}' (confidence: {lang_confidence:.2f})."
+    #         )
 
     # 5. Profanity Check
     if check_profanity(text):
@@ -72,10 +72,10 @@ def validate_text_input(text: str, task_lang: str = None, exp_task_script=None) 
     # metadata.update(length_result)
 
     # 7. Coherence Check
-    coherence_result = check_coherence(text)
-    if not coherence_result.get("coherence_ok", True):
-        fail_reasons.append("Text is incoherent or lacks clarity.")
-    metadata.update(coherence_result)
+    # coherence_result = check_coherence(text)
+    # if not coherence_result.get("coherence_ok", True):
+    #     fail_reasons.append("Text is incoherent or lacks clarity.")
+    # metadata.update(coherence_result)
 
     # Final Result
     fail_reasons = []
