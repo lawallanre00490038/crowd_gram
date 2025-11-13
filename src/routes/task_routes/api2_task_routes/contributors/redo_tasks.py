@@ -1,6 +1,7 @@
 from aiogram.types import Message, CallbackQuery
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
+from aiogram.types import URLInputFile
 from loguru import logger
 
 from src.constant.task_constants import ContributorTaskStatus
@@ -28,7 +29,8 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
             return
 
         allocations = await fetch_user_tasks(project_info, status=ContributorTaskStatus.REDO)
-        if not allocations:
+
+        if not (allocations and getattr(allocations, "tasks", None)):
             await callback.message.answer("No tasks to REDO at the moment...")
             return
 
@@ -40,10 +42,23 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
 
         task_msg, task_type = build_redo_task_message(
             first_task, project_info["instruction"], project_info["return_type"])
-        await callback.message.answer(task_msg)
 
-        await update_state_with_task(state, project_info, first_task, task_type, task_msg)
-        await state.update_data(is_redo=True)
+        if first_task.submission.type == "audio":
+            audio_file = URLInputFile(first_task.submission.file_url)
+
+            await callback.message.answer_audio(
+                caption=task_msg,
+                audio=audio_file,
+                parse_mode="HTML",
+                protect_content=True
+            )
+        else:
+            await callback.message.answer(
+                task_msg,
+                parse_mode="HTML"
+            )
+
+        await update_state_with_task(state, project_info, first_task, task_type, task_msg, redo_task=True)
         await set_task_state_by_type(callback.message, state)
 
     except Exception as e:

@@ -11,8 +11,6 @@ from src.config import BOT_TOKEN, MONGO_DB_URI, MONGODB_DB_NAME, USE_MONGO_DB
 bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
 
 # MongoDB FSM storage
-
-
 async def create_bot():
     logger.trace(USE_MONGO_DB)
     if USE_MONGO_DB:

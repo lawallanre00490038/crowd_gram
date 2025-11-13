@@ -1,6 +1,7 @@
 import time
+from loguru import logger
 from aiogram import BaseMiddleware
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, ContentType
 from typing import Callable, Dict, Any, Awaitable
 
 
@@ -11,9 +12,6 @@ class ResponseMiddleware(BaseMiddleware):
         event: CallbackQuery,
         data: Dict[str, Any]
     ) -> Any:
-        # Get the start time to calculate response time
-        start_time = time.time()
-
         # Process the update by calling the next handler
         await event.message.edit_reply_markup(reply_markup=None)
 
@@ -24,10 +22,14 @@ class ResponseMiddleware(BaseMiddleware):
                 for mkk in mk_key:
                     if mkk.callback_data == event.data:
                         resp = mkk.text
-        resp_text = event.message.text + f"\n\n<b>Selected</b>: {resp}"
 
-        if not (resp.startswith("❌") or resp.startswith("✅")):
-            await event.message.edit_text(resp_text)
+        if event.message.content_type == ContentType.TEXT:
+            resp_text = event.message.text + f"\n\n<b>Selected</b>: {resp}"
+            if not (resp.startswith("❌") or resp.startswith("✅")):
+                await event.message.edit_text(resp_text)
+        elif event.message.content_type == ContentType.AUDIO:
+            resp_text = event.message.caption + f"\n\n<b>Selected</b>: {resp}"
+            await event.message.edit_caption(caption=resp_text)
 
         result = await handler(event, data)
         return result
