@@ -74,6 +74,10 @@ async def handle_text_input(message: Message, state: FSMContext):
         if redo_task:
             await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='redo'))
         else:
+            redo_task = user_data.get("redo_task", False)
+        if redo_task:
+            await message.answer("Begin the next REDO task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='redo'))
+        else:
             await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='task'))
     else:
         errors = "\n".join(result["fail_reasons"])
@@ -115,6 +119,9 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
 
         redo_task = user_data.get("redo_task", False)
         if redo_task:
+            await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='redo'))
+        else:
+            if user_data.get("is_redo"):
             await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='redo'))
         else:
             await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='task'))

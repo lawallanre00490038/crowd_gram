@@ -58,7 +58,7 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
                 parse_mode="HTML"
             )
 
-        await update_state_with_task(state, project_info, first_task, task_type, task_msg, redo_task=True)
+        await update_state_with_task(state, project_info, first_task, task_type, task_msg, redo_task=True, redo_task=True)
         await set_task_state_by_type(callback.message, state)
 
     except Exception as e:
