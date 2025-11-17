@@ -47,6 +47,7 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
         logger.error(f"Error in start_task: {str(e)}")
         await callback.message.answer("Error occurred, please try again.")
 
+
 @router.message(TaskState.waiting_for_text)
 async def handle_text_input(message: Message, state: FSMContext):
     text = message.text.strip()
@@ -68,7 +69,12 @@ async def handle_text_input(message: Message, state: FSMContext):
             await message.answer("Failed to submit your work. Please try again.")
             return
         await message.answer("Your text submission has been received and recorded successfully. Thank you!")
-        await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='task'))
+
+        redo_task = user_data.get("redo_task", False)
+        if redo_task:
+            await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='redo'))
+        else:
+            await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='task'))
     else:
         errors = "\n".join(result["fail_reasons"])
         errors = ERROR_MESSAGE.format(errors=errors)
@@ -86,16 +92,14 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
         await message.answer(SUBMISSION_RECIEVED_MESSAGE)
 
         user_data = await state.get_data()
-        
+
         # REWRITE TO GET THE TASK INFO FROM STATE DATA LIKE AUDIO FILE FORMAT
         response, new_path, out_message = await handle_api2_audio_submission(task_info={}, file_id=message.voice.file_id if message.voice else message.audio.file_id, user_id=message.from_user.id, bot=message.bot)
         if not response:
             await message.answer(out_message or "Failed to process audio submission. Please try again.")
-            # task_msg = user_data.get("task", "")
-            # await message.answer(task_msg)
             logger.info("Audio submission failed")
             return
-        
+
         try:
             submission = SubmissionModel.model_validate(user_data)
             submission.type = "audio"
@@ -103,13 +107,17 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
             await message.answer("Session data missing. Please restart the task using /start.")
             return
 
-
         submission_response = await create_submission(submission, file_path=new_path)
         if not submission_response:
             await message.answer("Failed to submit your work. Please try again.")
             return
         await message.answer("Your audio submission has been received and recorded successfully. Thank you!")
-        await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='task'))
+
+        redo_task = user_data.get("redo_task", False)
+        if redo_task:
+            await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='redo'))
+        else:
+            await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='task'))
     except Exception as e:
         logger.error(f"Error in handle_audio_task_submission: {str(e)}")
         await message.answer("Error occurred, please try again.")

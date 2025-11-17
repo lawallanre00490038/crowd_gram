@@ -18,6 +18,7 @@ from src.models.api2_models.reviewer import ReviewModel, ReviewSubmissionRespons
 
 router = Router()
 
+
 @router.callback_query(F.data == "start_reviewer_task")
 async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
     try:
@@ -32,7 +33,7 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
         if not allocations:
             await callback.message.answer("No tasks available at the moment. Please check back later.")
             return
-        
+
         first_reviewer, first_task = get_first_reviewer(allocations)
         if not first_task:
             await callback.message.answer("No submissions available for review at the moment. Please check back later.")
@@ -43,21 +44,21 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
         submission = format_submission(first_task)
 
         caption = REVIEWER_TASK_MSG['intro'].format(
-                project_name=project_info["name"],
-                submission_type=first_task.submission.type,
-                payload_text=task_text,
-                submission=submission,
-                reviewer_instruction=project_info["reviewer_instructions"]
-            )
-        
+            project_name=project_info["name"],
+            submission_type=first_task.submission.type,
+            payload_text=task_text,
+            submission=submission,
+            reviewer_instruction=project_info["reviewer_instructions"]
+        )
+
         logger.trace(f"Task Submission Type: {first_task.submission.type}")
-        
+
         if first_task.submission.type == "audio":
             audio_file = URLInputFile(first_task.submission.file_url)
 
             await callback.message.answer_audio(
                 caption=caption,
-                audio=audio_file, 
+                audio=audio_file,
                 parse_mode="HTML",
                 protect_content=True,
                 reply_markup=review_task_inline_kb()
@@ -77,7 +78,6 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
     except Exception as e:
         logger.error(f"Error in start_reviewer_task: {str(e)}")
         await callback.message.answer("Error occurred, please try again.")
-
 
 
 @router.callback_query(F.data == "accept")
@@ -118,6 +118,8 @@ async def handle_accept(callback: CallbackQuery, state: FSMContext):
     except Exception as e:
         logger.error(f"Error in handle_accept: {str(e)}")
         await callback.message.answer("Error occurred, please try again.")
+
+    logger.debug("Starting reviewer accept task...")
 
     await callback.message.answer("Begin the next review task.", reply_markup=next_task_inline_kb(user_type="reviewer", task_type="normal"))
 
@@ -180,8 +182,7 @@ async def confirm_comments_handler(callback: CallbackQuery, state: FSMContext):
     if not selected:
         await callback.answer("Please select or write at least one comment before confirming.", show_alert=True)
         return
-    
-    
+
     logger.trace(selected)
     # Check if 'other' was selected — then ask for extra input
     if "other" in selected or "Other" in selected:
@@ -191,19 +192,19 @@ async def confirm_comments_handler(callback: CallbackQuery, state: FSMContext):
         await show_comment_summary(callback.message, state)
 
     await callback.answer()
-    
+
     return
 
 
 @router.message(ReviewStates.typing_extra_comment)
 async def handle_extra_comment(message: Message, state: FSMContext):
     extra_comment = message.text.strip()
-    
+
     # 🛑 Validation: Must not be empty
     if not extra_comment:
         await message.answer("⚠️ Please enter a valid comment (cannot be empty).")
         return
-    
+
     data = await state.get_data()
     selected = set(data.get("selected_comments", []))
     selected.add(extra_comment)
@@ -241,7 +242,7 @@ async def confirm_comment_submission(callback: CallbackQuery, state: FSMContext)
     decision = "reject"
     data = await state.get_data()
     selected_comments = data.get("selected_comments", [])
-    
+
     # 🛑 Final validation before sending to backend
     if not selected_comments:
         await callback.message.answer("⚠️ You must select or write at least one comment before submitting.")

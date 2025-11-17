@@ -136,7 +136,7 @@ def build_redo_task_message(task: TaskDetailResponseModel, instruction, return_t
     return task_msg, task_type
 
 
-async def update_state_with_task(state, project_info, task, task_type, task_msg):
+async def update_state_with_task(state, project_info, task, task_type, task_msg, redo_task=False):
     """Store task info in FSM state."""
     await state.update_data(
         project_id=project_info["id"],
@@ -145,7 +145,8 @@ async def update_state_with_task(state, project_info, task, task_type, task_msg)
         prompt_id=task.prompt.prompt_id,
         sentence_id=task.prompt.sentence_id,
         task_type=task_type,
-        task=task_msg
+        task=task_msg,
+        redo_task=redo_task
     )
     await state.set_state(TaskState.working_on_task)
 
