@@ -201,8 +201,10 @@ async def get_project_tasks_assigned_to_user(task_details: ProjectTaskRequestMod
     Returns:
         Optional[ProjectTaskDetailsResponseModel]: The task allocations or None if an error occurs.
     """
-    url = f"{BASE_URL_V2}/project/{task_details.project_id}/tasks/detailed"
-    params = {**task_details.model_dump(exclude_none=True)}
+    url = f"{BASE_URL_V2}/results/{task_details.project_id}/allocations/detailed"
+    params = {**task_details.model_dump(exclude_none=True, mode="json")}
+    logger.debug(
+        f"Fetching project tasks from URL: {url} with params: {params}")
 
     try:
         async with aiohttp.ClientSession() as session:
