@@ -8,3 +8,8 @@ class ContributorTaskStatus(str, Enum):
     REDO = "redo"
     SUBMITTED = "submitted"
     ASSIGNED = "assigned"
+
+
+class ReviewerTaskStatus(str, Enum):
+    PENDING = "pending"
+    ACCEPTED = "accepted"

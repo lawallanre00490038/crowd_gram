@@ -62,7 +62,7 @@ async def submit_review_details(review_data: ReviewModel) -> Optional[ReviewSubm
     Returns:
         str: A message indicating the result of the submission.
     """
-    url = f"{BASE_URL_V2}/reviewer/submissions/{review_data.submission_id}/review"\
+    url = f"{BASE_URL_V2}/reviewer/submissions/{review_data.submission_id}/review"
 
     # Separate query and body param4s as per API design
     params = {
@@ -74,7 +74,7 @@ async def submit_review_details(review_data: ReviewModel) -> Optional[ReviewSubm
         "decision": review_data.decision,
         "reviewer_comments": review_data.reviewer_comments,
     }
-    
+
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(url, json=body, params=params) as response:
@@ -82,7 +82,8 @@ async def submit_review_details(review_data: ReviewModel) -> Optional[ReviewSubm
                 if response.status == 200:
                     return ReviewSubmissionResponse(**await response.json())
                 else:
-                    logger.error(f"Failed to submit review ({response.status}): {response_text}")
+                    logger.error(
+                        f"Failed to submit review ({response.status}): {response_text}")
                     return None
     except Exception as e:
         logger.error(f"Error occurred: {str(e)}")

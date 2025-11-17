@@ -3,7 +3,7 @@ from typing import Optional
 import aiohttp
 
 from src.config import BASE_URL_V2
-from src.models.api2_models.projects import (Project, ProjectListResponseModel, ProjectUpdateModel,
+from src.models.api2_models.projects import (Project, ProjectListResponseModel, ProjectReviewerDetailsResponseModel, ProjectUpdateModel,
                                              ProjectTaskDetailsResponseModel, ProjectTaskRequestModel)
 
 
@@ -85,83 +85,83 @@ async def update_project(project_data: ProjectUpdateModel) -> Optional[Project]:
         logger.error(f"Exception during updating project: {str(e)}")
         return None
 
-    """Fetch assigned tasks for a specific project.
+    # """Fetch assigned tasks for a specific project.
 
-    Args:
-        project_data (ContributorProjectTaskRequestModel): The project data containing the project ID.
-    Returns:
-        Optional[ProjectAssignedTasksResponseModel]: The assigned tasks or None if an error occurs.
-    """
-    url = f"{BASE_URL_V2}/project/{project_data.project_id}/tasks/agent"
-    params = {**project_data.model_dump(exclude_none=True)}
+    # Args:
+    #     project_data (ContributorProjectTaskRequestModel): The project data containing the project ID.
+    # Returns:
+    #     Optional[ProjectAssignedTasksResponseModel]: The assigned tasks or None if an error occurs.
+    # """
+    # url = f"{BASE_URL_V2}/project/{project_data.project_id}/tasks/agent"
+    # params = {**project_data.model_dump(exclude_none=True)}
 
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, params=params) as response:
-                tasks_result = await response.json()
+    # try:
+    #     async with aiohttp.ClientSession() as session:
+    #         async with session.get(url, params=params) as response:
+    #             tasks_result = await response.json()
 
-                if response.status == 200:
-                    return ProjectTaskAllocationResponseModel.model_validate(tasks_result)
-                else:
-                    logger.error(
-                        f"Failed to fetch assigned tasks: {tasks_result.get('message', 'Unknown error')}")
-                    return None
-    except Exception as e:
-        logger.error(f"Exception during fetching assigned tasks: {str(e)}")
-        return None
+    #             if response.status == 200:
+    #                 return ProjectTaskAllocationResponseModel.model_validate(tasks_result)
+    #             else:
+    #                 logger.error(
+    #                     f"Failed to fetch assigned tasks: {tasks_result.get('message', 'Unknown error')}")
+    #                 return None
+    # except Exception as e:
+    #     logger.error(f"Exception during fetching assigned tasks: {str(e)}")
+    #     return None
 
-    """
-    Fetch task details for a specific project.
+    # """
+    # Fetch task details for a specific project.
 
-    Args:
-        project_data (ContributorProjectTaskRequestModel): The project data containing the project ID.
-        
-    Returns:
-        Optional[ProjectTaskDetailsResponseModel]: The task details or None if an error occurs.
-    """
-    url = f"{BASE_URL_V2}/project/{project_data.project_id}/tasks/agent/detailed"
+    # Args:
+    #     project_data (ContributorProjectTaskRequestModel): The project data containing the project ID.
 
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                tasks_result = await response.json()
+    # Returns:
+    #     Optional[ProjectTaskDetailsResponseModel]: The task details or None if an error occurs.
+    # """
+    # url = f"{BASE_URL_V2}/project/{project_data.project_id}/tasks/agent/detailed"
 
-                if response.status == 200:
-                    return ProjectTaskDetailsResponseModel.model_validate(tasks_result)
-                else:
-                    logger.error(
-                        f"Failed to fetch project task details: {tasks_result.get('message', 'Unknown error')}")
-                    return None
-    except Exception as e:
-        logger.error(
-            f"Exception during fetching project task details: {str(e)}")
-        return None
+    # try:
+    #     async with aiohttp.ClientSession() as session:
+    #         async with session.get(url) as response:
+    #             tasks_result = await response.json()
 
-    """Fetch task details for a specific project.
+    #             if response.status == 200:
+    #                 return ProjectTaskDetailsResponseModel.model_validate(tasks_result)
+    #             else:
+    #                 logger.error(
+    #                     f"Failed to fetch project task details: {tasks_result.get('message', 'Unknown error')}")
+    #                 return None
+    # except Exception as e:
+    #     logger.error(
+    #         f"Exception during fetching project task details: {str(e)}")
+    #     return None
 
-    Args:
-        project_data (ReviewerProjectAssignedTasksResponseModel): The project data containing the project ID.
+    # """Fetch task details for a specific project.
 
-    Returns:
-        Optional[ProjectTaskDetailsResponseModel]: The task details or None if an error occurs.
-    """
-    url = f"{BASE_URL_V2}/project/{project_data.project_id}/tasks/reviewer/detailed"
+    # Args:
+    #     project_data (ReviewerProjectAssignedTasksResponseModel): The project data containing the project ID.
 
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                tasks_result = await response.json()
+    # Returns:
+    #     Optional[ProjectTaskDetailsResponseModel]: The task details or None if an error occurs.
+    # """
+    # url = f"{BASE_URL_V2}/project/{project_data.project_id}/tasks/reviewer/detailed"
 
-                if response.status == 200:
-                    return ReviewerProjectAssignedTasksResponseModel.model_validate(tasks_result)
-                else:
-                    logger.error(
-                        f"Failed to fetch reviewer project task details: {tasks_result.get('message', 'Unknown error')}")
-                    return None
-    except Exception as e:
-        logger.error(
-            f"Exception during fetching reviewer project task details: {str(e)}")
-        return None
+    # try:
+    #     async with aiohttp.ClientSession() as session:
+    #         async with session.get(url) as response:
+    #             tasks_result = await response.json()
+
+    #             if response.status == 200:
+    #                 return ReviewerProjectAssignedTasksResponseModel.model_validate(tasks_result)
+    #             else:
+    #                 logger.error(
+    #                     f"Failed to fetch reviewer project task details: {tasks_result.get('message', 'Unknown error')}")
+    #                 return None
+    # except Exception as e:
+    #     logger.error(
+    #         f"Exception during fetching reviewer project task details: {str(e)}")
+    #     return None
 
 
 async def get_projects_details_by_user_email(user_email: str) -> Optional[ProjectListResponseModel]:
@@ -189,6 +189,37 @@ async def get_projects_details_by_user_email(user_email: str) -> Optional[Projec
     except Exception as e:
         logger.error(
             f"Exception during fetching projects by user email: {str(e)}")
+        return None
+
+
+async def get_project_tasks_assigned_to_reviewer(task_details: ProjectTaskRequestModel) -> Optional[ProjectReviewerDetailsResponseModel]:
+    """Fetch project task allocations assigned to a specific reviewer.
+
+    Args:
+        task_details (ProjectTaskRequestModel): The task details containing the user email.
+
+    Returns:
+        Optional[ProjectReviewerDetailsResponseModel]: The task allocations or None if an error occurs.
+    """
+    url = f"{BASE_URL_V2}/results/{task_details.project_id}/reviewer-allocations"
+    params = {**task_details.model_dump(exclude_none=True, mode="json")}
+    logger.debug(
+        f"Fetching project tasks from URL: {url} with params: {params}")
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params) as response:
+                tasks_result = await response.json()
+
+                if response.status == 200:
+                    return ProjectReviewerDetailsResponseModel.model_validate(tasks_result)
+                else:
+                    logger.error(
+                        f"Failed to fetch project tasks allocations by user: {tasks_result}")
+                    return None
+    except Exception as e:
+        logger.error(
+            f"Exception during fetching project tasks allocations by user: {str(e)}")
         return None
 
 

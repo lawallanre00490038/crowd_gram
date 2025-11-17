@@ -1,16 +1,14 @@
-from email.mime import text
 from aiogram.types import Message, CallbackQuery
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from typing import Optional
-from aiogram.types import URLInputFile
 
 from loguru import logger
 
 from src.constant.task_constants import ContributorTaskStatus
-from src.handlers.task_handlers.reviewer_handler import send_reviewer_task, get_first_reviewer, prepare_reviewer_state
-from src.handlers.task_handlers.utils import extract_project_info, fetch_user_tasks, format_submission
-from src.keyboards.inline import next_task_inline_kb, build_predefined_comments_kd, review_task_inline_kb, create_score_kb, summary_kb
+from src.handlers.task_handlers.reviewer_handler import send_reviewer_task, prepare_reviewer_state
+from src.handlers.task_handlers.utils import extract_project_info, fetch_reviewer_tasks
+from src.keyboards.inline import next_task_inline_kb, build_predefined_comments_kd, summary_kb
 from src.states.tasks import ReviewStates
 from src.services.server.api2_server.reviewer import submit_review_details
 from src.responses.task_formaters import REVIEWER_TASK_MSG
@@ -30,19 +28,13 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
             await callback.message.answer("Please select a project first using /project.")
             return
 
-        allocations = await fetch_user_tasks(project_info, status=ContributorTaskStatus.PENDING)
-        if not allocations:
+        allocations = await fetch_reviewer_tasks(project_info, status=ContributorTaskStatus.PENDING)
+        if len(allocations) == 0:
             await callback.message.answer("No tasks available at the moment. Please check back later.")
             return
-
-        first_reviewer, first_task = get_first_reviewer(allocations)
-        if not first_task:
-            await callback.message.answer("No submissions available for review at the moment. Please check back later.")
-            return
-
-        await send_reviewer_task(callback.message, first_task, project_info)
+        await send_reviewer_task(callback.message, allocations[0], project_info)
         # Update state
-        state_data = prepare_reviewer_state(allocations.reviewers)
+        state_data = prepare_reviewer_state(allocations[0])
         state_data.update({"project_id": project_info["id"]})
         await state.update_data(**state_data)
 
@@ -225,8 +217,8 @@ async def confirm_comment_submission(callback: CallbackQuery, state: FSMContext)
         reviewer_email = data.get("user_email")
 
         review_data = ReviewModel(
-            submission_id=submission_id,
-            project_id=project_id,
+            submission_id=str(submission_id),
+            project_id=str(project_id),
             reviewer_identifier=reviewer_email,
             decision="reject",
             reviewer_comments=selected_comments,

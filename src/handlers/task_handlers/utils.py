@@ -1,13 +1,13 @@
 from typing import List, Optional, Tuple, Union
 from loguru import logger
-from src.models.api2_models.projects import ContributorRole, ProjectTaskDetailsResponseModel, ProjectTaskRequestModel
-from src.models.api2_models.reviewer import ReviewerTaskResponseModel
+from src.models.api2_models.projects import ContributorRole, ProjectReviewerDetailsResponseModel, ProjectTaskDetailsResponseModel, ProjectTaskRequestModel, ReviewerTaskRequestModel
+from src.models.api2_models.reviewer import ReviewerAllocation, ReviewerTaskResponseModel
 from src.models.api2_models.reviewer import ReviewerTaskResponseModel
 from src.models.api2_models.task import TaskDetailResponseModel
 from src.responses.task_formaters import TASK_MSG
-from src.services.server.api2_server.projects import get_project_tasks_assigned_to_user
+from src.services.server.api2_server.projects import get_project_tasks_assigned_to_reviewer, get_project_tasks_assigned_to_user
 from src.states.tasks import TaskState
-from src.constant.task_constants import ContributorTaskStatus
+from src.constant.task_constants import ContributorTaskStatus, ReviewerTaskStatus
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from src.utils.file_url_handlers import build_file_section
@@ -39,6 +39,18 @@ def extract_project_info(user_data: dict):
         "instruction": project.get("agent_instructions", "Please translate carefully."),
         "return_type": project.get("return_type", "text"),
     }
+
+
+async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING) -> Optional[List[ReviewerAllocation]]:
+    """Retrieve allocated tasks for the reviewer."""
+    task_request = ReviewerTaskRequestModel(
+        project_id=project_info["id"],
+        agent_email=project_info["email"],
+        status=[status]
+    )
+    allocations = await get_project_tasks_assigned_to_reviewer(task_request)
+    logger.trace(f"Fetched allocations: {allocations}")
+    return allocations.allocations
 
 
 async def fetch_user_tasks(project_info, status=ContributorTaskStatus.ASSIGNED, role=ContributorRole.AGENT) -> Optional[ProjectTaskDetailsResponseModel]:
@@ -161,11 +173,10 @@ async def set_task_state_by_type(message: Message, state: FSMContext, task_type=
     return
 
 
-def format_submission(first_task):
+def format_submission(first_task: ReviewerAllocation, submission_type: str):
     """
     Return the proper submission content based on type.
     """
-    submission_type = first_task.submission.type
     if submission_type == "text":
-        return first_task.submission.payload_text
-    return build_file_section(submission_type, first_task.submission.file_url)
+        return first_task.submitted_text
+    return build_file_section(submission_type, first_task.file_url)

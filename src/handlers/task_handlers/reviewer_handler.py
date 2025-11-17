@@ -3,12 +3,13 @@ from aiogram.types import URLInputFile, Message
 from loguru import logger
 
 from src.keyboards.inline import review_task_inline_kb
-from src.models.api2_models.reviewer import ReviewerTaskResponseModel
+from src.models.api2_models.reviewer import ReviewerAllocation, ReviewerTaskResponseModel
 from src.models.api2_models.task import TaskDetailResponseModel
 from src.responses.task_formaters import REVIEWER_TASK_MSG
 from src.handlers.task_handlers.utils import format_submission
 
-async def send_reviewer_task(message: Message, first_task: ReviewerTaskResponseModel, project_info):
+
+async def send_reviewer_task(message: Message, first_task: ReviewerAllocation, project_info):
     """
     Sends a reviewer task message with appropriate formatting depending on submission type.
 
@@ -18,21 +19,21 @@ async def send_reviewer_task(message: Message, first_task: ReviewerTaskResponseM
         project_info: Dict containing project details (e.g., name, reviewer_instructions).
     """
 
-    task_text = first_task.prompt.sentence_text
-    submission = format_submission(first_task)
+    submission = format_submission(first_task, project_info["return_type"])
 
     caption = REVIEWER_TASK_MSG['intro'].format(
         project_name=project_info["name"],
-        submission_type=first_task.submission.type,
-        payload_text=task_text,
+        submission_type=project_info["return_type"],
+        payload_text=first_task.sentence,
         submission=submission,
         reviewer_instruction=project_info["reviewer_instructions"]
     )
 
-    logger.trace(f"Task Submission Type: {first_task.submission.type}")
+    logger.trace(f"Caption: {caption}")
 
-    if first_task.submission.type == "audio":
-        audio_file = URLInputFile(first_task.submission.file_url)
+    if project_info["return_type"] == "audio":
+
+        audio_file = URLInputFile(str(first_task.file_url))
         await message.answer_audio(
             caption=caption,
             audio=audio_file,
@@ -47,42 +48,13 @@ async def send_reviewer_task(message: Message, first_task: ReviewerTaskResponseM
             reply_markup=review_task_inline_kb()
         )
 
-def get_first_reviewer(
-    allocations
-) -> Tuple[Optional[ReviewerTaskResponseModel], Optional[TaskDetailResponseModel]]:
-    """
-    Returns the first reviewer and their first task, if available.
 
-    Args:
-        allocations: Object containing reviewer allocations.
-
-    Returns:
-        A tuple of (first_reviewer, first_task), or (None, None) if not found.
-    """
-    if not allocations or not getattr(allocations, 'reviewers', []):
-        return None, None
-
-    first_reviewer = allocations.reviewers[0]
-    if not getattr(first_reviewer, 'tasks', []):
-        return None, None
-
-    first_task = first_reviewer.tasks[0]
-    if getattr(first_task, 'submission', None) is None:
-        return None, None
-
-    return first_reviewer, first_task
-
-def prepare_reviewer_state(reviewers_list):
+def prepare_reviewer_state(allocations: ReviewerAllocation):
     """
     Convert Pydantic objects to dicts for FSM state storage.
     """
-    reviewers_list_dict = [reviewer.model_dump()
-                           for reviewer in reviewers_list]
-    first_task_dict = reviewers_list_dict[0].get("tasks", [{}])[0] if reviewers_list_dict else {}
-    submission_dict = first_task_dict.get("submission") or {}
-
     return {
-        "reviewers_list": reviewers_list_dict,
-        "submission_id": submission_dict.get("submission_id"),
-        "reviewer_id": reviewers_list_dict[0].get("reviewer_id"),
+        "reviewers_list": allocations.reviewer_allocation_id,
+        "submission_id": allocations.submission_id,
+        "reviewer_id": allocations.reviewer_id,
     }

@@ -1,14 +1,12 @@
 from enum import Enum
 from typing import List, Optional
 from datetime import datetime
-from src.constant.task_constants import ContributorTaskStatus
+from src.constant.task_constants import ContributorTaskStatus, ReviewerTaskStatus
+from src.models.api2_models.reviewer import ReviewerAllocation
 from src.models.api2_models.task import TaskDetailResponseModel
-from src.models.api2_models.reviewer import ReviewerTaskResponseModel
 from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, Field, RootModel, field_validator
-from typing import List, Optional, Any
-
 
 from typing import Optional, List
 from datetime import datetime
@@ -85,7 +83,25 @@ class ProjectTaskRequestModel(BaseModel):
     limit: int = 2                                      # default 2
 
 
+class ReviewerTaskRequestModel(BaseModel):
+    project_id: str
+    reviewer_email: Optional[str] = None
+    # optional list of strings
+    status: Optional[List[ReviewerTaskStatus]] = [
+        ReviewerTaskStatus.PENDING]
+    start_date: Optional[datetime] = None               # ISO datetime
+    end_date: Optional[datetime] = None                 # ISO datetime
+    skip: int = 0                                       # default 0
+    limit: int = 2                                      # default 2
+
+
 class ProjectTaskDetailsResponseModel(BaseModel):
     message: str
     total_count: int
     allocations: List[TaskDetailResponseModel] = []
+
+
+class ProjectReviewerDetailsResponseModel(BaseModel):
+    message: str
+    total_count: int
+    allocations: List[ReviewerAllocation] = []
