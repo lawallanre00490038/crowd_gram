@@ -1,6 +1,9 @@
+from enum import Enum
 from pydantic import BaseModel, EmailStr, UUID4
 from typing import Dict, List, Literal, Optional
 from datetime import datetime
+
+from src.constant.task_constants import ContributorTaskStatus
 
 
 class TaskModel(BaseModel):
@@ -73,12 +76,21 @@ class ReviewInfoModel(BaseModel):
     reviewers: List[ReviewModel]
 
 
+class AllocationType(str, Enum):
+    AGENT_ALLOCATION = "agent_allocation"
+    REVIEWER_ALLOCATION = "reviewer_allocation"
+
+
 class TaskDetailResponseModel(BaseModel):
+    type: AllocationType
+    allocation_id: str
     task_id: str
-    assignment_id: str
+    status: ContributorTaskStatus
     assigned_at: datetime
-    status: str
-    prompt: PromptInfoModel
-    submission: Optional[SubmissionInfoModel] = None
-    review: Optional[ReviewInfoModel] = None
-    user_email: Optional[str] = None
+    agent_email: str
+    agent_name: str
+    submission_id: Optional[str] = None
+    sentence: Optional[str] = None
+    sentence_id: Optional[str] = None
+    file_url: Optional[str] = None
+    review_info: Optional[dict] = None

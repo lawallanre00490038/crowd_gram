@@ -25,6 +25,9 @@ async def handle_project_selection(callback: CallbackQuery, state: FSMContext):
         if 0 <= project_index < len(projects_details):
             selected_project = projects_details[project_index]
             await state.update_data(project_index=project_index)
+            description = selected_project.get("description", "")
+            logger.debug(
+                f"Selected project: {description}")
             if role == "agent":
                 user_type = "Agent"
                 agent_coin = selected_project.get("agent_coin", 0.0)
@@ -33,6 +36,7 @@ async def handle_project_selection(callback: CallbackQuery, state: FSMContext):
                         "name", "Unknown Project"),
                     user_type=user_type,
                     user_coin=agent_coin,
+                    description=description,
                     total_tasks=selected_project.get("total_tasks", 0)
                 )
                 await callback.message.answer(welcome_message, reply_markup=start_task_inline_kb(user_type=user_type))
@@ -43,6 +47,7 @@ async def handle_project_selection(callback: CallbackQuery, state: FSMContext):
                     project_name=selected_project.get(
                         "name", "Unknown Project"),
                     user_type=user_type,
+                    description=selected_project.get("description", ""),
                     user_coin=reviewer_coin
                 )
                 await callback.message.answer(welcome_message, reply_markup=start_task_inline_kb(user_type=user_type))

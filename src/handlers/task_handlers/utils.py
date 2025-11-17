@@ -1,6 +1,6 @@
 from typing import List, Optional, Tuple, Union
 from loguru import logger
-from src.models.api2_models.projects import ProjectTaskDetailsResponseModel, ProjectTaskRequestModel
+from src.models.api2_models.projects import ContributorRole, ProjectTaskDetailsResponseModel, ProjectTaskRequestModel
 from src.models.api2_models.reviewer import ReviewerTaskResponseModel
 from src.models.api2_models.reviewer import ReviewerTaskResponseModel
 from src.models.api2_models.task import TaskDetailResponseModel
@@ -41,25 +41,26 @@ def extract_project_info(user_data: dict):
     }
 
 
-async def fetch_user_tasks(project_info, status=ContributorTaskStatus.ASSIGNED) -> Optional[ProjectTaskDetailsResponseModel]:
+async def fetch_user_tasks(project_info, status=ContributorTaskStatus.ASSIGNED, role=ContributorRole.AGENT) -> Optional[ProjectTaskDetailsResponseModel]:
     """Retrieve allocated tasks for the user."""
     task_request = ProjectTaskRequestModel(
         project_id=project_info["id"],
-        email=project_info["email"],
-        status=status
+        agent_email=project_info["email"],
+        role=role,
+        status=[status]
     )
     allocations = await get_project_tasks_assigned_to_user(task_request)
     logger.trace(f"Fetched allocations: {allocations}")
     return allocations
 
 
-def get_first_task(allocations):
+def get_first_task(allocations) -> TaskDetailResponseModel:
     """Get the first available task from allocations."""
-    tasks = getattr(allocations, "tasks", [])
+    tasks = getattr(allocations, "allocations", [])
     return tasks[0] if tasks else None
 
 
-def build_task_message(task, instruction, return_type):
+def build_task_message(task: TaskDetailResponseModel, instruction, return_type):
     """Construct the appropriate message for the task type."""
 
     task_type = type_map.get(return_type)
@@ -67,7 +68,7 @@ def build_task_message(task, instruction, return_type):
         logger.error(f"Unknown task type for return_type={return_type}")
         task_type = "Unknown"
 
-    task_text = getattr(task.prompt, "sentence_text",
+    task_text = getattr(task, "sentence",
                         "No task content provided.")
 
     task_msg = TASK_MSG["intro"].format(
@@ -124,14 +125,13 @@ def build_redo_task_message(task: TaskDetailResponseModel, instruction, return_t
     return task_msg, task_type
 
 
-async def update_state_with_task(state, project_info, task, task_type, task_msg, redo_task=False):
+async def update_state_with_task(state, project_info, task: TaskDetailResponseModel, task_type, task_msg, redo_task=False):
     """Store task info in FSM state."""
     await state.update_data(
         project_id=project_info["id"],
         task_id=task.task_id,
-        assignment_id=task.assignment_id,
-        prompt_id=task.prompt.prompt_id,
-        sentence_id=task.prompt.sentence_id,
+        agent_allocation_id=task.allocation_id,
+        sentence_id=task.sentence_id,
         task_type=task_type,
         task=task_msg,
         redo_task=redo_task
@@ -169,4 +169,3 @@ def format_submission(first_task):
     if submission_type == "text":
         return first_task.submission.payload_text
     return build_file_section(submission_type, first_task.submission.file_url)
-

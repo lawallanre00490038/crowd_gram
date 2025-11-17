@@ -27,7 +27,7 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
             return
 
         allocations = await fetch_user_tasks(project_info)
-        if not (allocations and getattr(allocations, "tasks", None)):
+        if not (allocations and getattr(allocations, "allocations", None)):
             await callback.message.answer("No tasks available at the moment. Please check back later.")
             return
 
@@ -121,12 +121,8 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
         if redo_task:
             await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='redo'))
         else:
-            if user_data.get("is_redo"):
-            await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='redo'))
-        else:
             await message.answer("Begin the next task.", reply_markup=next_task_inline_kb(user_type="agent", task_type='task'))
     except Exception as e:
         logger.error(f"Error in handle_audio_task_submission: {str(e)}")
         await message.answer("Error occurred, please try again.")
-
     return
