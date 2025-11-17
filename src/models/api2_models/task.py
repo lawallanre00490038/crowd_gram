@@ -4,6 +4,7 @@ from typing import Dict, List, Literal, Optional
 from datetime import datetime
 
 from src.constant.task_constants import ContributorTaskStatus
+from uuid import UUID
 
 
 class TaskModel(BaseModel):
@@ -81,6 +82,17 @@ class AllocationType(str, Enum):
     REVIEWER_ALLOCATION = "reviewer_allocation"
 
 
+class ReviewEvent(BaseModel):
+    type: str
+    review_id: UUID
+    reviewer_id: UUID
+    reviewer_email: EmailStr
+    reviewer_name: str
+    decision: str
+    reviewer_comments: List[str]
+    reviewed_at: datetime
+
+
 class TaskDetailResponseModel(BaseModel):
     type: AllocationType
     allocation_id: str
@@ -93,4 +105,4 @@ class TaskDetailResponseModel(BaseModel):
     sentence: Optional[str] = None
     sentence_id: Optional[str] = None
     file_url: Optional[str] = None
-    review_info: Optional[dict] = None
+    review_info: Optional[ReviewEvent] = None

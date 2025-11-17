@@ -43,8 +43,8 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
         task_msg, task_type = build_redo_task_message(
             first_task, project_info["instruction"], project_info["return_type"])
 
-        if first_task.submission.type == "audio":
-            audio_file = URLInputFile(first_task.submission.file_url)
+        if project_info["return_type"] == "audio":
+            audio_file = URLInputFile(str(first_task.file_url))
 
             await callback.message.answer_audio(
                 caption=task_msg,
