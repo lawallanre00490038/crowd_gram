@@ -71,12 +71,9 @@ class ContributorRole(str, Enum):
 
 class ProjectTaskRequestModel(BaseModel):
     project_id: str
-    role: Optional[ContributorRole] = ContributorRole.AGENT
     agent_email: Optional[str] = None
-    reviewer_email: Optional[str] = None
     # optional list of strings
-    status: Optional[List[ContributorTaskStatus]] = [
-        ContributorTaskStatus.ASSIGNED]
+    status: Optional[List[ContributorTaskStatus]]
     start_date: Optional[datetime] = None               # ISO datetime
     end_date: Optional[datetime] = None                 # ISO datetime
     skip: int = 0                                       # default 0
@@ -85,10 +82,9 @@ class ProjectTaskRequestModel(BaseModel):
 
 class ReviewerTaskRequestModel(BaseModel):
     project_id: str
-    reviewer_email: Optional[str] = None
+    reviewer_email: Optional[str]
     # optional list of strings
-    status: Optional[List[ReviewerTaskStatus]] = [
-        ReviewerTaskStatus.PENDING]
+    status: Optional[List[ReviewerTaskStatus]]
     start_date: Optional[datetime] = None               # ISO datetime
     end_date: Optional[datetime] = None                 # ISO datetime
     skip: int = 0                                       # default 0

@@ -47,39 +47,25 @@ async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING) 
     task_request = ReviewerTaskRequestModel(
         project_id=project_info["id"],
         reviewer_email=project_info["email"],
+        status=[status]
     )
 
-    if status == None:
-        task_request.status = []
-    else:
-        task_request.status = [status]
     allocations = await get_project_tasks_assigned_to_reviewer(task_request)
     logger.trace(f"Fetched allocations: {allocations}")
     return allocations.allocations
 
 
-async def fetch_user_tasks(project_info, status=ContributorTaskStatus.ASSIGNED, role=ContributorRole.AGENT) -> Optional[ProjectTaskDetailsResponseModel]:
+async def fetch_user_tasks(project_info, status=ContributorTaskStatus.ASSIGNED) -> Optional[ProjectTaskDetailsResponseModel]:
     """Retrieve allocated tasks for the user."""
     task_request = ProjectTaskRequestModel(
+        agent_email = project_info["email"],
         project_id=project_info["id"],
-        role=role,
         status=[status]
     )
-    if role == ContributorRole.REVIEWER:
-        task_request.reviewer_email = project_info["email"]
-    else:
-        task_request.agent_email = project_info["email"]
 
     allocations = await get_project_tasks_assigned_to_user(task_request)
     logger.trace(f"Fetched allocations: {allocations}")
-    return allocations
-
-
-def get_first_task(allocations) -> TaskDetailResponseModel:
-    """Get the first available task from allocations."""
-    tasks = getattr(allocations, "allocations", [])
-    return tasks[0] if tasks else None
-
+    return allocations.allocations
 
 def build_task_message(task: TaskDetailResponseModel, instruction, return_type):
     """Construct the appropriate message for the task type."""
@@ -150,7 +136,7 @@ async def update_state_with_task(state, project_info, task: TaskDetailResponseMo
     await state.update_data(
         project_id=project_info["id"],
         task_id=task.task_id,
-        agent_allocation_id=task.allocation_id,
+        agent_allocation_id=task.agent_allocation_id,
         sentence_id=task.sentence_id,
         task_type=task_type,
         task=task_msg,

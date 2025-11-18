@@ -4,7 +4,7 @@ import aiohttp
 
 from src.config import BASE_URL_V2
 from src.models.api2_models.projects import (Project, ProjectListResponseModel, ProjectReviewerDetailsResponseModel, ProjectUpdateModel,
-                                             ProjectTaskDetailsResponseModel, ProjectTaskRequestModel)
+                                             ProjectTaskDetailsResponseModel, ProjectTaskRequestModel, ReviewerTaskRequestModel)
 
 
 async def get_projects(project_data: dict) -> Optional[Project]:
@@ -192,11 +192,11 @@ async def get_projects_details_by_user_email(user_email: str) -> Optional[Projec
         return None
 
 
-async def get_project_tasks_assigned_to_reviewer(task_details: ProjectTaskRequestModel) -> Optional[ProjectReviewerDetailsResponseModel]:
+async def get_project_tasks_assigned_to_reviewer(task_details: ReviewerTaskRequestModel) -> Optional[ProjectReviewerDetailsResponseModel]:
     """Fetch project task allocations assigned to a specific reviewer.
 
     Args:
-        task_details (ProjectTaskRequestModel): The task details containing the user email.
+        task_details (ReviewerTaskRequestModel): The task details containing the user email.
 
     Returns:
         Optional[ProjectReviewerDetailsResponseModel]: The task allocations or None if an error occurs.
@@ -232,7 +232,7 @@ async def get_project_tasks_assigned_to_user(task_details: ProjectTaskRequestMod
     Returns:
         Optional[ProjectTaskDetailsResponseModel]: The task allocations or None if an error occurs.
     """
-    url = f"{BASE_URL_V2}/results/{task_details.project_id}/allocations/detailed"
+    url = f"{BASE_URL_V2}/results/{task_details.project_id}/agent-allocations"
     params = {**task_details.model_dump(exclude_none=True, mode="json")}
     logger.debug(
         f"Fetching project tasks from URL: {url} with params: {params}")

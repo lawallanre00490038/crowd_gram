@@ -92,17 +92,29 @@ class ReviewEvent(BaseModel):
     reviewer_comments: List[str]
     reviewed_at: datetime
 
-
 class TaskDetailResponseModel(BaseModel):
-    type: AllocationType
-    allocation_id: str
+    # Existing fields, updated if necessary
+    agent_allocation_id: str
     task_id: str
     status: ContributorTaskStatus
     assigned_at: datetime
     agent_email: str
-    agent_name: str
+    agent_name: Optional[str] = None
+    
+    # Fields from the new schema
+    project_id: str  # Added from new schema
     submission_id: Optional[str] = None
-    sentence: Optional[str] = None
-    sentence_id: Optional[str] = None
+    submitted_at: Optional[datetime] = None  # Added from new schema
     file_url: Optional[str] = None
-    review_info: Optional[ReviewEvent] = None
+    payload_text: Optional[str] = None  # Added from new schema
+    agent_id: str  # Added from new schema, using agent_id from the new schema
+    sentence_id: Optional[str] = None
+    sentence: Optional[str] = None
+    reviewer_comments: Optional[str] = None  # Replaces review_info's comment field
+    review_decision: Optional[str] = None  # Replaces review_info's decision field
+    reviewed_at: Optional[datetime] = None  # Replaces review_info's timestamp
+
+    # Removed/Modified fields:
+    # reviewer_email: Optional[str] = None  # Removed (not in new schema)
+    # reviewer_name: Optional[str] = None    # Removed (not in new schema)
+    # review_info: Optional[ReviewEvent] = None  # Replaced by reviewer_comments, review_decision, reviewed_at

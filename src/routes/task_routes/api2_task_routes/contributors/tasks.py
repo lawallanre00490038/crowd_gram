@@ -10,13 +10,11 @@ from src.services.quality_assurance.text_validation import validate_text_input
 from src.states.tasks import TaskState
 from src.services.server.api2_server.agent_submission import create_submission
 from src.handlers.task_handlers.audio_task_handler import handle_api2_audio_submission
-from src.handlers.task_handlers.utils import extract_project_info, fetch_user_tasks, get_first_task, build_task_message, set_task_state_by_type, update_state_with_task
+from src.handlers.task_handlers.utils import extract_project_info, fetch_user_tasks, build_task_message, set_task_state_by_type, update_state_with_task
 from src.responses.task_formaters import SUBMISSION_RECIEVED_MESSAGE
 
 
 router = Router()
-
-
 @router.callback_query(F.data == "start_agent_task")
 async def start_task(callback: CallbackQuery, state: FSMContext):
     try:
@@ -27,14 +25,11 @@ async def start_task(callback: CallbackQuery, state: FSMContext):
             return
 
         allocations = await fetch_user_tasks(project_info)
-        if not (allocations and getattr(allocations, "allocations", None)):
+        if allocations is None:
             await callback.message.answer("No tasks available at the moment. Please check back later.")
             return
 
-        first_task = get_first_task(allocations)
-        if not first_task:
-            await callback.message.answer("No tasks available at the moment. Please check back later.")
-            return
+        first_task = allocations[0]
 
         task_msg, task_type = build_task_message(
             first_task, project_info["instruction"], project_info["return_type"])
