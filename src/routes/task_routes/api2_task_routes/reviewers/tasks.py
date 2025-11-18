@@ -251,3 +251,4 @@ async def restart_comment_submission(callback: CallbackQuery, state: FSMContext)
     await start_reviewer_task(callback, state)
 
     return
+    
