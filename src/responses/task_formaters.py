@@ -58,9 +58,7 @@ You can now proceed to the next task.
 
 ERROR_MESSAGE = """
 ⚠️ <b>There were some issues with your submission:</b>
-
 {errors}
-
 Please review and correct them, then try again.
 """
 
@@ -98,11 +96,11 @@ Focus on what is happening, the people, objects, and actions you see.
 
 TASK_MSG = {
     "intro": (
-        "🆕 Your task is <b>{task_type}</b> task!\n\n\n"
+        "🆕 Your task is <b>{task_type}</b> task!\n\n"
         "Instructions: <i>{task_instruction}</i>\n\n"
         "───────────────────────────────────────────\n"
         "Task Prompt: <b>{task_text}</b>\n"
-        "───────────────────────────────────────────\n\n\n"
+        "───────────────────────────────────────────\n\n"
         "📝 Please follow the instructions carefully and submit your work when done."
     ),
 

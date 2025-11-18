@@ -1,6 +1,10 @@
+from enum import Enum
 from pydantic import BaseModel, EmailStr, UUID4
 from typing import Dict, List, Literal, Optional
 from datetime import datetime
+
+from src.constant.task_constants import ContributorTaskStatus
+from uuid import UUID
 
 
 class TaskModel(BaseModel):
@@ -73,12 +77,48 @@ class ReviewInfoModel(BaseModel):
     reviewers: List[ReviewModel]
 
 
+class AllocationType(str, Enum):
+    AGENT_ALLOCATION = "agent_allocation"
+    REVIEWER_ALLOCATION = "reviewer_allocation"
+
+class ReviewDecision(str, Enum):
+    ACCEPT = "accept"
+    REJECTED = "rejected"
+
+
+class ReviewEvent(BaseModel):
+    type: str
+    review_id: UUID
+    reviewer_id: UUID
+    reviewer_email: EmailStr
+    reviewer_name: str
+    decision: str
+    reviewer_comments: List[str]
+    reviewed_at: datetime
+
 class TaskDetailResponseModel(BaseModel):
+    # Existing fields, updated if necessary
+    agent_allocation_id: str
     task_id: str
-    assignment_id: str
+    status: ContributorTaskStatus
     assigned_at: datetime
-    status: str
-    prompt: PromptInfoModel
-    submission: Optional[SubmissionInfoModel] = None
-    review: Optional[ReviewInfoModel] = None
-    user_email: Optional[str] = None
+    agent_email: str
+    agent_name: Optional[str] = None
+    
+    # Fields from the new schema
+    project_id: str  # Added from new schema
+    submission_id: Optional[str] = None
+    submitted_at: Optional[datetime] = None  # Added from new schema
+    file_url: Optional[str] = None
+    payload_text: Optional[str] = None  # Added from new schema
+    agent_id: str  # Added from new schema, using agent_id from the new schema
+    sentence_id: Optional[str] = None
+    sentence: Optional[str] = None
+    reviewer_comments: Optional[List[str]] = None  # Replaces review_info's comment field
+    review_decision: Optional[ReviewDecision] = None  # Replaces review_info's decision field
+    reviewed_at: Optional[datetime] = None  # Replaces review_info's timestamp
+
+    # Removed/Modified fields:
+    # reviewer_email: Optional[str] = None  # Removed (not in new schema)
+    # reviewer_name: Optional[str] = None    # Removed (not in new schema)
+    # review_info: Optional[ReviewEvent] = None  # Replaced by reviewer_comments, review_decision, reviewed_at

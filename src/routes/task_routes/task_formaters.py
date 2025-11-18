@@ -30,9 +30,7 @@ You can now proceed to the next task.
 
 ERROR_MESSAGE = """
 ⚠️ <b>There were some issues with your submission:</b>
-
 {errors}
-
 Please review and correct them, then try again.
 """
 
@@ -50,7 +48,7 @@ Guide: {question}
 Example: {example}\n
 Your {target_lang} description:
 """
-        
+
 
 IMAGE_SUBMISSION_RECEIVED_MESSAGE = """
 ✅ Image received!

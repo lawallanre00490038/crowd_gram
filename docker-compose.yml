@@ -1,62 +1,32 @@
+version: "3.9"
+
 services:
-  backend:
-    build: ./backend_app
-    container_name: backend
+  aiogram-bot:
+    build: .
+    container_name: aiogram_bot
     restart: always
-    ports:
-      - "8000:8000" # backend API
     env_file:
-      - ./backend_app/.env
+      - .dockerenv
     depends_on:
-      - redis
-      - db
-
-  bot:
-    build: ./bot_app
-    container_name: bot
-    restart: always
-    ports:
-      - "10000:10000" # bot service (polling)
-    env_file:
-      - ./bot_app/.env
-    depends_on:
-      - backend
-
-  celery:
-    build: ./backend_app
-    container_name: celery
-    command: celery -A src.core.celery_app worker -l info --concurrency=4
-    environment:
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
-    restart: always
-    depends_on:
-      - backend
-      - redis
-      - db
-
-  redis:
-    image: redis/redis-stack-server:latest
-    container_name: redis
-    restart: always
-    ports:
-      - "6379:6379"
+      - mongodb
     volumes:
-      - redis_data:/data
+      - ./logs:/app/logs  # ✅ Persist logs on host
+    command: ["uv", "run", "main.py"]
 
-  db:
-    image: postgres:16
-    container_name: postgres
+  mongodb:
+    image: mongodb/mongodb-community-server:latest
+    container_name: database
     restart: always
     environment:
-      POSTGRES_DB: aiogram
-      POSTGRES_USER: equalyzai
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      MONGODB_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGODB_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGODB_INITDB_DATABASE: ${MONGO_DB}
     ports:
-      - "5433:5432"
+      - "27017:27017"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mongo_data:/data/db   # ✅ Persist MongoDB data
+      - mongo_logs:/var/log/mongodb  # Optional: Mongo logs
 
 volumes:
-  redis_data:
-  postgres_data:
+  mongo_data:
+  mongo_logs:

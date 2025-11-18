@@ -84,7 +84,7 @@ def check_audio_quality(
     data: Optional[np.ndarray] = None,
     sr: Optional[int] = None,
     try_enhance: int = 1,
-    min_snr_value: float = 40,
+    min_snr_value: float = 20,
     min_snr_value_edit: float = 15,
     min_speech_level: float = -50,
     max_speech_level: float = -10,

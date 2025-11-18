@@ -8,21 +8,21 @@ class SubmissionModel(BaseModel):
     """Model for creating a new submission."""
     project_id: str
     task_id: str
-    assignment_id: str
+    agent_allocation_id: str
     user_id: Optional[str] = None
     user_email: Optional[str] = None
     type: Optional[str] = None
     payload_text: Optional[str] = None
     telegram_file_id: Optional[str] = None
     file: Optional[Union[str, dict]] = None
-    
+
 
 class SubmissionResponseModel(BaseModel):
     """Model representing a submission response."""
     submission_id: str
     project_id: str
     task_id: str
-    assignment_id: str
+    agent_allocation_id: str
     user_id: Optional[str] = None
     user_email: Optional[str] = None
     type: Optional[str] = None
