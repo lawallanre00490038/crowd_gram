@@ -37,7 +37,8 @@ def start_task_inline_kb(user_type: str):
                 [InlineKeyboardButton(
                     text="Start Task", callback_data="start_reviewer_task"),
                     InlineKeyboardButton(
-                 text="Redo Task", callback_data="start_reviewer_redo_task")]
+                 text="Redo Task", callback_data="start_reviewer_redo_task")
+                 ]
             ]
         )
 

@@ -34,20 +34,6 @@ def extract_project_info(user_data: dict):
     }
 
 
-async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING) -> Optional[List[ReviewerAllocation]]:
-    """Retrieve allocated tasks for the reviewer."""
-
-    task_request = ReviewerTaskRequestModel(
-        project_id=project_info["id"],
-        reviewer_email=project_info["email"],
-        status=[status]
-    )
-
-    allocations = await get_project_tasks_assigned_to_reviewer(task_request)
-    logger.trace(f"Fetched allocations: {allocations}")
-    return allocations.allocations
-
-
 async def fetch_user_tasks(project_info, status=ContributorTaskStatus.ASSIGNED) -> Optional[ProjectTaskDetailsResponseModel]:
     """Retrieve allocated tasks for the user."""
     task_request = ProjectTaskRequestModel(

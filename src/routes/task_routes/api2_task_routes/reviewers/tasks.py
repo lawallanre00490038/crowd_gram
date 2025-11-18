@@ -5,9 +5,8 @@ from aiogram.fsm.context import FSMContext
 from loguru import logger
 
 from src.constant.task_constants import ContributorTaskStatus
-from src.handlers.task_handlers.reviewer_handler import process_review_submission, send_reviewer_task
-from src.handlers.task_handlers.utils import extract_project_info, fetch_reviewer_tasks
-from src.keyboards.inline import next_task_inline_kb, build_predefined_comments_kd, summary_kb
+from src.handlers.task_handlers.reviewer_handler import handle_reviewer_task_start, process_review_submission
+from src.keyboards.inline import build_predefined_comments_kd, summary_kb
 from src.states.tasks import ReviewStates
 from src.responses.task_formaters import REVIEWER_TASK_MSG
 
@@ -17,22 +16,12 @@ router = Router()
 @router.callback_query(F.data == "start_reviewer_task")
 async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
     try:
-        user_data = await state.get_data()
-        project_info = extract_project_info(user_data)
-
-        if not project_info["email"] or not project_info["id"]:
-            await callback.message.answer("Please select a project first using /project.")
-            return
-
-        allocations = await fetch_reviewer_tasks(project_info, status=ContributorTaskStatus.PENDING)
-        if len(allocations) == 0:
-            await callback.message.answer("No tasks available at the moment. Please check back later.")
-            return
-        
-        first_task = allocations[0]
-        await send_reviewer_task(callback.message, first_task, project_info)
-        await state.update_data({"project_id": project_info["id"], "submission_id": str(first_task.submission_id)})
-
+        await handle_reviewer_task_start(
+            callback=callback,
+            state=state,
+            status_filter=ContributorTaskStatus.PENDING,
+            no_tasks_message="No tasks available at the moment. Please check back later."
+        )
     except Exception as e:
         logger.error(f"Error in start_reviewer_task: {str(e)}")
         await callback.message.answer("Error occurred, please try again.")

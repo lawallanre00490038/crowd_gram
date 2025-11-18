@@ -97,11 +97,12 @@ class ReviewerAllocation(BaseModel):
     payload_text: Optional[str] = None
     file_url: Optional[HttpUrl] = None
 
-    reviewer_email: EmailStr
-    reviewer_name: str
-    agent_email: EmailStr
-    agent_name: str
-
+    reviewer_email: Optional[EmailStr] = None
+    reviewer_name: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    
+    agent_email: Optional[EmailStr] = None
+    agent_name: Optional[str] = None
     status: ReviewerTaskStatus
     assigned_at: datetime
     agent_submission_date: datetime

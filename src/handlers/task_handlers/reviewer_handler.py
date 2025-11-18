@@ -1,17 +1,88 @@
 from typing import Dict, Optional, Tuple
 from aiogram.types import URLInputFile, Message
+from aiogram.fsm.context import FSMContext
 from loguru import logger
 
 from aiogram.types import CallbackQuery
 from typing import Optional, List
 
+from src.constant.task_constants import ReviewerTaskStatus
 from src.keyboards.inline import next_task_inline_kb, review_task_inline_kb
+from src.models.api2_models.projects import ReviewerTaskRequestModel
 from src.models.api2_models.reviewer import ReviewModel, ReviewSubmissionResponse, ReviewerAllocation, ReviewerTaskResponseModel
 from src.models.api2_models.task import TaskDetailResponseModel
 from src.responses.task_formaters import REVIEWER_TASK_MSG
-from src.handlers.task_handlers.utils import format_submission
+from src.handlers.task_handlers.utils import extract_project_info, format_submission
+from src.services.server.api2_server.projects import get_project_tasks_assigned_to_reviewer
 from src.services.server.api2_server.reviewer import submit_review_details
 
+async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING) -> Optional[List[ReviewerAllocation]]:
+    """Retrieve allocated tasks for the reviewer."""
+
+
+    task_request = ReviewerTaskRequestModel(
+        project_id=project_info["id"],
+        reviewer_email=project_info["email"],
+        # status=[status]
+        status=[ReviewerTaskStatus.PENDING]
+    )
+
+    allocations = await get_project_tasks_assigned_to_reviewer(task_request)
+
+    all_allocation = allocations.allocations 
+
+    if status == ReviewerTaskStatus.REDO:
+        new_allocation = []
+        for allocate in all_allocation:
+            if allocate.reviewed_at is not None:
+                new_allocation.append(allocate)
+        return new_allocation
+
+    elif status == ReviewerTaskStatus.PENDING:
+        new_allocation = []
+        for allocate in all_allocation:
+            if allocate.reviewed_at is None:
+                new_allocation.append(allocate)
+        return new_allocation
+    
+    logger.trace(f"Fetched allocations: {allocations}")
+    return allocations.allocations
+
+async def handle_reviewer_task_start(
+    callback: CallbackQuery,
+    state: FSMContext,
+    status_filter: Optional[str],
+    no_tasks_message: str,
+):
+    """
+    Reusable function to handle the core logic of fetching, sending, and updating
+    state for reviewer tasks.
+    """
+    user_data = await state.get_data()
+    project_info = extract_project_info(user_data) # Ensure extract_project_info is awaited if necessary
+
+    # 1. Validation check
+    if not project_info or not project_info.get("email") or not project_info.get("id"):
+        await callback.message.answer("Please select a project first using /project.")
+        return
+
+    # 2. Fetch tasks using the provided status filter
+    allocations = await fetch_reviewer_tasks(project_info, status=status_filter)
+
+    # 3. Check for available tasks
+    if len(allocations) == 0:
+        await callback.message.answer(no_tasks_message)
+        return
+
+    first_task = allocations[0]
+
+    # 4. Send the task and update state
+    await send_reviewer_task(callback.message, first_task, project_info)
+
+    await state.update_data({
+        "project_id": project_info["id"],
+        "submission_id": str(first_task.submission_id)
+    })
 
 async def send_reviewer_task(message: Message, first_task: ReviewerAllocation, project_info):
     """
@@ -108,7 +179,7 @@ async def process_review_submission(
         await callback.message.answer(
             "✅ Review submitted successfully!" if decision == "reject" else "✅ Review accepted successfully!"
         )
-        await complete_review_response(callback.message, state_data.get("redo_task", False))
+        await complete_review_response(callback.message, state_data)
         return True
 
     await callback.message.answer("❌ Failed to submit review. Please try again later.")
