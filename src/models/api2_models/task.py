@@ -81,6 +81,10 @@ class AllocationType(str, Enum):
     AGENT_ALLOCATION = "agent_allocation"
     REVIEWER_ALLOCATION = "reviewer_allocation"
 
+class ReviewDecision(str, Enum):
+    ACCEPT = "accept"
+    REJECTED = "rejected"
+
 
 class ReviewEvent(BaseModel):
     type: str
@@ -110,8 +114,8 @@ class TaskDetailResponseModel(BaseModel):
     agent_id: str  # Added from new schema, using agent_id from the new schema
     sentence_id: Optional[str] = None
     sentence: Optional[str] = None
-    reviewer_comments: Optional[str] = None  # Replaces review_info's comment field
-    review_decision: Optional[str] = None  # Replaces review_info's decision field
+    reviewer_comments: Optional[List[str]] = None  # Replaces review_info's comment field
+    review_decision: Optional[ReviewDecision] = None  # Replaces review_info's decision field
     reviewed_at: Optional[datetime] = None  # Replaces review_info's timestamp
 
     # Removed/Modified fields:

@@ -1,0 +1,139 @@
+from loguru import logger
+
+from aiogram.fsm.context import FSMContext
+from typing import Optional, Callable, Tuple
+from aiogram.types import CallbackQuery, URLInputFile
+
+
+from src.constant.task_constants import ContributorTaskStatus
+from src.handlers.task_handlers.utils import extract_project_info, fetch_user_tasks, set_task_state_by_type, update_state_with_task
+from src.models.api2_models.task import TaskDetailResponseModel
+from src.responses.task_formaters import TASK_MSG
+from src.utils.file_url_handlers import build_file_section
+
+
+type_map = {
+    "text": "Text",
+    "audio": "Audio",
+    "image": "Image",
+    "video": "Video"
+}
+
+# New Reusable Function
+async def process_and_send_task(
+    callback: CallbackQuery,
+    state: FSMContext,
+    status_filter: Optional[ContributorTaskStatus] = None, # Used by the REDO task handler
+    no_tasks_message: str = "No tasks available at the moment. Please check back later.",
+    project_not_selected_message: str = "Please select a project first using /projects.",
+    build_msg_func: Callable[..., Tuple[str, str]] = None, # build_task_message or build_redo_task_message
+    is_redo_task: bool = False,
+):
+    """
+    Handles the common logic for fetching, preparing, and sending a task to the user.
+    """
+    if build_msg_func is None:
+        raise ValueError("build_msg_func must be provided.")
+
+    try:
+        user_data = await state.get_data()
+        project_info = extract_project_info(user_data)
+
+        if not project_info:
+            await callback.message.answer(project_not_selected_message)
+            return
+
+        # Core difference: Pass the status filter (None for new task, REDO for redo task)
+        allocations = await fetch_user_tasks(project_info, status=status_filter)
+
+        if len(allocations) == 0:
+            await callback.message.answer(no_tasks_message)
+            return
+
+        first_task = allocations[0]
+
+        # Core difference: Call the appropriate message building function
+        task_msg, task_type = build_msg_func(
+            first_task, project_info["instruction"], project_info["return_type"])
+
+        # Core difference: Send the message (handling audio for REDO, but can be used for new tasks too)
+        if project_info["return_type"] == "audio" and first_task.file_url:
+            audio_file = URLInputFile(str(first_task.file_url))
+            await callback.message.answer_audio(
+                caption=task_msg,
+                audio=audio_file,
+                parse_mode="HTML",
+                protect_content=True
+            )
+        else:
+            await callback.message.answer(
+                task_msg,
+                parse_mode="HTML"
+            )
+
+        # Update state with the task info
+        await update_state_with_task(
+            state, project_info, first_task, task_type, task_msg, redo_task=is_redo_task
+        )
+        await set_task_state_by_type(callback.message, state)
+
+    except Exception as e:
+        logger.error(f"Error in task processing: {str(e)}")
+        await callback.message.answer("Error occurred, please try again.")
+
+def build_task_message(task: TaskDetailResponseModel, instruction, return_type):
+    """Construct the appropriate message for the task type."""
+
+    task_type = type_map.get(return_type)
+    if not task_type:
+        logger.error(f"Unknown task type for return_type={return_type}")
+        task_type = "Unknown"
+
+    task_text = getattr(task, "sentence",
+                        "No task content provided.")
+
+    task_msg = TASK_MSG["intro"].format(
+        task_type=task_type,
+        task_instruction=instruction,
+        task_text=task_text
+    )
+    return task_msg, task_type
+
+
+def build_redo_task_message(task: TaskDetailResponseModel, instruction, return_type):
+    """Construct the appropriate message for the task type."""
+    task_type = type_map.get(return_type)
+    if not task_type:
+        logger.error(f"Unknown task type for return_type={return_type}")
+        task_type = "Unknown"
+
+    task_text = getattr(task, "sentence",
+                        "No task content provided.")
+
+    # Handle submission type
+    if return_type == "text":
+        submission = task.sentence
+    else:
+        submission = build_file_section(
+            return_type, task.file_url)
+
+    # Handle missing review object
+    reviewer_comments = task.reviewer_comments
+
+    # Ensure reviewer_comments is iterable
+    if not reviewer_comments:
+        reviewer_comment = "No comments provided."
+    elif isinstance(reviewer_comments, str):
+        reviewer_comment = reviewer_comments
+    elif isinstance(reviewer_comments, (list, set, tuple)):
+        reviewer_comment = "\n".join(str(c) for c in reviewer_comments)
+
+    task_msg = TASK_MSG["redo_task"].format(
+        task_type=task_type,
+        task_instruction=instruction,
+        task_text=task_text,
+        previous_submission=submission,
+        reviewer_comment=reviewer_comment
+    )
+
+    return task_msg, task_type

@@ -12,13 +12,6 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from src.utils.file_url_handlers import build_file_section
 
-type_map = {
-    "text": "Text",
-    "audio": "Audio",
-    "image": "Image",
-    "video": "Video"
-}
-
 
 def extract_project_info(user_data: dict):
     """Extract and validate project details from user data."""
@@ -66,69 +59,6 @@ async def fetch_user_tasks(project_info, status=ContributorTaskStatus.ASSIGNED) 
     allocations = await get_project_tasks_assigned_to_user(task_request)
     logger.trace(f"Fetched allocations: {allocations}")
     return allocations.allocations
-
-def build_task_message(task: TaskDetailResponseModel, instruction, return_type):
-    """Construct the appropriate message for the task type."""
-
-    task_type = type_map.get(return_type)
-    if not task_type:
-        logger.error(f"Unknown task type for return_type={return_type}")
-        task_type = "Unknown"
-
-    task_text = getattr(task, "sentence",
-                        "No task content provided.")
-
-    task_msg = TASK_MSG["intro"].format(
-        task_type=task_type,
-        task_instruction=instruction,
-        task_text=task_text
-    )
-    return task_msg, task_type
-
-
-def build_redo_task_message(task: TaskDetailResponseModel, instruction, return_type):
-    """Construct the appropriate message for the task type."""
-    task_type = type_map.get(return_type)
-    if not task_type:
-        logger.error(f"Unknown task type for return_type={return_type}")
-        task_type = "Unknown"
-
-    task_text = getattr(task, "sentence",
-                        "No task content provided.")
-
-    # Handle submission type
-    if return_type == "text":
-        submission = task.sentence
-    else:
-        submission = build_file_section(
-            return_type, task.file_url)
-
-    # Handle missing review object
-    if task.review_info is None or not task.review_info.reviewer_email:
-        logger.error(f"Task review data missing for return_type={return_type}")
-        reviewer_comment = "No reviewer comments available."
-    else:
-        reviewer_comments = task.review_info.reviewer_comments
-
-        # Ensure reviewer_comments is iterable
-        if not reviewer_comments:
-            reviewer_comment = "No comments provided."
-        elif isinstance(reviewer_comments, str):
-            reviewer_comment = reviewer_comments
-        elif isinstance(reviewer_comments, (list, set, tuple)):
-            reviewer_comment = "\n".join(str(c) for c in reviewer_comments)
-        else:
-            reviewer_comment = str(reviewer_comments)
-
-    task_msg = TASK_MSG["redo_task"].format(
-        task_type=task_type,
-        task_instruction=instruction,
-        task_text=task_text,
-        previous_submission=submission,
-        reviewer_comment=reviewer_comment
-    )
-
-    return task_msg, task_type
 
 
 async def update_state_with_task(state, project_info, task: TaskDetailResponseModel, task_type, task_msg, redo_task=False):
