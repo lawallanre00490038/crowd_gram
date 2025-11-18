@@ -2,6 +2,7 @@ from uuid import UUID
 from datetime import datetime
 from typing import Dict, List, Optional
 from pydantic import BaseModel, RootModel,  HttpUrl, EmailStr
+from src.constant.task_constants import ReviewerTaskStatus
 from src.models.api2_models.task import TaskDetailResponseModel
 
 
@@ -101,6 +102,6 @@ class ReviewerAllocation(BaseModel):
     agent_email: EmailStr
     agent_name: str
 
-    status: str
+    status: ReviewerTaskStatus
     assigned_at: datetime
     agent_submission_date: datetime

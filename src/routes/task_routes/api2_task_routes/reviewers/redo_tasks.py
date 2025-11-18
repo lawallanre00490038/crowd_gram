@@ -7,7 +7,7 @@ from loguru import logger
 
 from aiogram.types import URLInputFile
 
-from src.constant.task_constants import ContributorTaskStatus
+from src.constant.task_constants import ContributorTaskStatus, ReviewerTaskStatus
 from src.handlers.task_handlers.reviewer_handler import send_reviewer_task, prepare_reviewer_state
 from src.handlers.task_handlers.utils import extract_project_info, fetch_reviewer_tasks, fetch_user_tasks, format_submission
 from src.keyboards.inline import next_task_inline_kb, build_predefined_comments_kd, review_task_inline_kb, create_score_kb, summary_kb
@@ -33,20 +33,24 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
             await callback.message.answer("Please select a project first using /project.")
             return
 
-        allocations = await fetch_reviewer_tasks(project_info, status=ContributorTaskStatus.PENDING)
+        allocations = await fetch_reviewer_tasks(project_info, status=None)
 
         logger.trace(f"Allocation: {allocations}")
 
-        await send_reviewer_task(callback.message, allocations[0], project_info)
+        first_task = None
 
-        if len(allocations) == 0:
+        for allocate in allocations:
+            if allocate.status == ReviewerTaskStatus.REDO:
+                first_task = allocate
+
+        if first_task is None:
             await callback.message.answer("No tasks to REDO at the moment...")
             return
 
-        await send_reviewer_task(callback.message, allocations[0], project_info)
+        await send_reviewer_task(callback.message, first_task, project_info)
 
         # Update state
-        state_data = prepare_reviewer_state(allocations[0])
+        state_data = prepare_reviewer_state(first_task)
         state_data.update(
             {"project_id": project_info["id"], "redo_task": True})
         await state.update_data(**state_data)
