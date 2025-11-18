@@ -94,7 +94,7 @@ class ReviewerAllocation(BaseModel):
 
     sentence_id: str
     sentence: str
-    submitted_text: Optional[str] = None
+    payload_text: Optional[str] = None
     file_url: Optional[HttpUrl] = None
 
     reviewer_email: EmailStr

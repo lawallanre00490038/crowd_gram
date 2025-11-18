@@ -14,3 +14,4 @@ class ReviewerTaskStatus(str, Enum):
     PENDING = "pending"
     ACCEPTED = "accepted"
     REDO = "redo"
+    REJECTED = "rejected"
