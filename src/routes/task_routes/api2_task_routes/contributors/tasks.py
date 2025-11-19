@@ -3,6 +3,7 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from loguru import logger
 
+from src.constant.task_constants import ContributorTaskStatus
 from src.handlers.task_handlers.contributor_handler import build_task_message, process_and_send_task
 from src.models.api2_models.agent import SubmissionModel
 from src.keyboards.inline import next_task_inline_kb
@@ -22,7 +23,7 @@ async def start_task_new(callback: CallbackQuery, state: FSMContext):
         callback=callback,
         state=state,
         # Default parameters for NEW task
-        status_filter=None, # Fetching the default available status
+        status_filter=ContributorTaskStatus.ASSIGNED, # Fetching the default available status
         no_tasks_message="No tasks available at the moment. Please check back later.",
         project_not_selected_message="Please select a project first using /projects.",
         build_msg_func=build_task_message,

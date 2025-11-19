@@ -42,6 +42,8 @@ async def fetch_user_tasks(project_info, status=ContributorTaskStatus.ASSIGNED) 
         status=[status]
     )
 
+    logger.trace(f"Fetching tasks with request: {task_request}")
+
     allocations = await get_project_tasks_assigned_to_user(task_request)
     logger.trace(f"Fetched allocations: {allocations}")
     return allocations.allocations
