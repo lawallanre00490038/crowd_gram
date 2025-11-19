@@ -1,23 +1,16 @@
 from typing import List, Optional, Tuple, Union
 from loguru import logger
-from src.models.api2_models.projects import ProjectTaskDetailsResponseModel, ProjectTaskRequestModel
-from src.models.api2_models.reviewer import ReviewerTaskResponseModel
+from src.models.api2_models.projects import ContributorRole, ProjectReviewerDetailsResponseModel, ProjectTaskDetailsResponseModel, ProjectTaskRequestModel, ReviewerTaskRequestModel
+from src.models.api2_models.reviewer import ReviewerAllocation, ReviewerTaskResponseModel
 from src.models.api2_models.reviewer import ReviewerTaskResponseModel
 from src.models.api2_models.task import TaskDetailResponseModel
 from src.responses.task_formaters import TASK_MSG
-from src.services.server.api2_server.projects import get_project_tasks_assigned_to_user
+from src.services.server.api2_server.projects import get_project_tasks_assigned_to_reviewer, get_project_tasks_assigned_to_user
 from src.states.tasks import TaskState
-from src.constant.task_constants import ContributorTaskStatus
+from src.constant.task_constants import ContributorTaskStatus, ReviewerTaskStatus
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from src.utils.file_url_handlers import build_file_section
-
-type_map = {
-    "text": "Text",
-    "audio": "Audio",
-    "image": "Image",
-    "video": "Video"
-}
 
 
 def extract_project_info(user_data: dict):
@@ -44,94 +37,23 @@ def extract_project_info(user_data: dict):
 async def fetch_user_tasks(project_info, status=ContributorTaskStatus.ASSIGNED) -> Optional[ProjectTaskDetailsResponseModel]:
     """Retrieve allocated tasks for the user."""
     task_request = ProjectTaskRequestModel(
+        agent_email = project_info["email"],
         project_id=project_info["id"],
-        email=project_info["email"],
-        status=status
+        status=[status]
     )
+
     allocations = await get_project_tasks_assigned_to_user(task_request)
     logger.trace(f"Fetched allocations: {allocations}")
-    return allocations
+    return allocations.allocations
 
 
-def get_first_task(allocations):
-    """Get the first available task from allocations."""
-    tasks = getattr(allocations, "tasks", [])
-    return tasks[0] if tasks else None
-
-
-def build_task_message(task, instruction, return_type):
-    """Construct the appropriate message for the task type."""
-
-    task_type = type_map.get(return_type)
-    if not task_type:
-        logger.error(f"Unknown task type for return_type={return_type}")
-        task_type = "Unknown"
-
-    task_text = getattr(task.prompt, "sentence_text",
-                        "No task content provided.")
-
-    task_msg = TASK_MSG["intro"].format(
-        task_type=task_type,
-        task_instruction=instruction,
-        task_text=task_text
-    )
-    return task_msg, task_type
-
-
-def build_redo_task_message(task: TaskDetailResponseModel, instruction, return_type):
-    """Construct the appropriate message for the task type."""
-    task_type = type_map.get(return_type)
-    if not task_type:
-        logger.error(f"Unknown task type for return_type={return_type}")
-        task_type = "Unknown"
-
-    task_text = getattr(task.prompt, "sentence_text",
-                        "No task content provided.")
-
-    # Handle submission type
-    if task.submission.type == "text":
-        submission = task.submission.payload_text
-    else:
-        submission = build_file_section(
-            task.submission.type, task.submission.file_url)
-
-    # Handle missing review object
-    if task.review is None or not task.review.reviewers:
-        logger.error(f"Task review data missing for return_type={return_type}")
-        reviewer_comment = "No reviewer comments available."
-    else:
-        reviewer_data = task.review.reviewers[0]
-        reviewer_comments = reviewer_data.reviewer_comments
-
-        # Ensure reviewer_comments is iterable
-        if not reviewer_comments:
-            reviewer_comment = "No comments provided."
-        elif isinstance(reviewer_comments, str):
-            reviewer_comment = reviewer_comments
-        elif isinstance(reviewer_comments, (list, set, tuple)):
-            reviewer_comment = "\n".join(str(c) for c in reviewer_comments)
-        else:
-            reviewer_comment = str(reviewer_comments)
-
-    task_msg = TASK_MSG["redo_task"].format(
-        task_type=task_type,
-        task_instruction=instruction,
-        task_text=task_text,
-        previous_submission=submission,
-        reviewer_comment=reviewer_comment
-    )
-
-    return task_msg, task_type
-
-
-async def update_state_with_task(state, project_info, task, task_type, task_msg, redo_task=False):
+async def update_state_with_task(state, project_info, task: TaskDetailResponseModel, task_type, task_msg, redo_task=False):
     """Store task info in FSM state."""
     await state.update_data(
         project_id=project_info["id"],
         task_id=task.task_id,
-        assignment_id=task.assignment_id,
-        prompt_id=task.prompt.prompt_id,
-        sentence_id=task.prompt.sentence_id,
+        agent_allocation_id=task.agent_allocation_id,
+        sentence_id=task.sentence_id,
         task_type=task_type,
         task=task_msg,
         redo_task=redo_task
@@ -161,12 +83,10 @@ async def set_task_state_by_type(message: Message, state: FSMContext, task_type=
     return
 
 
-def format_submission(first_task):
+def format_submission(first_task: ReviewerAllocation, submission_type: str):
     """
     Return the proper submission content based on type.
     """
-    submission_type = first_task.submission.type
     if submission_type == "text":
-        return first_task.submission.payload_text
-    return build_file_section(submission_type, first_task.submission.file_url)
-
+        return first_task.submitted_text
+    return build_file_section(submission_type, first_task.file_url)

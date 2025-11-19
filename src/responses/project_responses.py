@@ -3,7 +3,6 @@ PROJECT_SELECTION_MESSAGE = "Please select a project to work on:"
 PROJECT_WELCOME_MSG = {
     "intro": (
         "👋 Welcome to the <b>{project_name}</b> project!\n\n"
-        "🎯 You’re about to contribute valuable data to this initiative."
     ),
 
     "stats": (
@@ -36,8 +35,8 @@ START_TASK_PROMPT = "Click the button below to start your first task!"
 
 PROJECT_FULL_WELCOME_MSG = (
     PROJECT_WELCOME_MSG['intro'].format(project_name="{project_name}")
-    + "\n\n"
+    + "<b>Description:</b> {description}\n\n"
     + PROJECT_WELCOME_MSG['stats'].format(user_type="{user_type}", user_coin="{user_coin}")
-    + "\n\n"
+    + "\n"
     + PROJECT_WELCOME_MSG['ready']
 )

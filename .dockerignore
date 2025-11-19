@@ -1,0 +1,32 @@
+# Byte-compiled / optimized / DLL files
+*.py[cod]
+__pycache__/
+
+# aiogram specific files
+.aiogram.yaml
+aiogram.yaml
+
+# Docker files
+Dockerfile
+docker-compose.yml
+
+# Logs
+.log
+logs/
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.iml
+
+# Miscellaneous
+*.gitignore
+*.gitattributes
+*.md
+*.txt
+.env
