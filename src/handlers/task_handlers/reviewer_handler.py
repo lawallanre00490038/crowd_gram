@@ -24,7 +24,8 @@ async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING) 
         project_id=project_info["id"],
         reviewer_email=project_info["email"],
         # status=[status]
-        status=[ReviewerTaskStatus.PENDING]
+        status=[ReviewerTaskStatus.PENDING],
+        limit=50
     )
 
     allocations = await get_project_tasks_assigned_to_reviewer(task_request)
@@ -36,6 +37,7 @@ async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING) 
         for allocate in all_allocation:
             if allocate.reviewed_at is not None:
                 new_allocation.append(allocate)
+                break
         return new_allocation
 
     elif status == ReviewerTaskStatus.PENDING:
@@ -43,6 +45,7 @@ async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING) 
         for allocate in all_allocation:
             if allocate.reviewed_at is None:
                 new_allocation.append(allocate)
+                break
         return new_allocation
     
     logger.trace(f"Fetched allocations: {allocations}")
@@ -78,7 +81,7 @@ async def handle_reviewer_task_start(
 
     # 4. Send the task and update state
     await send_reviewer_task(callback.message, first_task, project_info)
-
+    
     await state.update_data({
         "project_id": project_info["id"],
         "submission_id": str(first_task.submission_id)

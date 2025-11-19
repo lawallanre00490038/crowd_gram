@@ -19,6 +19,7 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
             no_tasks_message="No tasks to REDO at the moment..."
         )
 
+        await state.update_data(redo_task=True)
     except Exception as e:
         logger.error(f"Error in start_reviewer_task: {str(e)}")
         await callback.message.answer("Error occurred, please try again.")
