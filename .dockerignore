@@ -13,6 +13,7 @@ docker-compose.yml
 # Logs
 .log
 logs/
+log/
 
 # Virtual environment
 venv/
