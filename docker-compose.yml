@@ -7,10 +7,12 @@ services:
     restart: always
     env_file:
       - .dockerenv
+    networks:
+      - botnet
     depends_on:
       - mongodb
     volumes:
-      - ./logs:/app/logs  # ✅ Persist logs on host
+      - ./logs:/app/logs  
     command: ["uv", "run", "main.py"]
 
   mongodb:
@@ -24,8 +26,14 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - mongo_data:/data/db   # ✅ Persist MongoDB data
-      - mongo_logs:/var/log/mongodb  # Optional: Mongo logs
+      - mongo_data:/data/db
+      - mongo_logs:/var/log/mongodb
+    networks:
+      - botnet
+
+networks:
+  botnet:
+    driver: bridge
 
 volumes:
   mongo_data:

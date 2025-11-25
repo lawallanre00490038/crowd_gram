@@ -1,4 +1,5 @@
 from aiogram.types import Message, CallbackQuery
+from aiogram.filters import Command
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from loguru import logger
@@ -10,6 +11,24 @@ from src.states.tasks import TaskState
 
 
 router = Router()
+
+@router.message(Command("start_task"))
+async def handle_start_task(message: Message, state: FSMContext):
+    user_state = await state.get_data()
+    role = user_state.get("role", None)
+    project_index = user_state.get("project_index", None)
+    project_details = user_state.get("projects_details", [])
+    if role is None:
+        await message.answer("Please login first using /start.")
+        return
+    if project_index is None:
+        await message.answer("Please select a project first using /projects.")
+        return
+    
+    project_name = project_details[project_index]['name']
+        
+    await message.answer(f"Continue your work on the <b>{project_name}</b> project. \nPlease select the type of task you'd like to perform.", reply_markup=start_task_inline_kb(user_type=role))
+
 
 
 @router.callback_query(F.data.startswith("proj_"))

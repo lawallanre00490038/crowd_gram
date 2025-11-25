@@ -6,11 +6,15 @@ from aiogram import BaseMiddleware
 from aiogram.types import Message, CallbackQuery
 from typing import Callable, Dict, Any, Awaitable
 from aiogram.types import Update
+import os
+
+logs_folder = os.getenv("LOGS_FOLDER", "log")
+print(f"Logs will be stored in: {logs_folder}")
 
 # Set up Loguru logging (log to file and console)
-logger.add("logs/bot_logs.log", rotation="1 day",
+logger.add(f"{logs_folder}/bot_logs.log", rotation="1 day",
            retention="7 days", compression="zip", level="INFO")
-logger.add("logs/trace.log", rotation="1 day",
+logger.add(f"{logs_folder}/trace.log", rotation="1 day",
            retention="1 days", compression="zip", level="TRACE")
 # logger.add(sys.stdout, level="INFO")  # Logs to the console as well
 
