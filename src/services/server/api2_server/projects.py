@@ -176,16 +176,39 @@ async def get_projects_details_by_user_email(user_email: str) -> Optional[Projec
     url = f"{BASE_URL_V2}/project/projects/by-email/{user_email}"
 
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                projects_result = await response.json()
+        import os
+        import json
+        import pandas as pd
 
-                if response.status == 200:
+        mapping = {
+            "English users_sample_agent.xlsx": "english.json",
+            "English users_sample_reviewer.xlsx": "english.json",
+            "Hausa Batch 1 users_sample_with_passwords.xlsx": "hausa.json",
+            "Pidgin Batch 1 users_sample_with_passwords.xlsx": "pidgin.json"
+        }
+
+        for i in mapping.keys():
+            file = pd.read_excel(os.path.join(i))
+
+            if (sum(file["email"].str.lower().str.strip().isin([user_email])) > 0):
+                try:
+                    with open(mapping[i], "r") as file:
+                        projects_result = json.load(file)
+
                     return ProjectListResponseModel.model_validate(projects_result)
-                else:
-                    logger.error(
-                        f"Failed to fetch projects by user email: {projects_result.get('message', 'Unknown error')}")
+                except FileNotFoundError:
+                    logger.error(f"Projects JSON file not found")
                     return None
+        # async with aiohttp.ClientSession() as session:
+        #     async with session.get(url) as response:
+        #         projects_result = await response.json()
+
+        #         if response.status == 200:
+        #             return ProjectListResponseModel.model_validate(projects_result)
+        #         else:
+        #             logger.error(
+        #                 f"Failed to fetch projects by user email: {projects_result.get('message', 'Unknown error')}")
+        #             return None
     except Exception as e:
         logger.error(
             f"Exception during fetching projects by user email: {str(e)}")

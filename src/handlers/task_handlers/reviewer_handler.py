@@ -16,40 +16,41 @@ from src.handlers.task_handlers.utils import extract_project_info, format_submis
 from src.services.server.api2_server.projects import get_project_tasks_assigned_to_reviewer
 from src.services.server.api2_server.reviewer import submit_review_details
 
+
 async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING) -> Optional[List[ReviewerAllocation]]:
     """Retrieve allocated tasks for the reviewer."""
-
 
     task_request = ReviewerTaskRequestModel(
         project_id=project_info["id"],
         reviewer_email=project_info["email"],
-        # status=[status]
-        status=[ReviewerTaskStatus.PENDING],
+        status=[status],
+        # status=[ReviewerTaskStatus.PENDING],
         limit=50
     )
 
     allocations = await get_project_tasks_assigned_to_reviewer(task_request)
 
-    all_allocation = allocations.allocations 
+    # all_allocation = allocations.allocations
 
-    if status == ReviewerTaskStatus.REDO:
-        new_allocation = []
-        for allocate in all_allocation:
-            if allocate.reviewed_at is not None:
-                new_allocation.append(allocate)
-                break
-        return new_allocation
+    # if status == ReviewerTaskStatus.REDO:
+    #     new_allocation = []
+    #     for allocate in all_allocation:
+    #         if allocate.reviewed_at is not None:
+    #             new_allocation.append(allocate)
+    #             break
+    #     return new_allocation
 
-    elif status == ReviewerTaskStatus.PENDING:
-        new_allocation = []
-        for allocate in all_allocation:
-            if allocate.reviewed_at is None:
-                new_allocation.append(allocate)
-                break
-        return new_allocation
-    
+    # elif status == ReviewerTaskStatus.PENDING:
+    #     new_allocation = []
+    #     for allocate in all_allocation:
+    #         if allocate.reviewed_at is None:
+    #             new_allocation.append(allocate)
+    #             break
+    #     return new_allocation
+
     logger.trace(f"Fetched allocations: {allocations}")
     return allocations.allocations
+
 
 async def handle_reviewer_task_start(
     callback: CallbackQuery,
@@ -62,7 +63,8 @@ async def handle_reviewer_task_start(
     state for reviewer tasks.
     """
     user_data = await state.get_data()
-    project_info = extract_project_info(user_data) # Ensure extract_project_info is awaited if necessary
+    # Ensure extract_project_info is awaited if necessary
+    project_info = extract_project_info(user_data)
 
     # 1. Validation check
     if not project_info or not project_info.get("email") or not project_info.get("id"):
@@ -81,11 +83,12 @@ async def handle_reviewer_task_start(
 
     # 4. Send the task and update state
     await send_reviewer_task(callback.message, first_task, project_info)
-    
+
     await state.update_data({
         "project_id": project_info["id"],
         "submission_id": str(first_task.submission_id)
     })
+
 
 async def send_reviewer_task(message: Message, first_task: ReviewerAllocation, project_info):
     """
@@ -107,7 +110,6 @@ async def send_reviewer_task(message: Message, first_task: ReviewerAllocation, p
         reviewer_instruction=project_info["reviewer_instructions"]
     )
 
-
     if project_info["return_type"] == "audio":
 
         audio_file = URLInputFile(str(first_task.file_url))
@@ -124,6 +126,7 @@ async def send_reviewer_task(message: Message, first_task: ReviewerAllocation, p
             parse_mode="HTML",
             reply_markup=review_task_inline_kb()
         )
+
 
 async def extract_submission_id(data: dict) -> Optional[str]:
     """Extract submission_id from FSM data or fallback to reviewers_list."""
@@ -152,6 +155,7 @@ async def build_review_model(data: dict, decision: str, comments: List[str]) -> 
         decision=decision,
         reviewer_comments=comments,
     )
+
 
 async def complete_review_response(message: Message, user_data: Dict):
     redo_task = user_data.get("redo_task", False)

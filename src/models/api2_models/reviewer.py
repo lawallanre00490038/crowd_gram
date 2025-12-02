@@ -89,8 +89,8 @@ class ReviewSubmissionResponse(BaseModel):
 class ReviewerAllocation(BaseModel):
     reviewer_allocation_id: UUID
     submission_id: UUID
-    reviewer_id: UUID
-    agent_id: UUID
+    reviewer_id: str
+    agent_id: str
 
     sentence_id: str
     sentence: str
@@ -100,7 +100,7 @@ class ReviewerAllocation(BaseModel):
     reviewer_email: Optional[EmailStr] = None
     reviewer_name: Optional[str] = None
     reviewed_at: Optional[datetime] = None
-    
+
     agent_email: Optional[EmailStr] = None
     agent_name: Optional[str] = None
     status: ReviewerTaskStatus
