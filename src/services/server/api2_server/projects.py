@@ -187,6 +187,9 @@ async def get_projects_details_by_user_email(user_email: str) -> Optional[Projec
                     import json
                     import pandas as pd
 
+                    cwd = os.getcwd()
+                    logger.info(cwd)
+
                     mapping = {
                         "English users_sample_agent.xlsx": "english.json",
                         "English users_sample_reviewer.xlsx": "english.json",
@@ -195,11 +198,12 @@ async def get_projects_details_by_user_email(user_email: str) -> Optional[Projec
                     }
 
                     for i in mapping.keys():
-                        file = pd.read_excel(os.path.join(i))
+                        file = pd.read_excel(
+                            os.path.join(cwd, os.path.join(i)))
 
                         if (sum(file["email"].str.lower().str.strip().isin([user_email])) > 0):
                             try:
-                                with open(mapping[i], "r") as file:
+                                with open(os.path.join(cwd, mapping[i]), "r") as file:
                                     projects_result = json.load(file)
 
                                 return ProjectListResponseModel.model_validate(projects_result)
