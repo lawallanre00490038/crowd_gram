@@ -182,9 +182,9 @@ async def process_review_submission(
 
     result: Optional[ReviewSubmissionResponse] = await submit_review_details(review_data)
 
-    if result and result.submission_status:
+    if result:
         await callback.message.answer(
-            "✅ Review submitted successfully!" if decision == "reject" else "✅ Review accepted successfully!"
+            "✅ Review submitted successfully!"
         )
         await complete_review_response(callback.message, state_data)
         return True

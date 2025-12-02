@@ -78,12 +78,12 @@ class ReviewerHistoryResponseListModel(RootModel[List[ReviewerHistoryResponseMod
 
 
 class ReviewSubmissionResponse(BaseModel):
-    submission_status: str
-    score: float
-    approved: bool
+    # submission_status: str
+    # score: float
+    # approved: bool
     predefined_comments: Optional[List[str]] = None
     reviewer_comments: Optional[List[str]] = None
-    scored_percent: float
+    # scored_percent: float
 
 
 class ReviewerAllocation(BaseModel):
