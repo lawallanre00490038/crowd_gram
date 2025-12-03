@@ -49,7 +49,13 @@ async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING) 
     #     return new_allocation
 
     logger.trace(f"Fetched allocations: {allocations}")
-    return allocations.allocations
+    new_allocations = []
+
+    for allocate in allocations.allocations:
+        if allocate.reviewed_at is None:
+            new_allocations.append(allocate)
+
+    return new_allocations
 
 
 async def handle_reviewer_task_start(
@@ -113,6 +119,9 @@ async def send_reviewer_task(message: Message, first_task: ReviewerAllocation, p
     if project_info["return_type"] == "audio":
 
         audio_file = URLInputFile(str(first_task.file_url))
+
+        logger.debug(f"Sending audio file from URL: {first_task.file_url}")
+        logger.debug(f"With caption: {caption}")
         await message.answer_audio(
             caption=caption,
             audio=audio_file,
