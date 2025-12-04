@@ -49,14 +49,11 @@ async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING) 
     #     return new_allocation
 
     logger.trace(f"Fetched allocations: {allocations}")
-    new_allocations = []
 
-    for allocate in allocations.allocations:
-        if allocate.reviewed_at is None:
-            new_allocations.append(allocate)
-
-    return new_allocations
-
+    if status == ReviewerTaskStatus.PENDING:
+        return [allocate for allocate in allocations.allocations if allocate.reviewed_at is not None]
+    else:
+        return allocations.allocations
 
 async def handle_reviewer_task_start(
     callback: CallbackQuery,
