@@ -94,6 +94,10 @@ async def handle_audio_task_submission(message: Message, state: FSMContext):
             return
 
         submission_response = await create_submission(submission, file_path=new_path)
+        import os
+
+        os.remove(new_path)
+        
         if not submission_response:
             await message.answer("Failed to submit your work. Please try again.")
             return

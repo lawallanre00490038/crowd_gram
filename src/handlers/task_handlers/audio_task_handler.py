@@ -1,3 +1,4 @@
+import os
 import librosa
 from typing import List
 from loguru import logger
@@ -212,6 +213,8 @@ async def handle_api2_audio_submission(task_info, file_id, user_id, bot):
 
     save_librosa_audio_as_mp3(new_audio, sr, new_path)
 
+    os.remove(file_path)    
+
     logger.info(f"New audio saved at {new_path}")
     logger.info(
         f"Audio check result for user {user_id}: {response.is_valid}, errors: {response.errors}, {quality_response}")
@@ -229,21 +232,6 @@ async def handle_api2_audio_submission(task_info, file_id, user_id, bot):
 
         logger.info(f"Audio submission failed for user {user_id}: {errors}")
 
-        import os
-        import shutil
-
-        # Target directory
-        target_dir = "logs/failed_submissions/"
-
-        # Create the directory if it doesn't exist
-        os.makedirs(target_dir, exist_ok=True)
-
-        # Build the destination file path
-        destination = os.path.join(target_dir, os.path.basename(new_path))
-
-        # Move the file
-        shutil.move(new_path, destination)
-
-        logger.info(f"Failed Audio submission file path: {destination}")
+        logger.info(f"Failed Audio submission file id: {file_id}")
 
         return False, new_path, errors
