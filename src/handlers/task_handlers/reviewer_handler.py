@@ -51,7 +51,7 @@ async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING) 
     logger.trace(f"Fetched allocations: {allocations}")
 
     if status == ReviewerTaskStatus.PENDING:
-        return [allocate for allocate in allocations.allocations if allocate.reviewed_at is not None]
+        return [allocate for allocate in allocations.allocations if allocate.reviewed_at is None]
     else:
         return allocations.allocations
 
