@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from loguru import logger
 
 from src.constant.task_constants import ContributorTaskStatus
-from src.handlers.task_handlers.reviewer_handler import handle_reviewer_task_start, process_review_submission
+from src.handlers.task_handlers.reviewer_handler import add_submission, handle_reviewer_task_start, process_review_submission
 from src.keyboards.inline import build_predefined_comments_kd, summary_kb
 from src.states.tasks import ReviewStates
 from src.responses.task_formaters import REVIEWER_TASK_MSG
@@ -31,7 +31,6 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
 async def handle_accept(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     data = await state.get_data()
-
     try:
         success = await process_review_submission(
             callback,
@@ -39,6 +38,9 @@ async def handle_accept(callback: CallbackQuery, state: FSMContext):
             decision="accept",
             comments=data.get("comments", []),
         )
+
+        await add_submission(state)
+
         if not success:
             return
 
@@ -169,6 +171,8 @@ async def confirm_comment_submission(callback: CallbackQuery, state: FSMContext)
             decision="reject",
             comments=selected_comments,
         )
+
+        await add_submission(state)
 
     except Exception as e:
         logger.exception(f"Error in confirm_comment_submission: {e}")

@@ -13,7 +13,7 @@ from src.models.api2_models.reviewer import ReviewModel, ReviewSubmissionRespons
 from src.models.api2_models.task import TaskDetailResponseModel
 from src.responses.task_formaters import REVIEWER_TASK_MSG
 from src.handlers.task_handlers.utils import extract_project_info, format_submission
-from src.services.server.api2_server.projects import get_project_tasks_assigned_to_reviewer
+from src.services.server.api2_server.projects import get_project_tasks_assigned_to_reviewer, get_task_submission
 from src.services.server.api2_server.reviewer import submit_review_details
 
 
@@ -29,24 +29,6 @@ async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING) 
     )
 
     allocations = await get_project_tasks_assigned_to_reviewer(task_request)
-
-    # all_allocation = allocations.allocations
-
-    # if status == ReviewerTaskStatus.REDO:
-    #     new_allocation = []
-    #     for allocate in all_allocation:
-    #         if allocate.reviewed_at is not None:
-    #             new_allocation.append(allocate)
-    #             break
-    #     return new_allocation
-
-    # elif status == ReviewerTaskStatus.PENDING:
-    #     new_allocation = []
-    #     for allocate in all_allocation:
-    #         if allocate.reviewed_at is None:
-    #             new_allocation.append(allocate)
-    #             break
-    #     return new_allocation
 
     logger.trace(f"Fetched allocations: {allocations}")
 
@@ -82,7 +64,18 @@ async def handle_reviewer_task_start(
         await callback.message.answer(no_tasks_message)
         return
 
-    first_task = allocations[0]
+    first_task = None
+
+    for allocate in allocations:
+        submission = await get_task_submission(allocate.submission_id)
+        if submission.status == "pending":
+            first_task = allocate
+            break
+
+    # 3. Check for available tasks
+    if first_task is None:
+        await callback.message.answer(no_tasks_message)
+        return
 
     # 4. Send the task and update state
     await send_reviewer_task(callback.message, first_task, project_info)
@@ -197,3 +190,13 @@ async def process_review_submission(
 
     await callback.message.answer("❌ Failed to submit review. Please try again later.")
     return False
+
+async def add_submission(state: FSMContext):
+    processed_submission = await state.get_value("processed_submission", [])
+
+    submission_id = await state.get_value("submission_id", None)
+
+    if submission_id is not None:
+        processed_submission.append(submission_id)
+
+    await state.update_data(processed_submission=processed_submission)

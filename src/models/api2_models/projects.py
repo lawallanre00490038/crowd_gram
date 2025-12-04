@@ -101,3 +101,27 @@ class ProjectReviewerDetailsResponseModel(BaseModel):
     message: str
     total_count: int
     allocations: List[ReviewerAllocation] = []
+
+class Prompt(BaseModel):
+    prompt_id: str
+    sentence_id: str
+    sentence_text: str
+    media_url: Optional[str] = None
+    category: str
+    domain: str
+
+class Submission(BaseModel):
+    submission_id: str
+    project_id: str
+    task_id: str
+    agent_allocation_id: str
+    user_id: str
+    user_email: str
+    type: str
+    payload_text: str
+    file_url: str
+    status: str
+    num_redo: Optional[int] = None
+    created_at: datetime
+    updated_at: datetime
+    prompt: Prompt
