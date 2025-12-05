@@ -65,10 +65,13 @@ async def handle_reviewer_task_start(
         return
 
     first_task = None
-
+    
+    processed_submission = user_data.get('processed_submission', [])
     for allocate in allocations:
         submission = await get_task_submission(allocate.submission_id)
-        if submission.status == "pending":
+        logger.debug(f"Checking submission {allocate.submission_id} with status {submission.status} and processed: {processed_submission}")
+
+        if (str(allocate.submission_id) not in processed_submission)  and (submission.status == "pending"):
             first_task = allocate
             break
 
@@ -200,3 +203,5 @@ async def add_submission(state: FSMContext):
         processed_submission.append(submission_id)
 
     await state.update_data(processed_submission=processed_submission)
+
+# It's crucial for couples to prioritize open communication about their family planning goals.	It's crucial for couples to prioritize open communication about their family planning goals.	no	13
