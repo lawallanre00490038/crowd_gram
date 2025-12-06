@@ -77,7 +77,7 @@ class ProjectTaskRequestModel(BaseModel):
     start_date: Optional[datetime] = None               # ISO datetime
     end_date: Optional[datetime] = None                 # ISO datetime
     skip: int = 0                                       # default 0
-    limit: int = 2                                      # default 2
+    limit: int = 30                                      # default 2
 
 
 class ReviewerTaskRequestModel(BaseModel):
