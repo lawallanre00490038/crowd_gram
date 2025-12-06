@@ -17,7 +17,7 @@ from src.services.server.api2_server.projects import get_project_tasks_assigned_
 from src.services.server.api2_server.reviewer import submit_review_details
 
 
-async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING, skip=0) -> Optional[List[ReviewerAllocation]]:
+async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING, skip=0, limit = 50) -> Optional[List[ReviewerAllocation]]:
     """Retrieve allocated tasks for the reviewer."""
 
     task_request = ReviewerTaskRequestModel(
@@ -25,7 +25,7 @@ async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING, 
         reviewer_email=project_info["email"],
         status=[status],
         # status=[ReviewerTaskStatus.PENDING],
-        limit=2,
+        limit=limit,
         skip=skip
     )
 
@@ -57,31 +57,35 @@ async def handle_reviewer_task_start(
         await callback.message.answer("Please select a project first using /project.")
         return
     
-    processed_submission = user_data.get('processed_submission', [])
-    skipped_tasks = user_data.get('skipped_task', [])
+    while True:
+        processed_submission = user_data.get('processed_submission', [])
+        skipped_tasks = user_data.get('skipped_task', [])
 
-    # 2. Fetch tasks using the provided status filter
-    allocations = await fetch_reviewer_tasks(project_info, status=status_filter, skip=len(skipped_tasks) + len(processed_submission))
-    
-    # 3. Check for available tasks
-    if len(allocations) == 0:
-        await callback.message.answer(no_tasks_message)
-        return
+        # 2. Fetch tasks using the provided status filter
+        allocations = await fetch_reviewer_tasks(project_info, status=status_filter, skip=len(skipped_tasks) + len(processed_submission), limit=2)
+        
+        # 3. Check for available tasks
+        if len(allocations) == 0:
+            await callback.message.answer(no_tasks_message)
+            return
 
-    first_task = None
+        first_task = None
 
-    for allocate in allocations:
-        submission = await get_task_submission(allocate.submission_id)
-        logger.debug(f"Checking submission {allocate.submission_id} with status {submission.status} and processed: {processed_submission}")
+        for allocate in allocations:
+            submission = await get_task_submission(allocate.submission_id)
+            logger.debug(f"Checking submission {allocate.submission_id} with status {submission.status} and processed: {processed_submission} and skipped: {skipped_tasks}")
 
-        if (str(allocate.submission_id) not in skipped_tasks) and ((str(allocate.submission_id) not in processed_submission)  and (submission.status == "pending")):
-            first_task = allocate
+            if (str(allocate.submission_id) not in skipped_tasks) and ((str(allocate.submission_id) not in processed_submission)):
+                if (submission.status == "pending"):
+                    first_task = allocate
+                    break
+                else:
+                    skipped_tasks.append(str(allocate.submission_id))
+                    await state.update_data(skipped_task=skipped_tasks)
+
+        # 3. Check for available tasks
+        if first_task is not None:
             break
-
-    # 3. Check for available tasks
-    if first_task is None:
-        await callback.message.answer(no_tasks_message)
-        return
 
     # 4. Send the task and update state
     await send_reviewer_task(callback.message, first_task, project_info)
