@@ -16,10 +16,10 @@ def review_task_inline_kb():
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="Accept", callback_data="accept")],
-            [InlineKeyboardButton(text="Reject", callback_data="reject")]
+            [InlineKeyboardButton(text="Reject", callback_data="reject")],
+            [InlineKeyboardButton(text="Skip Task", callback_data="skip_reviewer_task")]
         ]
     )
-
 
 def start_task_inline_kb(user_type: str):
     if user_type.lower() == "agent":

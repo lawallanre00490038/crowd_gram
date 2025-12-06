@@ -26,6 +26,28 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
         logger.error(f"Error in start_reviewer_task: {str(e)}")
         await callback.message.answer("Error occurred, please try again.")
 
+@router.callback_query(F.data == "skip_reviewer_task")
+async def skip_reviewer_task(callback: CallbackQuery, state: FSMContext):
+    skipped_task = await state.get_value("skipped_task", [])
+    task_id = await state.get_value("submission_id")
+    skipped_task.append(task_id)
+
+    logger.debug(f"Skipping task ID: {task_id} Skipped tasks so far: {skipped_task}")
+        
+    await state.update_data(skipped_task=skipped_task)
+
+    try:
+        await handle_reviewer_task_start(
+            callback=callback,
+            state=state,
+            status_filter=ContributorTaskStatus.PENDING,
+            no_tasks_message="No tasks available at the moment. Please check back later."
+        )
+    except Exception as e:
+        logger.error(f"Error in start_reviewer_task: {str(e)}")
+        await callback.message.answer("Error occurred, please try again.")
+
+
 
 @router.callback_query(F.data == "accept")
 async def handle_accept(callback: CallbackQuery, state: FSMContext):

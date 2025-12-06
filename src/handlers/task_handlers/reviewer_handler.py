@@ -65,13 +65,14 @@ async def handle_reviewer_task_start(
         return
 
     first_task = None
-    
     processed_submission = user_data.get('processed_submission', [])
+    skipped_tasks = user_data.get('skipped_task', [])
+
     for allocate in allocations:
         submission = await get_task_submission(allocate.submission_id)
         logger.debug(f"Checking submission {allocate.submission_id} with status {submission.status} and processed: {processed_submission}")
 
-        if (str(allocate.submission_id) not in processed_submission)  and (submission.status == "pending"):
+        if (str(allocate.submission_id) not in skipped_tasks) and ((str(allocate.submission_id) not in processed_submission)  and (submission.status == "pending")):
             first_task = allocate
             break
 
