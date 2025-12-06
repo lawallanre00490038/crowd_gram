@@ -17,7 +17,7 @@ from src.services.server.api2_server.projects import get_project_tasks_assigned_
 from src.services.server.api2_server.reviewer import submit_review_details
 
 
-async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING) -> Optional[List[ReviewerAllocation]]:
+async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING, skip=0) -> Optional[List[ReviewerAllocation]]:
     """Retrieve allocated tasks for the reviewer."""
 
     task_request = ReviewerTaskRequestModel(
@@ -25,7 +25,8 @@ async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING) 
         reviewer_email=project_info["email"],
         status=[status],
         # status=[ReviewerTaskStatus.PENDING],
-        limit=50
+        limit=2,
+        skip=skip
     )
 
     allocations = await get_project_tasks_assigned_to_reviewer(task_request)
@@ -55,18 +56,19 @@ async def handle_reviewer_task_start(
     if not project_info or not project_info.get("email") or not project_info.get("id"):
         await callback.message.answer("Please select a project first using /project.")
         return
+    
+    processed_submission = user_data.get('processed_submission', [])
+    skipped_tasks = user_data.get('skipped_task', [])
 
     # 2. Fetch tasks using the provided status filter
-    allocations = await fetch_reviewer_tasks(project_info, status=status_filter)
-
+    allocations = await fetch_reviewer_tasks(project_info, status=status_filter, skip=len(skipped_tasks) + len(processed_submission))
+    
     # 3. Check for available tasks
     if len(allocations) == 0:
         await callback.message.answer(no_tasks_message)
         return
 
     first_task = None
-    processed_submission = user_data.get('processed_submission', [])
-    skipped_tasks = user_data.get('skipped_task', [])
 
     for allocate in allocations:
         submission = await get_task_submission(allocate.submission_id)

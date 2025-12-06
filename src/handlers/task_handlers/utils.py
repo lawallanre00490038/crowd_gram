@@ -34,12 +34,13 @@ def extract_project_info(user_data: dict):
     }
 
 
-async def fetch_user_tasks(project_info, status=ContributorTaskStatus.ASSIGNED) -> Optional[ProjectTaskDetailsResponseModel]:
+async def fetch_user_tasks(project_info, status=ContributorTaskStatus.ASSIGNED, skip = 0) -> Optional[ProjectTaskDetailsResponseModel]:
     """Retrieve allocated tasks for the user."""
     task_request = ProjectTaskRequestModel(
         agent_email = project_info["email"],
         project_id=project_info["id"],
-        status=[status]
+        status=[status],
+        skip=skip
     )
 
     logger.trace(f"Fetching tasks with request: {task_request}")

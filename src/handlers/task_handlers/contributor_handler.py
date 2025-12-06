@@ -44,17 +44,17 @@ async def process_and_send_task(
             await callback.message.answer(project_not_selected_message)
             return
 
+        skipped_task = user_data.get("skipped_task", [])
         # Core difference: Pass the status filter (None for new task, REDO for redo task)
-        allocations = await fetch_user_tasks(project_info, status=status_filter)
+        allocations = await fetch_user_tasks(project_info, status=status_filter, skip=len(skipped_task))
 
         if len(allocations) == 0:
             await callback.message.answer(no_tasks_message)
             return
 
         first_task = None
-        skipped_tasks = user_data.get('skipped_task', [])
         for allocate in allocations:
-            if allocate.task_id not in skipped_tasks:
+            if allocate.task_id not in skipped_task:
                 first_task = allocate
                 break
 
