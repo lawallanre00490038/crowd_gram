@@ -7,6 +7,7 @@ from aiogram.types import CallbackQuery, URLInputFile
 
 from src.constant.task_constants import ContributorTaskStatus
 from src.handlers.task_handlers.utils import extract_project_info, fetch_user_tasks, set_task_state_by_type, update_state_with_task
+from src.keyboards.inline import skip_task_inline_kb
 from src.models.api2_models.task import TaskDetailResponseModel
 from src.responses.task_formaters import TASK_MSG
 from src.utils.file_url_handlers import build_file_section
@@ -50,7 +51,16 @@ async def process_and_send_task(
             await callback.message.answer(no_tasks_message)
             return
 
-        first_task = allocations[0]
+        first_task = None
+        skipped_tasks = user_data.get('skipped_task', [])
+        for allocate in allocations:
+            if allocate.task_id not in skipped_tasks:
+                first_task = allocate
+                break
+
+        if not first_task:
+            await callback.message.answer(no_tasks_message)
+            return
 
         # Core difference: Call the appropriate message building function
         task_msg, task_type = build_msg_func(
@@ -63,12 +73,13 @@ async def process_and_send_task(
                 caption=task_msg,
                 audio=audio_file,
                 parse_mode="HTML",
-                protect_content=True
-            )
+                protect_content=True,
+                reply_markup=skip_task_inline_kb("agent"))
         else:
             await callback.message.answer(
                 task_msg,
-                parse_mode="HTML"
+                parse_mode="HTML",
+                reply_markup=skip_task_inline_kb("agent")
             )
 
         # Update state with the task info

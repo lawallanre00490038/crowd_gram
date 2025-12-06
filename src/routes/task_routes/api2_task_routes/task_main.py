@@ -21,12 +21,13 @@ async def handle_start_task(message: Message, state: FSMContext):
     if role is None:
         await message.answer("Please login first using /start.")
         return
-    if project_index is None:
+    if project_index is None:   
         await message.answer("Please select a project first using /projects.")
         return
     
     project_name = project_details[project_index]['name']
-        
+    
+    await state.update_data(skipped_task=[])
     await message.answer(f"Continue your work on the <b>{project_name}</b> project. \nPlease select the type of task you'd like to perform.", reply_markup=start_task_inline_kb(user_type=role))
 
 

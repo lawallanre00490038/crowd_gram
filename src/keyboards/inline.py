@@ -42,6 +42,22 @@ def start_task_inline_kb(user_type: str):
             ]
         )
 
+def skip_task_inline_kb(user_type: str):
+    if user_type.lower() == "agent":
+        return InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(
+                    text="Skip Task", callback_data="skip_agent_task")],
+            ]
+        )
+    elif user_type.lower() == "reviewer":
+        return InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(
+                    text="Skip Task", callback_data="skip_reviewer_task"),
+                 ]
+            ]
+        )
 
 def next_task_inline_kb(user_type: str, task_type: str):
     if user_type.lower() == "agent":
