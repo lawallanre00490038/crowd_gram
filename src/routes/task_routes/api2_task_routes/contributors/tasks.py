@@ -32,19 +32,25 @@ async def start_task_new(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "skip_agent_task")
 async def skip_task_new(callback: CallbackQuery, state: FSMContext):
-    skipped_task = await state.get_value("skipped_task", [])
-    task_id = await state.get_value("task_id")
+    user_state = await state.get_data()
+    skipped_task = user_state.get("skipped_task", [])
+    task_id = user_state.get("task_id")
     skipped_task.append(task_id)
 
     logger.debug(f"Skipping task ID: {task_id} Skipped tasks so far: {skipped_task}")
         
     await state.update_data(skipped_task=skipped_task)
     
+    if user_state.get("redo_task", False):
+        status_filter =  ContributorTaskStatus.PENDING
+    else:
+        status_filter = ContributorTaskStatus.REDO
+
     await process_and_send_task(
         callback=callback,
         state=state,
         # Default parameters for NEW task
-        status_filter=ContributorTaskStatus.ASSIGNED, # Fetching the default available status
+        status_filter=status_filter, # Fetching the default available status
         no_tasks_message="No tasks available at the moment. Please check back later.",
         project_not_selected_message="Please select a project first using /projects.",
         build_msg_func=build_task_message,

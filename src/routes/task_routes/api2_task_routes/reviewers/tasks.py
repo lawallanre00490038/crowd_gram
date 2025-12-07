@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 
 from loguru import logger
 
-from src.constant.task_constants import ContributorTaskStatus
+from src.constant.task_constants import ContributorTaskStatus, ReviewerTaskStatus
 from src.handlers.task_handlers.reviewer_handler import add_submission, handle_reviewer_task_start, process_review_submission
 from src.keyboards.inline import build_predefined_comments_kd, summary_kb
 from src.states.tasks import ReviewStates
@@ -28,8 +28,10 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "skip_reviewer_task")
 async def skip_reviewer_task(callback: CallbackQuery, state: FSMContext):
-    skipped_task = await state.get_value("skipped_task", [])
-    task_id = await state.get_value("submission_id")
+    user_state = await state.get_data()
+
+    skipped_task = user_state.get("skipped_task", [])
+    task_id = user_state.get("submission_id")
     skipped_task.append(task_id)
 
     logger.debug(f"Skipping task ID: {task_id} Skipped tasks so far: {skipped_task}")
@@ -37,10 +39,15 @@ async def skip_reviewer_task(callback: CallbackQuery, state: FSMContext):
     await state.update_data(skipped_task=skipped_task)
 
     try:
+        if user_state.get("redo_task", False):
+            status_filter =  ContributorTaskStatus.PENDING
+        else:
+            status_filter = ReviewerTaskStatus.REDO
+
         await handle_reviewer_task_start(
             callback=callback,
             state=state,
-            status_filter=ContributorTaskStatus.PENDING,
+            status_filter=status_filter,
             no_tasks_message="No tasks available at the moment. Please check back later."
         )
     except Exception as e:
