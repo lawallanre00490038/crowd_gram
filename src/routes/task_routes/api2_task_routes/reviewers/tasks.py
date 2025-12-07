@@ -19,7 +19,7 @@ async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
         await handle_reviewer_task_start(
             callback=callback,
             state=state,
-            status_filter=ContributorTaskStatus.PENDING,
+            status_filter=ReviewerTaskStatus.PENDING,
             no_tasks_message="No tasks available at the moment. Please check back later."
         )
     except Exception as e:
@@ -40,16 +40,19 @@ async def skip_reviewer_task(callback: CallbackQuery, state: FSMContext):
 
     try:
         if user_state.get("redo_task", False):
-            status_filter =  ContributorTaskStatus.PENDING
+            await handle_reviewer_task_start(
+                callback=callback,
+                state=state,
+                status_filter=ReviewerTaskStatus.REDO,
+                no_tasks_message="No tasks to REDO at the moment..."
+            )
         else:
-            status_filter = ReviewerTaskStatus.REDO
-
-        await handle_reviewer_task_start(
-            callback=callback,
-            state=state,
-            status_filter=status_filter,
-            no_tasks_message="No tasks available at the moment. Please check back later."
-        )
+            await handle_reviewer_task_start(
+                callback=callback,
+                state=state,
+                status_filter=ReviewerTaskStatus.PENDING,
+                no_tasks_message="No tasks available at the moment. Please check back later."
+            )
     except Exception as e:
         logger.error(f"Error in start_reviewer_task: {str(e)}")
         await callback.message.answer("Error occurred, please try again.")

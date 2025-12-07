@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from loguru import logger
 
 from src.constant.task_constants import ContributorTaskStatus
-from src.handlers.task_handlers.contributor_handler import build_task_message, process_and_send_task
+from src.handlers.task_handlers.contributor_handler import build_redo_task_message, build_task_message, process_and_send_task
 from src.models.api2_models.agent import SubmissionModel
 from src.keyboards.inline import next_task_inline_kb
 from src.routes.task_routes.task_formaters import ERROR_MESSAGE
@@ -42,20 +42,27 @@ async def skip_task_new(callback: CallbackQuery, state: FSMContext):
     await state.update_data(skipped_task=skipped_task)
     
     if user_state.get("redo_task", False):
-        status_filter =  ContributorTaskStatus.PENDING
+        await process_and_send_task(
+            callback=callback,
+            state=state,
+            # Specific parameters for REDO task
+            status_filter=ContributorTaskStatus.REDO,
+            no_tasks_message="No tasks to REDO at the moment...",
+            project_not_selected_message="Please select a project first using /start.", # Different message for REDO
+            build_msg_func=build_redo_task_message,
+            is_redo_task=True,
+        )
     else:
-        status_filter = ContributorTaskStatus.REDO
-
-    await process_and_send_task(
-        callback=callback,
-        state=state,
-        # Default parameters for NEW task
-        status_filter=status_filter, # Fetching the default available status
-        no_tasks_message="No tasks available at the moment. Please check back later.",
-        project_not_selected_message="Please select a project first using /projects.",
-        build_msg_func=build_task_message,
-        is_redo_task=False,
-    )
+        await process_and_send_task(
+            callback=callback,
+            state=state,
+            # Default parameters for NEW task
+            status_filter=ContributorTaskStatus.ASSIGNED, # Fetching the default available status
+            no_tasks_message="No tasks available at the moment. Please check back later.",
+            project_not_selected_message="Please select a project first using /projects.",
+            build_msg_func=build_task_message,
+            is_redo_task=False,
+        )
 
 @router.message(TaskState.waiting_for_text)
 async def handle_text_input(message: Message, state: FSMContext):
