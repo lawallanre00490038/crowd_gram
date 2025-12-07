@@ -33,10 +33,7 @@ async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING, 
 
     logger.trace(f"Fetched allocations: {allocations}")
 
-    if status == ReviewerTaskStatus.PENDING:
-        return [allocate for allocate in allocations.allocations if allocate.reviewed_at is None]
-    else:
-        return allocations.allocations
+    return allocations.allocations
 
 async def handle_reviewer_task_start(
     callback: CallbackQuery,
@@ -48,59 +45,81 @@ async def handle_reviewer_task_start(
     Reusable function to handle the core logic of fetching, sending, and updating
     state for reviewer tasks.
     """
+
     user_data = await state.get_data()
-    # Ensure extract_project_info is awaited if necessary
     project_info = extract_project_info(user_data)
 
-    # 1. Validation check
+    # --- 1. Validation ---
     if not project_info or not project_info.get("email") or not project_info.get("id"):
         await callback.message.answer("Please select a project first using /project.")
         return
-    
-    count = 0
-    while True:
-        processed_submission = user_data.get('processed_submission', [])
-        skipped_tasks = user_data.get('skipped_task', [])
 
-        # 2. Fetch tasks using the provided status filter
-        allocations = await fetch_reviewer_tasks(project_info, status=status_filter, skip=len(skipped_tasks) + len(processed_submission), limit=2)
-        
-        # 3. Check for available tasks
-        if len(allocations) == 0:
+    processed = set(user_data.get("processed_submission", []))
+    skipped = set(user_data.get("skipped_task", []))
+
+    MAX_ITERATIONS = 100
+    iteration = 0
+    first_task = None
+
+    while iteration < MAX_ITERATIONS:
+        iteration += 1
+
+        # --- 2. Fetch next batch of tasks ---
+        offset = len(processed) + len(skipped)
+        allocations = await fetch_reviewer_tasks(
+            project_info,
+            status=status_filter,
+            skip=offset,
+            limit=2
+        )
+
+        if not allocations:
             await callback.message.answer(no_tasks_message)
             return
 
-        first_task = None
-
+        # --- 3. Select the first valid task ---
         for allocate in allocations:
-            submission = await get_task_submission(allocate.submission_id)
-            logger.debug(f"Checking submission {allocate.submission_id} with status {submission.status} and processed: {processed_submission} and skipped: {skipped_tasks}")
+            sid = str(allocate.submission_id)
 
-            if (str(allocate.submission_id) not in skipped_tasks) and ((str(allocate.submission_id) not in processed_submission)):
-                if (submission.status == "pending"):
+            if sid in skipped or sid in processed:
+                continue
+
+            submission = await get_task_submission(allocate.submission_id)
+
+            # Only accept pending tasks if filter is pending
+            if submission.status != "pending":
+                skipped.add(sid)
+                continue
+
+            # Pending task logic
+            if status_filter == ReviewerTaskStatus.PENDING:
+                if allocate.reviewed_at is None:
                     first_task = allocate
                     break
                 else:
-                    skipped_tasks.append(str(allocate.submission_id))
-                    await state.update_data(skipped_task=skipped_tasks)
-        count +=1
+                    skipped.add(sid)
+                    continue
+            else:
+                first_task = allocate
+                break
 
-        if count < 10000:
-            logger.debug(f"Count: {count}, Skipped tasks: {len(skipped_tasks)}, Processed submissions: {len(processed_submission)}")
-        else:
-            logger.warning(f"Count exceeded 10000 iterations, breaking the loop to prevent infinite loop. Skipped tasks: {len(skipped_tasks)}, Processed submissions: {len(processed_submission)}")
-            break
-        # 3. Check for available tasks
-        if first_task is not None:
+        if first_task:
             break
 
-    # 4. Send the task and update state
+    else:
+        logger.warning("Loop exceeded iteration limit, aborting to avoid infinite loop.")
+        await callback.message.answer("Unable to find a task. Please try again.")
+        return
+
+    # --- 4. Send task + update state ---
     await send_reviewer_task(callback.message, first_task, project_info)
 
-    await state.update_data({
-        "project_id": project_info["id"],
-        "submission_id": str(first_task.submission_id)  
-    })
+    await state.update_data(
+        project_id=project_info["id"],
+        submission_id=str(first_task.submission_id),
+        skipped_task=list(skipped),
+    )
+
 
 
 async def send_reviewer_task(message: Message, first_task: ReviewerAllocation, project_info):
