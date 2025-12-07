@@ -57,6 +57,7 @@ async def handle_reviewer_task_start(
         await callback.message.answer("Please select a project first using /project.")
         return
     
+    count = 0
     while True:
         processed_submission = user_data.get('processed_submission', [])
         skipped_tasks = user_data.get('skipped_task', [])
@@ -82,7 +83,13 @@ async def handle_reviewer_task_start(
                 else:
                     skipped_tasks.append(str(allocate.submission_id))
                     await state.update_data(skipped_task=skipped_tasks)
+        count +=1
 
+        if count < 10000:
+            logger.debug(f"Count: {count}, Skipped tasks: {len(skipped_tasks)}, Processed submissions: {len(processed_submission)}")
+        else:
+            logger.warning(f"Count exceeded 10000 iterations, breaking the loop to prevent infinite loop. Skipped tasks: {len(skipped_tasks)}, Processed submissions: {len(processed_submission)}")
+            break
         # 3. Check for available tasks
         if first_task is not None:
             break
@@ -92,7 +99,7 @@ async def handle_reviewer_task_start(
 
     await state.update_data({
         "project_id": project_info["id"],
-        "submission_id": str(first_task.submission_id)
+        "submission_id": str(first_task.submission_id)  
     })
 
 
