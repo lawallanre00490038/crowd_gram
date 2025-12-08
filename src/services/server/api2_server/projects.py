@@ -1,10 +1,10 @@
 from loguru import logger
-from typing import Optional
+from typing import List, Optional
 import aiohttp
 
 from src.config import BASE_URL_V2
 from src.models.api2_models.projects import (Project, ProjectListResponseModel, ProjectReviewerDetailsResponseModel, ProjectUpdateModel,
-                                             ProjectTaskDetailsResponseModel, ProjectTaskRequestModel, ReviewerTaskRequestModel, Submission)
+                                             ProjectTaskDetailsResponseModel, ProjectTaskRequestModel, ReviewAssignment, ReviewAssignmentsResponse, ReviewerTaskRequestModel, Submission)
 
 
 async def get_projects(project_data: dict) -> Optional[Project]:
@@ -267,6 +267,33 @@ async def get_task_submission(submission_id: str) -> Optional[Submission]:
 
                 if response.status == 200:
                     return Submission.model_validate(tasks_result)
+                else:
+                    logger.error(
+                        f"Failed to fetch project tasks allocations by user: {tasks_result}")
+                    return None
+    except Exception as e:
+        logger.error(
+            f"Exception during fetching project tasks allocations by user: {str(e)}")
+        return None
+    
+async def get_submission_reviewer_allocation(submission_id: str) -> Optional[List[ReviewAssignment]]:
+    """Fetch project task allocations assigned to a specific reviewer.
+
+    Args:
+        task_details (ReviewerTaskRequestModel): The task details containing the user email.
+
+    Returns:
+        Optional[ProjectReviewerDetailsResponseModel]: The task allocations or None if an error occurs.
+    """
+    url = f"{BASE_URL_V2}/submission/{submission_id}/agent/review_allocations".format(submission_id)
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                tasks_result = await response.json()
+
+                if response.status == 200:
+                    return [ReviewAssignment.model_validate(i) for i in tasks_result]
                 else:
                     logger.error(
                         f"Failed to fetch project tasks allocations by user: {tasks_result}")

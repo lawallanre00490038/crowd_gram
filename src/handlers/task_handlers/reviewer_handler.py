@@ -13,7 +13,7 @@ from src.models.api2_models.reviewer import ReviewModel, ReviewSubmissionRespons
 from src.models.api2_models.task import TaskDetailResponseModel
 from src.responses.task_formaters import REVIEWER_TASK_MSG
 from src.handlers.task_handlers.utils import extract_project_info, format_submission
-from src.services.server.api2_server.projects import get_project_tasks_assigned_to_reviewer, get_task_submission
+from src.services.server.api2_server.projects import get_project_tasks_assigned_to_reviewer, get_submission_reviewer_allocation, get_task_submission
 from src.services.server.api2_server.reviewer import submit_review_details
 
 
@@ -70,7 +70,7 @@ async def handle_reviewer_task_start(
             project_info,
             status=status_filter,
             skip=offset,
-            limit=2
+            limit=5
         )
 
         if not allocations:
@@ -82,12 +82,14 @@ async def handle_reviewer_task_start(
             sid = str(allocate.submission_id)
 
             if sid in skipped or sid in processed:
+                logger.debug(f"Skipping already processed/skipped submission_id: {sid}")
                 continue
 
-            submission = await get_task_submission(allocate.submission_id)
+            submission = await get_submission_reviewer_allocation(allocate.submission_id)
 
             # Only accept pending tasks if filter is pending
-            if submission.status != "pending":
+            if len(submission) > 1:
+                logger.debug(f"Skipping task with multiple submissions: {sid}")
                 skipped.add(sid)
                 continue
 

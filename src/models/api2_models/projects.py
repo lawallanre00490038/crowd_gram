@@ -125,3 +125,25 @@ class Submission(BaseModel):
     created_at: datetime
     updated_at: datetime
     prompt: Prompt
+
+
+from typing import Optional, List
+from uuid import UUID
+from datetime import datetime
+from pydantic import BaseModel
+
+
+class ReviewAssignment(BaseModel):
+    reviewer_id: str
+    id: str
+    assigned_at: datetime
+    reviewed_at: Optional[datetime] = None
+    updated_at: datetime
+    submission_id: str
+    status: str
+    decision: Optional[str] = None
+    created_at: datetime
+
+
+# If your endpoint returns the whole list:
+ReviewAssignmentsResponse = List[ReviewAssignment]
