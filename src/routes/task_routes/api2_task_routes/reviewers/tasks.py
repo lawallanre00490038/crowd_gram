@@ -72,9 +72,8 @@ async def handle_accept(callback: CallbackQuery, state: FSMContext):
             comments=data.get("comments", []),
         )
 
-        await add_submission(state)
-
         if not success:
+            await add_submission(state)
             return
 
     except Exception as e:
@@ -198,14 +197,15 @@ async def confirm_comment_submission(callback: CallbackQuery, state: FSMContext)
         return
 
     try:
-        await process_review_submission(
+        success = await process_review_submission(
             callback,
             data,
             decision="reject",
             comments=selected_comments,
         )
 
-        await add_submission(state)
+        if not success:
+            await add_submission(state)
 
     except Exception as e:
         logger.exception(f"Error in confirm_comment_submission: {e}")

@@ -98,7 +98,8 @@ async def handle_reviewer_task_start(
                 if allocate.reviewed_at is None:
                     first_task = allocate
                     break
-                else:
+                else:   
+                    logger.debug(f"Skipping task with multiple submissions: {allocate}")
                     skipped.add(sid)
                     continue
             else:
