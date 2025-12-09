@@ -85,10 +85,10 @@ async def handle_reviewer_task_start(
                 logger.debug(f"Skipping already processed/skipped submission_id: {sid}")
                 continue
 
-            submission = await get_submission_reviewer_allocation(allocate.submission_id)
+            submission = await get_task_submission(allocate.submission_id)
 
             # Only accept pending tasks if filter is pending
-            if len(submission) > 1:
+            if submission.status != ReviewerTaskStatus.PENDING:
                 logger.debug(f"Skipping task with multiple submissions: {sid}")
                 skipped.add(sid)
                 continue

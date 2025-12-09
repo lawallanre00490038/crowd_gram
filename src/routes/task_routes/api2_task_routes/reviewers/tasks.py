@@ -16,6 +16,7 @@ router = Router()
 @router.callback_query(F.data == "start_reviewer_task")
 async def start_reviewer_task(callback: CallbackQuery, state: FSMContext):
     try:
+        await state.update_data(redo_task=False)
         await handle_reviewer_task_start(
             callback=callback,
             state=state,

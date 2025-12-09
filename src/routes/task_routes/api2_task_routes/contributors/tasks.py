@@ -19,6 +19,7 @@ router = Router()
 
 @router.callback_query(F.data == "start_agent_task")
 async def start_task_new(callback: CallbackQuery, state: FSMContext):
+    await state.update_data(redo_task=False)
     await process_and_send_task(
         callback=callback,
         state=state,
@@ -26,7 +27,7 @@ async def start_task_new(callback: CallbackQuery, state: FSMContext):
         status_filter=ContributorTaskStatus.ASSIGNED, # Fetching the default available status
         no_tasks_message="No tasks available at the moment. Please check back later.",
         project_not_selected_message="Please select a project first using /projects.",
-        build_msg_func=build_task_message,
+        build_msg_func=build_task_message,  
         is_redo_task=False,
     )
 
