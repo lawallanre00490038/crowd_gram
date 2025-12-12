@@ -183,35 +183,8 @@ async def get_projects_details_by_user_email(user_email: str) -> Optional[Projec
                 if response.status == 200:
                     return ProjectListResponseModel.model_validate(projects_result)
                 else:
-                    import os
-                    import json
-                    import pandas as pd
-
-                    cwd = os.getcwd()
-                    logger.info(cwd)
-
-                    mapping = {
-                        "English users_sample_agent.xlsx": "english.json",
-                        "English users_sample_reviewer.xlsx": "english.json",
-                        "Hausa Batch 1 users_sample_with_passwords.xlsx": "hausa.json",
-                        "Pidgin Batch 1 users_sample_with_passwords.xlsx": "pidgin.json"
-                    }
-
-                    for i in mapping.keys():
-                        file = pd.read_excel(
-                            os.path.join(cwd, os.path.join(i)))
-
-                        if (sum(file["email"].str.lower().str.strip().isin([user_email])) > 0):
-                            try:
-                                with open(os.path.join(cwd, mapping[i]), "r") as file:
-                                    projects_result = json.load(file)
-
-                                return ProjectListResponseModel.model_validate(projects_result)
-                            except FileNotFoundError:
-                                logger.error(f"Projects JSON file not found")
-                                return None
                     logger.error(
-                        f"Failed to fetch projects by user email: {projects_result.get('message', 'Unknown error')}")
+                        f"Failed to fetch projects by user email: {projects_result}")
                     return None
     except Exception as e:
         logger.error(

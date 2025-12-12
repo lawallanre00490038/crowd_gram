@@ -4,7 +4,10 @@ import aiohttp
 
 from src.config import BASE_URL_V2
 
-from src.models.api2_models.status import StatusModel, StatusContributorResponseModel, StatusReviewerResponseModel,      AnalyticsResponseModel, DailyAnalyticsResponseModel
+from src.constant.task_constants import ContributorTaskStatus
+from src.models.api2_models.projects import ProjectTaskRequestModel, ReviewerTaskRequestModel
+from src.models.api2_models.status import ProjectReviewStats, StatusModel, StatusContributorResponseModel, StatusReviewerResponseModel,      AnalyticsResponseModel, DailyAnalyticsResponseModel
+from src.services.server.api2_server.projects import get_project_tasks_assigned_to_reviewer, get_project_tasks_assigned_to_user, get_projects_details_by_user_email
 
 
 async def get_contributor_status(contributor_data: StatusModel) -> StatusContributorResponseModel:
@@ -45,6 +48,69 @@ async def get_reviewer_status(reviewer_data: StatusModel) -> StatusReviewerRespo
     Returns:
         StatusReviewerResponseModel: The status details of the reviewer.
     """
+
+    projects = await get_projects_details_by_user_email(reviewer_data.email)
+
+    status_review = StatusReviewerResponseModel(reviewer_email=reviewer_data.email, total_reviewed=0, approved_reviews=0, rejected_reviews=0, pending_reviews=0, redo_reviews=0, per_project=[])
+    import pandas as pd
+    for _, project in projects:
+        project = project[0]
+        logger.info(f"Processing project: {project.id} - {project.name}")
+        task_request = ReviewerTaskRequestModel(
+            reviewer_email = reviewer_data.email,
+            project_id=project.id,
+            status=[],
+            limit=100000
+        )
+        
+
+        logger.info(f"Fetching tasks for project: {task_request}")
+
+        allocate = (await get_project_tasks_assigned_to_reviewer(task_request)).allocations        
+        user_df = pd.DataFrame([i.model_dump() for i in allocate])
+        user_request_model = ProjectTaskRequestModel(project_id=project.id, status=[ContributorTaskStatus.PENDING], limit=100000)
+        user_allocation = (await get_project_tasks_assigned_to_user(user_request_model)).allocations
+        agent_df = pd.DataFrame([i.model_dump() for i in user_allocation])
+
+        def correct_status(row):
+            if row['status'] == ContributorTaskStatus.PENDING:
+                if row["submission_id"] in agent_df['submission_id'].values:
+                    logger.info(f"Submission {row['submission_id']} is already in agent_df")
+                    return True
+                else:
+                    return False
+            else: 
+                return True
+        
+        project_status = user_df[user_df.apply(correct_status, axis=1)]['status'].value_counts()
+        
+        # logger.info(f"Total task recovered: {user_df[user_df.apply(correct_status, axis=1)]['status'].value_counts()}")
+
+        status_review.total_reviewed += project_status.sum()
+        status_review.approved_reviews += project_status.get(ContributorTaskStatus.ACCEPTED, 0)
+        status_review.rejected_reviews += project_status.get(ContributorTaskStatus.REJECTED, 0)
+        status_review.pending_reviews += project_status.get(ContributorTaskStatus.PENDING, 0)  
+        status_review.redo_reviews += project_status.get(ContributorTaskStatus.REDO, 0)
+
+        status_review.per_project.append(
+            ProjectReviewStats(
+                project_id=project.id,
+                project_name=project.name,
+                total_reviewed=project_status.get(ContributorTaskStatus.ACCEPTED, 0) + project_status.get(ContributorTaskStatus.REJECTED, 0) +
+                               project_status.get(ContributorTaskStatus.PENDING, 0) + project_status.get(ContributorTaskStatus.REDO, 0),
+                approved=project_status.get(ContributorTaskStatus.ACCEPTED, 0),
+                rejected=project_status.get(ContributorTaskStatus.REJECTED, 0),
+                pending_review=project_status.get(ContributorTaskStatus.PENDING, 0),
+                redo=project_status.get(ContributorTaskStatus.REDO, 0),
+                number_assigned=project_status.sum(),
+                total_coins_earned=0,
+                total_amount_earned=0.0
+            )
+        )
+
+
+    return status_review
+
     url = f"{BASE_URL_V2}/status/reviewer/{reviewer_data.email}"
 
     try:

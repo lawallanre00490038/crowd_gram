@@ -73,7 +73,7 @@ class ProjectTaskRequestModel(BaseModel):
     project_id: str
     agent_email: Optional[str] = None
     # optional list of strings
-    status: Optional[List[ContributorTaskStatus]]
+    status: Optional[List[ContributorTaskStatus]] = []
     start_date: Optional[datetime] = None               # ISO datetime
     end_date: Optional[datetime] = None                 # ISO datetime
     skip: int = 0                                       # default 0

@@ -84,6 +84,10 @@ class AllocationType(str, Enum):
 class ReviewDecision(str, Enum):
     ACCEPT = "accept"
     REJECTED = "rejected"
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+
+
 
 
 class ReviewEvent(BaseModel):
