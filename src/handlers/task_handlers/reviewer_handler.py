@@ -76,7 +76,12 @@ async def handle_reviewer_task_start(
         if not allocations:
             await callback.message.answer(no_tasks_message)
             return
+        
+        if status_filter == ReviewerTaskStatus.REDO:
+            await send_reviewer_task(callback.message, allocations[0], project_info)
 
+            return
+        
         # --- 3. Select the first valid task ---
         for allocate in allocations:
             sid = str(allocate.submission_id)
