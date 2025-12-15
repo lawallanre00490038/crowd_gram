@@ -25,7 +25,7 @@ async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING, 
         reviewer_email=project_info["email"],
         status=[status],
         # status=[ReviewerTaskStatus.PENDING],
-        limit=limit,
+        limit=1000,
         skip=skip
     )
 
