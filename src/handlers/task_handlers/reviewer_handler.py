@@ -82,10 +82,10 @@ async def handle_reviewer_task_start(
 
             await state.update_data(
                 project_id=project_info["id"],
-                submission_id=str(first_task.submission_id),
+                submission_id=str(allocations[0].submission_id),
                 skipped_task=list(skipped),
             )
-            
+
             return
         
         # --- 3. Select the first valid task ---
