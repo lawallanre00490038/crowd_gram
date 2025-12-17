@@ -10,13 +10,15 @@ router = Router()
 
 @router.callback_query(F.data == "start_agent_redo_task")
 async def start_task_redo(callback: CallbackQuery, state: FSMContext):
-    await process_and_send_task(
-        callback=callback,
-        state=state,
-        # Specific parameters for REDO task
-        status_filter=ContributorTaskStatus.REDO,
-        no_tasks_message="No tasks to REDO at the moment...",
-        project_not_selected_message="Please select a project first using /start.", # Different message for REDO
-        build_msg_func=build_redo_task_message,
-        is_redo_task=True,
-    )
+    await callback.message.answer("You can not start a new task at the moment. Please try again later.")
+
+    # await process_and_send_task(
+    #     callback=callback,
+    #     state=state,
+    #     # Specific parameters for REDO task
+    #     status_filter=ContributorTaskStatus.REDO,
+    #     no_tasks_message="No tasks to REDO at the moment...",
+    #     project_not_selected_message="Please select a project first using /start.", # Different message for REDO
+    #     build_msg_func=build_redo_task_message,
+    #     is_redo_task=True,
+    # )
