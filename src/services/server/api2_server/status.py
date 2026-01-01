@@ -32,11 +32,11 @@ async def get_contributor_status(contributor_data: StatusModel) -> StatusContrib
                 else:
                     logger.error(
                         f"Failed to fetch contributor status: {response_text}")
-                    return StatusContributorResponseModel(user_email=contributor_data.email, approved=0, pending=0, rejected=0, per_project=[])
+                    return StatusContributorResponseModel(user_email=contributor_data.email)
     except Exception as e:
         logger.error(
             f"Error occurred while fetching contributor status: {str(e)}")
-        return StatusContributorResponseModel(user_email=contributor_data.email, approved=0, pending=0, rejected=0, per_project=[])
+        return StatusContributorResponseModel(user_email=contributor_data.email)
 
 
 async def get_reviewer_status(reviewer_data: StatusModel) -> StatusReviewerResponseModel:
@@ -53,6 +53,10 @@ async def get_reviewer_status(reviewer_data: StatusModel) -> StatusReviewerRespo
 
     status_review = StatusReviewerResponseModel(reviewer_email=reviewer_data.email, total_reviewed=0, approved_reviews=0, rejected_reviews=0, pending_reviews=0, redo_reviews=0, per_project=[])
     import pandas as pd
+    
+    if projects is None:
+        return status_review
+
     for _, project in projects:
         project = project[0]
         logger.info(f"Processing project: {project.id} - {project.name}")

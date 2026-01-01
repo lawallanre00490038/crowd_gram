@@ -7,13 +7,11 @@ class StatusModel(BaseModel):
     email: str
     start: Optional[datetime] = None
     end: Optional[datetime] = None
-
-
 class ProjectStats(BaseModel):
     project_id: str
     project_name: str
-    total: int
-    number_assigned: int
+    # total: int                        # Not in the new implementation
+    total_assigned: int                 # New Implementation number_assigned: int
     total_submissions: int
     approved: int
     rejected: int
@@ -39,12 +37,11 @@ class ProjectReviewStats(BaseModel):
 
 class StatusContributorResponseModel(BaseModel):
     user_email: str
-    approved: int
-    pending: int
-    rejected: int
-    redo: int
+    approved: int = 0
+    pending: int = 0
+    rejected: int = 0
+    redo: int = 0
     per_project: List[ProjectStats] = []
-
 
 class StatusReviewerResponseModel(BaseModel):
     reviewer_email: str

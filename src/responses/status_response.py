@@ -16,7 +16,7 @@ def format_agent_status(data: dict) -> str:
     for project in data.get("per_project", []):
         status_msg += f"""
 📌 <b>{project['project_name'].upper()}</b>
-• Assigned Tasks: <b>{project['number_assigned']}</b>
+• Assigned Tasks: <b>{project['total_assigned']}</b>
 • Total Submissions: <b>{project['total_submissions']}</b>
 • ✅ Approved: <b>{project['approved']}</b>
 • 🕓 Pending Review: <b>{project['pending_review']}</b>
