@@ -1,5 +1,5 @@
 from typing import Dict, Optional, Tuple
-from aiogram.types import URLInputFile, Message
+from aiogram.types import URLInputFile, Message, MaybeInaccessibleMessageUnion
 from aiogram.fsm.context import FSMContext
 from loguru import logger
 
@@ -7,6 +7,7 @@ from aiogram.types import CallbackQuery
 from typing import Optional, List
 
 from src.constant.task_constants import ReviewerTaskStatus
+from src.handlers.task_handlers.location_handler import get_address
 from src.keyboards.inline import next_task_inline_kb, review_task_inline_kb
 from src.models.api2_models.projects import ExtractedProjectInfo, ReviewerTaskRequestModel
 from src.models.api2_models.reviewer import ReviewModel, ReviewSubmissionResponse, ReviewerAllocation, ReviewerTaskResponseModel
@@ -30,6 +31,9 @@ async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING, 
     )
 
     allocations = await get_project_tasks_assigned_to_reviewer(task_request)
+
+    if allocations is None:
+        return None
 
     logger.trace(f"Fetched allocations: {allocations}")
 
@@ -99,8 +103,8 @@ async def handle_reviewer_task_start(
                 logger.debug(f"Skipping already processed/skipped submission_id: {sid}")
                 continue
 
-            submission = await get_task_submission(allocate.submission_id)
-
+            submission = await get_task_submission(str(allocate.submission_id))
+            
             # Only accept pending tasks if filter is pending
             if submission.status != ReviewerTaskStatus.PENDING:
                 logger.debug(f"Skipping task with multiple submissions: {sid}")
@@ -122,7 +126,7 @@ async def handle_reviewer_task_start(
 
         if first_task:
             break
-
+    
     else:
         logger.warning("Loop exceeded iteration limit, aborting to avoid infinite loop.")
         await callback.message.answer("Unable to find a task. Please try again.")
@@ -139,7 +143,7 @@ async def handle_reviewer_task_start(
 
 
 
-async def send_reviewer_task(message: Message, first_task: ReviewerAllocation, project_info: ExtractedProjectInfo):
+async def send_reviewer_task(message: MaybeInaccessibleMessageUnion, first_task: ReviewerAllocation, project_info: ExtractedProjectInfo):
     """
     Sends a reviewer task message with appropriate formatting depending on submission type.
 
@@ -151,13 +155,19 @@ async def send_reviewer_task(message: Message, first_task: ReviewerAllocation, p
 
     submission = format_submission(first_task, project_info.return_type)
 
+    location_data = None
+    if project_info.require_geo:
+        location_data = get_address(latitude=first_task.meta['lat'], longitude=first_task.meta['lon'])
+
     caption = REVIEWER_TASK_MSG['intro'].format(
         project_name=project_info.name,
         submission_type=project_info.return_type,
         payload_text=first_task.sentence,
         submission=submission,
-        reviewer_instruction=project_info.reviewer_instructions
+        reviewer_instruction=project_info.reviewer_instructions,
+        location_str=f"📍 Location: {location_data}\n" if location_data else ""
     )
+
 
     if project_info.return_type == "audio":
 
@@ -168,6 +178,20 @@ async def send_reviewer_task(message: Message, first_task: ReviewerAllocation, p
         await message.answer_audio(
             caption=caption,
             audio=audio_file,
+            parse_mode="HTML",
+            protect_content=True,
+            reply_markup=review_task_inline_kb()
+        )
+        
+    elif project_info.return_type == "image":
+
+        audio_file = URLInputFile(str(first_task.file_url))
+
+        logger.debug(f"Sending audio file from URL: {first_task.file_url}")
+        logger.debug(f"With caption: {caption}")
+        await message.answer_photo(
+            caption=caption,
+            photo=audio_file,
             parse_mode="HTML",
             protect_content=True,
             reply_markup=review_task_inline_kb()

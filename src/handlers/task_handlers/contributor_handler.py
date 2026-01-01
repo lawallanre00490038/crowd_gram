@@ -56,7 +56,7 @@ async def validate_image_input(message: Message):
                 response="Please take a photograph",
                 metadata={})
     
-    return await handle_image_submission(file_id = message.photo[0].file_id, bot = message.bot)
+    return await handle_image_submission(file_id = message.photo[-1].file_id, bot = message.bot)
     # return await handle_api2_audio_submission(task_info={}, file_id=message.voice.file_id if message.voice else message.audio.file_id, user_id=message.from_user.id, bot=message.bot)
 
 async def validate_audio_input(message: Message):

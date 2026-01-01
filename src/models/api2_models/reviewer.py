@@ -89,6 +89,8 @@ class ReviewSubmissionResponse(BaseModel):
 class ReviewerAllocation(BaseModel):
     reviewer_allocation_id: UUID
     submission_id: UUID
+
+    meta: Dict = {}
     reviewer_id: str
     agent_id: str
 

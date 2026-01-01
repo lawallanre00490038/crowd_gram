@@ -20,7 +20,7 @@ def build_file_section(submission_type: str, file_url: str | None) -> str:
         case "video":
             return f'🎥 <a href="{file_url}">Watch submission</a>  \n\n'
         case "image":
-            return f'🖼️ <a href="{file_url}">View image</a> \n\n'
+            return f'Verify the Submission'
         case "document" | "pdf":
             return f'📄 <a href="{file_url}">Open document</a> \n\n'
         case _:
