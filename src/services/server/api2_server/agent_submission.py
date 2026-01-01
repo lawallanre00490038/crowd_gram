@@ -25,7 +25,7 @@ async def create_submission(submission_data: SubmissionModel, file_path: str | N
     form = aiohttp.FormData()
 
     # Add text fields
-    for key, value in submission_data.model_dump(exclude_none=True, exclude={"file"}).items():
+    for key, value in submission_data.model_dump(exclude_none=True, exclude={"file"}, mode="json").items():
         form.add_field(key, json.dumps(value) if isinstance(
             value, (dict, list)) else str(value))
 

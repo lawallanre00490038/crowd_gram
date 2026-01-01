@@ -1,6 +1,6 @@
 # qa_text_validation.py
 
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 from loguru import logger
 
 
@@ -10,7 +10,7 @@ from src.services.quality_assurance.text_structural_checks import check_junk, ha
 from src.services.quality_assurance.text_length_check import check_length_and_truncation
 
 
-def validate_text_input(text: str, task_lang: str = None, exp_task_script=None) -> Dict[str, Union[bool, List[str], Dict]]:
+def validate_text_input(text: str, task_lang: Optional[str] = None, exp_task_script=None):
     """
     Telegram bot–friendly text QA validator.
     Runs all checks, accumulates failures, and returns structured result.

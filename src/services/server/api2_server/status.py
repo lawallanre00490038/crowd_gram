@@ -60,7 +60,7 @@ async def get_reviewer_status(reviewer_data: StatusModel) -> StatusReviewerRespo
             reviewer_email = reviewer_data.email,
             project_id=project.id,
             status=[],
-            limit=100000
+            limit=10000
         )
         
 

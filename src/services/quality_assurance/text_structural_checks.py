@@ -15,6 +15,7 @@ Usage:
     result = run_all_checks("some input text", expected_script_prefix="LATIN")
 """
 
+from typing import Optional
 import unicodedata
 from loguru import logger
 import re
@@ -52,7 +53,7 @@ def has_repeated_chars(text: str, threshold: int = 4) -> bool:
     return bool(re.search(rf"(.)\1{{{threshold},}}", text))
 
 
-def check_unicode_script(text: str, expected_script_prefix: str) -> bool:
+def check_unicode_script(text: str, expected_script_prefix: Optional[str]) -> bool:
     """
     Check if all characters in the text match the expected Unicode script.
 
@@ -75,12 +76,11 @@ def check_unicode_script(text: str, expected_script_prefix: str) -> bool:
             # Only enforce check on letters
             if unicodedata.category(char).startswith("L"):
                 name = unicodedata.name(char, "")
+                if expected_script_prefix == None:
+                    return False
                 if not name.startswith(expected_script_prefix):
                     return False
         return True
-    except Exception as e:
-        logger.warning(f"Unicode script check failed: {e}")
-        return False
     except Exception as e:
         logger.warning(f"Unicode script check failed: {e}")
         return False
