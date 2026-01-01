@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List, Optional
 from datetime import datetime
-from src.constant.task_constants import ContributorTaskStatus, ReviewerTaskStatus
+from src.constant.task_constants import ContributorTaskStatus, ReviewerTaskStatus, TaskType
 from src.models.api2_models.reviewer import ReviewerAllocation
 from src.models.api2_models.task import TaskDetailResponseModel
 from datetime import datetime
@@ -11,6 +11,36 @@ from pydantic import BaseModel, Field, RootModel, field_validator
 from typing import Optional, List
 from datetime import datetime
 from pydantic import BaseModel, Field, field_validator
+
+from pydantic import BaseModel, Field
+from typing import Optional
+
+class ProjectModel(BaseModel):
+    id: str
+    name: Optional[str] = None
+    require_geo: bool = False
+    reviewer_instructions: str = Field(
+        default="No specific instructions provided."
+    )
+    agent_instructions: str = Field(
+        default="Please translate carefully."
+    )
+    return_type: TaskType = Field(default=TaskType.TEXT)
+
+class UserProjectState(BaseModel):
+    user_email: str
+    project_index: int
+    projects_details: List[ProjectModel]
+
+
+class ExtractedProjectInfo(BaseModel):
+    email: str
+    id: str
+    name: Optional[str]
+    reviewer_instructions: str
+    instruction: str
+    return_type: TaskType
+    require_geo: bool = False
 
 
 class Project(BaseModel):
@@ -39,6 +69,7 @@ class Project(BaseModel):
     review_scale: int = 5
     review_threshold_percent: int = 0
 
+    require_geo: bool = False
     total_prompts: int = 0
     total_tasks: int = 0
     total_submissions: int = 0

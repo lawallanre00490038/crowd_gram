@@ -1,10 +1,16 @@
 from enum import Enum
-from pydantic import BaseModel, EmailStr, UUID4
-from typing import Dict, List, Literal, Optional
+from pydantic import BaseModel, EmailStr, UUID4, Field
+from typing import Dict, List, Literal, Optional, Any
 from datetime import datetime
 
 from src.constant.task_constants import ContributorTaskStatus
 from uuid import UUID
+
+
+class SubmissionResult(BaseModel):
+    success: bool
+    response: str
+    metadata: Dict[str, Any] = Field(default_factory=dict) 
 
 
 class TaskModel(BaseModel):

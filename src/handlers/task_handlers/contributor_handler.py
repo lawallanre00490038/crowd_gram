@@ -1,15 +1,23 @@
+from optparse import Option
+import os
 from loguru import logger
+
 
 from aiogram.fsm.context import FSMContext
 from typing import Optional, Callable, Tuple
-from aiogram.types import CallbackQuery, URLInputFile
+from aiogram.types import CallbackQuery, URLInputFile, Message
 
 
-from src.constant.task_constants import ContributorTaskStatus
+from src.constant.task_constants import ContributorTaskStatus, TaskType
+from src.handlers.task_handlers.audio_task_handler import handle_api2_audio_submission
+from src.handlers.task_handlers.image_handlers.image_task_submission_handler import handle_image_submission
 from src.handlers.task_handlers.utils import extract_project_info, fetch_user_tasks, set_task_state_by_type, update_state_with_task
-from src.keyboards.inline import skip_task_inline_kb
-from src.models.api2_models.task import TaskDetailResponseModel
+from src.keyboards.inline import next_task_inline_kb, skip_task_inline_kb
+from src.models.api2_models.task import SubmissionResult, TaskDetailResponseModel
 from src.responses.task_formaters import TASK_MSG
+from src.services.quality_assurance.text_validation import validate_text_input
+from src.services.server.api2_server.agent_submission import create_submission
+from src.states.tasks import TaskState
 from src.utils.file_url_handlers import build_file_section
 
 
@@ -20,6 +28,100 @@ type_map = {
     "video": "Video"
 }
 
+async def validate_task(message: Message, task_type: TaskType) -> Optional[SubmissionResult]:
+    if message.forward_date:
+        await message.answer("Forwarded data is not acceptable")
+        return 
+
+    if task_type == TaskType.TEXT:
+        if message.text == None:
+            return
+        
+        result = validate_text_input(message.text.strip(), task_lang=None, exp_task_script=None)
+
+        return SubmissionResult(
+            success=result['success'],
+            response="".join(result['fail_reasons']),
+            metadata=result['metadata']
+        )
+    elif task_type == TaskType.AUDIO:
+        return await validate_audio_input(message=message)
+    elif task_type == TaskType.IMAGE:
+        return await validate_image_input(message=message)
+
+async def validate_image_input(message: Message):
+    if not message.photo:
+        return SubmissionResult(
+                success=False,
+                response="Please take a photograph",
+                metadata={})
+    
+    return await handle_image_submission(file_id = message.photo[0].file_id, bot = message.bot)
+    # return await handle_api2_audio_submission(task_info={}, file_id=message.voice.file_id if message.voice else message.audio.file_id, user_id=message.from_user.id, bot=message.bot)
+
+async def validate_audio_input(message: Message):
+    if not message.voice:
+        return SubmissionResult(
+            success=False,
+            response="Please record a voice message.",
+            metadata={}
+        )
+    if message.audio != None and message.from_user != None:
+        return await handle_api2_audio_submission(task_info={}, file_id=message.voice.file_id if message.voice else message.audio.file_id, user_id=message.from_user.id, bot=message.bot)
+
+async def finalize_submission(
+    message,
+    submission,
+    new_path,
+    project_info,
+    user_data: dict,
+) -> bool:
+    """
+    Finalize a submission:
+    - Create submission (with or without file)
+    - Remove temp file if present
+    - Send success / failure messages
+    - Handle next task routing
+
+    Returns True on success, False on failure.
+    """
+
+    # Create submission
+    if new_path:
+        submission_response = await create_submission(
+            submission, file_path=new_path
+        )
+    else:
+        submission_response = await create_submission(submission)
+
+    # Cleanup temp file
+    if new_path and os.path.exists(new_path):
+        os.remove(new_path)
+
+    if not submission_response:
+        await message.answer("Failed to submit your work. Please try again.")
+        return False
+
+    # Success message
+    await message.answer(
+        f"Your {project_info.return_type} submission has been received and recorded successfully. Thank you!"
+    )
+
+    # Next task logic
+    redo_task = user_data.get("redo_task", False)
+    task_type = "redo" if redo_task else "task"
+
+    await message.answer(
+        "Begin the next task." if not redo_task else "Begin the next REDO task.",
+        reply_markup=next_task_inline_kb(
+            user_type="agent",
+            task_type=task_type,
+        ),
+    )
+
+    return True
+
+
 # New Reusable Function
 async def process_and_send_task(
     callback: CallbackQuery,
@@ -27,7 +129,7 @@ async def process_and_send_task(
     status_filter: Optional[ContributorTaskStatus] = None, # Used by the REDO task handler
     no_tasks_message: str = "No tasks available at the moment. Please check back later.",
     project_not_selected_message: str = "Please select a project first using /projects.",
-    build_msg_func: Callable[..., Tuple[str, str]] = None, # build_task_message or build_redo_task_message
+    build_msg_func: Optional[Callable[..., Tuple[str, str]]] = None, # build_task_message or build_redo_task_message
     is_redo_task: bool = False,
 ):
     """
@@ -40,15 +142,22 @@ async def process_and_send_task(
         user_data = await state.get_data()
         project_info = extract_project_info(user_data)
 
+        if callback.message == None:
+            return
+
         if not project_info:
             await callback.message.answer(project_not_selected_message)
             return
 
         skipped_task = user_data.get("skipped_task", [])
         # Core difference: Pass the status filter (None for new task, REDO for redo task)
+        if status_filter == None:
+            await callback.message.answer(project_not_selected_message)
+            return
+        
         allocations = await fetch_user_tasks(project_info, status=status_filter, skip=len(skipped_task))
-
-        if len(allocations) == 0:
+        
+        if (allocations == None) or (len(allocations) == 0):
             await callback.message.answer(no_tasks_message)
             return
 
@@ -64,10 +173,10 @@ async def process_and_send_task(
 
         # Core difference: Call the appropriate message building function
         task_msg, task_type = build_msg_func(
-            first_task, project_info["instruction"], project_info["return_type"])
+            first_task, project_info.instruction, project_info.return_type)
 
         # Core difference: Send the message (handling audio for REDO, but can be used for new tasks too)
-        if project_info["return_type"] == "audio" and first_task.file_url:
+        if project_info.return_type == "audio" and first_task.file_url:
             audio_file = URLInputFile(str(first_task.file_url))
             await callback.message.answer_audio(
                 caption=task_msg,
@@ -86,11 +195,13 @@ async def process_and_send_task(
         await update_state_with_task(
             state, project_info, first_task, task_type, task_msg, redo_task=is_redo_task
         )
-        await set_task_state_by_type(callback.message, state)
+        # await set_task_state_by_type(callback.message, state) # Remove Later
+        await state.set_state(TaskState.waiting_for_submission)
 
     except Exception as e:
         logger.error(f"Error in task processing: {str(e)}")
-        await callback.message.answer("Error occurred, please try again.")
+        if callback.message != None:
+            await callback.message.answer("Error occurred, please try again.")
 
 def build_task_message(task: TaskDetailResponseModel, instruction, return_type):
     """Construct the appropriate message for the task type."""

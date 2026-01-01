@@ -8,6 +8,9 @@ class TaskState(StatesGroup):
     waiting_for_text = State()
     waiting_for_image = State()
     waiting_for_video = State()
+    waiting_for_submission = State()
+    waiting_for_location = State()
+
     reviewing = State()
     scoring = State()
     commenting = State()

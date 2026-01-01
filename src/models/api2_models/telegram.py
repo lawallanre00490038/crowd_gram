@@ -19,7 +19,7 @@ class LoginModel(BaseModel):
 
 class LoginResponseModel(BaseModel):
     """Model for login response."""
-    message: str
+    message: Optional[str] = None
     id: str
     email: str
     name: str

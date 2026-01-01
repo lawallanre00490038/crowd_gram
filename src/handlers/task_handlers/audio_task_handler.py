@@ -6,6 +6,7 @@ from loguru import logger
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
+from src.models.api2_models.task import SubmissionResult
 from src.utils.parameters import UserParams
 from src.states.tasks import AudioTaskSubmission
 from src.utils.downloader import download_telegram
@@ -89,7 +90,7 @@ async def send_audio_question_actual_tasks(
 
     # Persist minimal state for the real-task flow
     await state.update_data(
-        **{
+        {
             state_key_task_id: task.task_id,
             state_key_target_lang: language,
         }
@@ -185,8 +186,7 @@ async def handle_audio_submission(task_info, file_id, user_id, bot):
 
         return False, errors
 
-
-async def handle_api2_audio_submission(task_info, file_id, user_id, bot):
+async def handle_api2_audio_submission(task_info, file_id, user_id, bot) -> SubmissionResult:
     """
     Handles the audio submission for a given task.
 
@@ -220,7 +220,11 @@ async def handle_api2_audio_submission(task_info, file_id, user_id, bot):
         f"Audio check result for user {user_id}: {response.is_valid}, errors: {response.errors}, {quality_response}")
 
     if response.is_valid and (quality_response["message"] == "Approved"):
-        return True, new_path, APPROVED_TASK_MESSAGE
+        return SubmissionResult(
+            success=True,
+            response=APPROVED_TASK_MESSAGE,
+            metadata={"new_path": new_path}
+        )
     else:
         errors = ""
 
@@ -234,4 +238,8 @@ async def handle_api2_audio_submission(task_info, file_id, user_id, bot):
 
         logger.info(f"Failed Audio submission file id: {file_id}")
 
-        return False, new_path, errors
+        return SubmissionResult(
+            success = False,
+            response = errors,
+            metadata =  {"new_path": new_path}
+        )

@@ -15,3 +15,10 @@ class ReviewerTaskStatus(str, Enum):
     ACCEPTED = "accepted"
     REDO = "redo"
     REJECTED = "rejected"
+
+class TaskType(str, Enum):
+    AUDIO = "audio"
+    TEXT = "text"
+    VIDEO = "video"
+    IMAGE = "image"
+
