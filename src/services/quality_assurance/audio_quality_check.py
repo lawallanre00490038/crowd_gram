@@ -18,9 +18,9 @@ def reduce_noise(data, sr):
         sr=sr,
         stationary=False,
         time_constant_s=3.5,  # 3.5
-        freq_mask_smooth_hz=300.0,  # 2000.0
-        time_mask_smooth_ms=100.0,  # 100.0
-        thresh_n_mult_nonstationary=0.5  # 1.0
+        freq_mask_smooth_hz=300,  # 2000.0
+        time_mask_smooth_ms=100,  # 100.0
+        thresh_n_mult_nonstationary=1  # 1.0
     )
 
     return enhanced
@@ -82,7 +82,7 @@ def analyze_audio(data, sr):
 def check_audio_quality(
     file_path: Optional[str] = None,
     data: Optional[np.ndarray] = None,
-    sr: Optional[int] = None,
+    sr: Optional[int | float] = None,
     try_enhance: int = 1,
     min_snr_value: float = 40,
     min_snr_value_edit: float = 20,

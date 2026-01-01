@@ -50,7 +50,7 @@ async def handle_reviewer_task_start(
     project_info = extract_project_info(user_data)
 
     # --- 1. Validation ---
-    if not project_info or not project_info.get("email") or not project_info.get("id"):
+    if not project_info or not project_info.email or not project_info.id:
         await callback.message.answer("Please select a project first using /project.")
         return
 
@@ -81,7 +81,7 @@ async def handle_reviewer_task_start(
             await send_reviewer_task(callback.message, allocations[0], project_info)
 
             await state.update_data(
-                project_id=project_info["id"],
+                project_id=project_info.id,
                 submission_id=str(allocations[0].submission_id),
                 skipped_task=list(skipped),
             )
@@ -129,7 +129,7 @@ async def handle_reviewer_task_start(
     await send_reviewer_task(callback.message, first_task, project_info)
 
     await state.update_data(
-        project_id=project_info["id"],
+        project_id=project_info.id,
         submission_id=str(first_task.submission_id),
         skipped_task=list(skipped),
     )
@@ -146,17 +146,17 @@ async def send_reviewer_task(message: Message, first_task: ReviewerAllocation, p
         project_info: Dict containing project details (e.g., name, reviewer_instructions).
     """
 
-    submission = format_submission(first_task, project_info["return_type"])
+    submission = format_submission(first_task, project_info.return_type)
 
     caption = REVIEWER_TASK_MSG['intro'].format(
-        project_name=project_info["name"],
-        submission_type=project_info["return_type"],
+        project_name=project_info.name,
+        submission_type=project_info.return_type,
         payload_text=first_task.sentence,
         submission=submission,
-        reviewer_instruction=project_info["reviewer_instructions"]
+        reviewer_instruction=project_info.reviewer_instructions
     )
 
-    if project_info["return_type"] == "audio":
+    if project_info.return_type == "audio":
 
         audio_file = URLInputFile(str(first_task.file_url))
 
