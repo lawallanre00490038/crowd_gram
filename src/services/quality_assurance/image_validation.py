@@ -10,9 +10,6 @@ from .img_quality_checks import (
 
 from .img_size_check import check_image_file_size_and_resolution
 
-logger = logging.getLogger("image_validator")
-
-
 def validate_image_input(image_path: str,
                          entropy_threshold: float = 3.5,
                          niqe_threshold: float = 6.0) -> Dict[str, Any]:

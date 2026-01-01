@@ -1,5 +1,6 @@
-from pydantic import BaseModel, RootModel
-from typing import List, Optional, Union
+from ast import Dict
+from pydantic import BaseModel, RootModel, Field
+from typing import List, Optional, Union, Dict, Any
 from datetime import datetime
 from src.models.api2_models.task import PromptInfoModel
 
@@ -15,6 +16,7 @@ class SubmissionModel(BaseModel):
     payload_text: Optional[str] = None
     telegram_file_id: Optional[str] = None
     file: Optional[Union[str, dict]] = None
+    meta: Dict[str, Any] = Field(default_factory=dict) 
 
 
 class SubmissionResponseModel(BaseModel):
@@ -32,6 +34,7 @@ class SubmissionResponseModel(BaseModel):
     created_at: datetime
     updated_at: datetime
     prompt: Optional[PromptInfoModel] = None
+
 
 
 class SubmissionListResponseModel(RootModel[List[SubmissionResponseModel]]):

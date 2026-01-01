@@ -1,53 +1,49 @@
 from loguru import logger
-from PIL import Image, ImageEnhance
 
+from src.models.api2_models.task import SubmissionResult
 from src.services.quality_assurance.image_validation import validate_image_input
-from src.services.quality_assurance.img_quality_checks import run_image_quality_checks
-from src.services.quality_assurance.img_size_check import check_image_file_size_and_resolution
-from src.services.task_distributor import assign_task, get_full_task_detail, Task
 from src.utils.downloader import download_telegram
 from src.utils.image_processing import process_image
-from src.constant.auth_constants import TOKEN_LOCATION
 
-
-async def handle_image_submission(task_info, file_id, user_id, bot):
+async def handle_image_submission(file_id, bot):
     """
-    Handles the image submission for a given task.
-
-    Args:
-        task (Task): The task object containing details about the image task.
+    Handles image submission by validating quality, processing, and returning a SubmissionResult.
     """
-    task_info = Task(**task_info)
-    task_full_details = await get_full_task_detail(task_info.task_id, user_id)
 
+    # 1. Download image
     file_path = await download_telegram(file_id, bot=bot)
 
-    # Validate image input
-    is_valid, validation_msg = validate_image_input(image_path=file_path)
-    if not is_valid:
-        logger.warning(f"Image validation failed: {validation_msg}")
-        return {"status": "error", "message": f"Image validation failed: {validation_msg}"}
+    # 2. Run consolidated validation
+    # This now handles blur, entropy, NIQE, and size/resolution in one go
+    validation_report = validate_image_input(image_path=file_path)
+    
+    # Check if validation failed
+    if not validation_report["success"]:
+        errors = ", ".join(validation_report["fail_reasons"])
+        logger.warning(f"Image validation failed: {errors}")
+        
+        return SubmissionResult(
+            success=False,
+            response=errors,
+            metadata=validation_report["metadata"]
+        )
 
-    # Check image file size and resolution
-    size_ok, size_msg = check_image_file_size_and_resolution(
-        image_path=file_path)
-    if not size_ok:
-        logger.warning(f"Image size/resolution check failed: {size_msg}")
-        return {"status": "error", "message": f"Image size/resolution check failed: {size_msg}"}
+    # 3. Processing (Only if validation passes)
+    try:
+        # Update metadata with the new path
+        final_metadata = validation_report["metadata"]
+        final_metadata["new_path"] = file_path
 
-    # Run image quality checks
-    quality_ok, quality_msg = run_image_quality_checks(image_path=file_path)
-    if not quality_ok:
-        logger.warning(f"Image quality check failed: {quality_msg}")
-        return {"status": "error", "message": f"Image quality check failed: {quality_msg}"}
-
-    image = Image.open(file_path)
-
-    new_image = process_image(image)
-
-    new_path = file_path.replace(".jpg", "_enhanced.jpg")
-    new_image.save(new_path)
-    logger.info(f"New image saved at {new_path}")
-
-    logger.info("Image passed all checks.")
-    return {"status": "success", "message": "Image accepted and passed all checks."}
+        return SubmissionResult(
+            success=True,
+            response="Image accepted and passed all checks.",
+            metadata=final_metadata
+        )
+        
+    except Exception as e:
+        logger.error(f"Error during image processing: {e}")
+        return SubmissionResult(
+            success=False,
+            response=f"Processing error: {str(e)}",
+            metadata={"file_path": file_path}
+        )
