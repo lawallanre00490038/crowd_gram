@@ -157,11 +157,13 @@ REVIEWER_TASK_MSG = {
     "intro": (
         "🧾 New Submission to Review!\n\n"
         "📂 Project: {project_name}\n"
-        "🧠 Task Type: {submission_type}\n\n\n"
+        "🧠 Task Type: {submission_type}\n"
+        "\n"
         "📜 Review Instructions: <b>{reviewer_instruction}</b>\n"
         "───────────────────────────────────────────\n"
         "🗒️ Task Prompt: <b>{payload_text}</b>\n\n"
-        " Task Submission: {submission} \n"
+        " Task Submission: {submission} \n\n"
+        "{location_str}"  # Placeholder for the location line
         "───────────────────────────────────────────\n\n\n"
         "Please evaluate the submission carefully and choose an appropriate action."
     ),

@@ -176,7 +176,7 @@ async def handle_location(message: Message, state: FSMContext):
     
         # You now have both! (photo_id, lat, lon)
         await message.answer(
-            f" Report Received!\nCoords: {lat}, {lon}",
+            f" Location Received!",
             reply_markup=ReplyKeyboardRemove()
         )
 
