@@ -8,7 +8,7 @@ from typing import Optional, List
 
 from src.constant.task_constants import ReviewerTaskStatus
 from src.keyboards.inline import next_task_inline_kb, review_task_inline_kb
-from src.models.api2_models.projects import ReviewerTaskRequestModel
+from src.models.api2_models.projects import ExtractedProjectInfo, ReviewerTaskRequestModel
 from src.models.api2_models.reviewer import ReviewModel, ReviewSubmissionResponse, ReviewerAllocation, ReviewerTaskResponseModel
 from src.models.api2_models.task import TaskDetailResponseModel
 from src.responses.task_formaters import REVIEWER_TASK_MSG
@@ -21,8 +21,8 @@ async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING, 
     """Retrieve allocated tasks for the reviewer."""
 
     task_request = ReviewerTaskRequestModel(
-        project_id=project_info["id"],
-        reviewer_email=project_info["email"],
+        project_id=project_info.id,
+        reviewer_email=project_info.email,
         status=[status],
         # status=[ReviewerTaskStatus.PENDING],
         limit=1000,
@@ -38,13 +38,16 @@ async def fetch_reviewer_tasks(project_info, status=ReviewerTaskStatus.PENDING, 
 async def handle_reviewer_task_start(
     callback: CallbackQuery,
     state: FSMContext,
-    status_filter: Optional[str],
+    status_filter: ReviewerTaskStatus,
     no_tasks_message: str,
 ):
     """
     Reusable function to handle the core logic of fetching, sending, and updating
     state for reviewer tasks.
     """
+
+    if callback.message is None:
+        return
 
     user_data = await state.get_data()
     project_info = extract_project_info(user_data)
@@ -136,7 +139,7 @@ async def handle_reviewer_task_start(
 
 
 
-async def send_reviewer_task(message: Message, first_task: ReviewerAllocation, project_info):
+async def send_reviewer_task(message: Message, first_task: ReviewerAllocation, project_info: ExtractedProjectInfo):
     """
     Sends a reviewer task message with appropriate formatting depending on submission type.
 

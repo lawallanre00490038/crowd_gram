@@ -22,7 +22,7 @@ class LoginResponseModel(BaseModel):
     message: Optional[str] = None
     id: str
     email: str
-    name: str
+    name: Optional[str] = None
     telegram_id: Optional[str] = None
     role: str
     languages: Optional[List[str]] = []
