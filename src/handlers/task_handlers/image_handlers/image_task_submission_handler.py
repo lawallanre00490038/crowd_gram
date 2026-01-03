@@ -9,27 +9,26 @@ async def handle_image_submission(file_id, bot):
     """
     Handles image submission by validating quality, processing, and returning a SubmissionResult.
     """
-
-    # 1. Download image
-    file_path = await download_telegram(file_id, bot=bot)
-
-    # 2. Run consolidated validation
-    # This now handles blur, entropy, NIQE, and size/resolution in one go
-    validation_report = validate_image_input(image_path=file_path)
-    
-    # Check if validation failed
-    if not validation_report["success"]:
-        errors = ", ".join(validation_report["fail_reasons"])
-        logger.warning(f"Image validation failed: {errors}")
-        
-        return SubmissionResult(
-            success=False,
-            response=errors,
-            metadata=validation_report["metadata"]
-        )
-
-    # 3. Processing (Only if validation passes)
     try:
+
+        # 1. Download image
+        file_path = await download_telegram(file_id, bot=bot)
+
+        # 2. Run consolidated validation
+        # This now handles blur, entropy, NIQE, and size/resolution in one go
+        validation_report = validate_image_input(image_path=file_path)
+        
+        # Check if validation failed
+        if not validation_report["success"]:
+            errors = "\n * ".join(validation_report["fail_reasons"])
+            logger.warning(f"Image validation failed: {errors}")
+            
+            return SubmissionResult(
+                success=False,
+                response=errors,
+                metadata=validation_report["metadata"]
+            )
+
         # Update metadata with the new path
         final_metadata = validation_report["metadata"]
         final_metadata["new_path"] = file_path

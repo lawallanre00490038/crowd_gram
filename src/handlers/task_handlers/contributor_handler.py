@@ -41,7 +41,7 @@ async def validate_task(message: Message, task_type: TaskType) -> Optional[Submi
 
         return SubmissionResult(
             success=result['success'],
-            response="".join(result['fail_reasons']),
+            response="\n * ".join(result['fail_reasons']),
             metadata=result['metadata']
         )
     elif task_type == TaskType.AUDIO:
