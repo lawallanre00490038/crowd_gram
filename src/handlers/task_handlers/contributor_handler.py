@@ -217,7 +217,9 @@ def build_task_message(task: TaskDetailResponseModel, instruction, return_type):
     task_msg = TASK_MSG["intro"].format(
         task_type=task_type,
         task_instruction=instruction,
-        task_text=task_text
+        task_text=task_text,
+        max_submit = task.max_submissions_allowed,
+        cur_submit = task.current_submission_count
     )
     return task_msg, task_type
 
@@ -255,7 +257,9 @@ def build_redo_task_message(task: TaskDetailResponseModel, instruction, return_t
         task_instruction=instruction,
         task_text=task_text,
         previous_submission=submission,
-        reviewer_comment=reviewer_comment
+        reviewer_comment=reviewer_comment,
+        max_submit = task.max_submissions_allowed,
+        cur_submit = task.current_submission_count
     )
 
     return task_msg, task_type

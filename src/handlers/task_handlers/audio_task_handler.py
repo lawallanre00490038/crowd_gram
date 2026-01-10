@@ -229,7 +229,7 @@ async def handle_api2_audio_submission(task_info, file_id, user_id, bot) -> Subm
         errors = ""
 
         if not response.is_valid:
-            errors = "\n * ".join(response.errors)
+            errors = "\n *  ".join(response.errors)
         if quality_response["message"] != "Approved":
             errors += f"\n * Quality check: {quality_response['message']}"
         errors = ERROR_MESSAGE.format(errors=errors)

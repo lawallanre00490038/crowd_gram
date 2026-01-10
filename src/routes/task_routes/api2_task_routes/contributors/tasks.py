@@ -134,7 +134,7 @@ async def handle_submission_input(message: Message, state: FSMContext):
         return
     except Exception as e:
         logger.error(f"Error in handle_audio_task_submission: {str(e)}")
-        await message.answer("Error occurred, please try again.")
+        await message.answer("Error occurred, please submit again")
 
 
 @router.message(TaskState.waiting_for_location, F.location)
