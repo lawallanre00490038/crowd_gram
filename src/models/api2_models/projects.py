@@ -1,4 +1,5 @@
 from enum import Enum
+from optparse import Option
 from typing import List, Optional
 from datetime import datetime
 from src.constant.task_constants import ContributorTaskStatus, ReviewerTaskStatus, TaskType
@@ -41,6 +42,8 @@ class ExtractedProjectInfo(BaseModel):
     instruction: str
     return_type: TaskType
     require_geo: bool = False
+    max_submit: Optional[int] = None
+    cur_submit: Optional[int] = None
 
 
 class Project(BaseModel):

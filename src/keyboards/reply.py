@@ -96,3 +96,9 @@ request_location_keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True,
     one_time_keyboard=True
 )
+
+submit_submissions = ReplyKeyboardMarkup(
+    keyboard=[[KeyboardButton(text="Submit")]],
+    resize_keyboard=True,
+    one_time_keyboard=True
+)

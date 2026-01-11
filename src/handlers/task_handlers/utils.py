@@ -1,3 +1,4 @@
+from calendar import c
 from typing import List, Optional, Tuple, Union
 from loguru import logger
 from src.models.api2_models.projects import ContributorRole, ExtractedProjectInfo, ProjectReviewerDetailsResponseModel, ProjectTaskDetailsResponseModel, ProjectTaskRequestModel, ReviewerTaskRequestModel, UserProjectState
@@ -32,7 +33,9 @@ def extract_project_info(user_data: dict) -> Optional[ExtractedProjectInfo]:
             reviewer_instructions=project.reviewer_instructions,
             instruction=project.agent_instructions,
             return_type=project.return_type,
-            require_geo=project.require_geo
+            require_geo=project.require_geo,
+            max_submit = user_data.get("max_submit"),
+            cur_submit = user_data.get("cur_submit")
         )
 
     except Exception as e:
@@ -69,7 +72,9 @@ async def update_state_with_task(state, project_info: ExtractedProjectInfo, task
         sentence_id=task.sentence_id,
         task_type=task_type,
         task=task_msg,
-        redo_task=redo_task
+        redo_task=redo_task,
+        max_submit=task.max_submissions_allowed,
+        cur_submit=task.current_submission_count,
     )
     await state.set_state(TaskState.working_on_task)
 

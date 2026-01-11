@@ -1,34 +1,22 @@
-import json
-from re import sub
-from aiogram.types import Message, CallbackQuery
-from aiogram import Router, F
-from aiogram.fsm.context import FSMContext
+import datetime as dt
 from loguru import logger
 
-from aiogram.types import ReplyKeyboardRemove
+from aiogram import Router, F
+from aiogram.fsm.context import FSMContext
+from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 
+from src.handlers.task_handlers.utils import extract_project_info
 from src.constant.task_constants import ContributorTaskStatus, TaskType
 from src.handlers.task_handlers.contributor_handler import build_redo_task_message, build_task_message, finalize_submission, process_and_send_task, validate_task
-from src.handlers.task_handlers.utils import extract_project_info
+
+from src.keyboards.inline import skip_task_inline_kb
 from src.models.api2_models.agent import SubmissionModel
-from src.models.api2_models.task import SubmissionResult
 from src.routes.task_routes.task_formaters import ERROR_MESSAGE
-
-@property
-def meta(self):
-    raise NotImplementedError
-
-@meta.setter
-def meta(self, value):
-    raise NotImplementedError
 
 from src.states.tasks import TaskState
 from src.responses.task_formaters import SUBMISSION_RECIEVED_MESSAGE
 
-import datetime as dt
-
-
-from src.keyboards.reply import request_location_keyboard
+from src.keyboards.reply import request_location_keyboard, submit_submissions
 
 router = Router()
 
@@ -90,6 +78,12 @@ async def handle_submission_input(message: Message, state: FSMContext):
 
         if project_info == None:
             return
+        
+        # Validate the Submission
+        submission = SubmissionModel.model_validate(user_data)
+        submission.type = project_info.return_type
+        logger.debug(f"Submission data: {submission}")
+        await message.answer(SUBMISSION_RECIEVED_MESSAGE)
 
         # Validate Input
         result = await validate_task(message=message, task_type=project_info.return_type)
@@ -105,35 +99,45 @@ async def handle_submission_input(message: Message, state: FSMContext):
             await message.answer(errors)
             return
 
-        # Validate the Submission
-        submission = SubmissionModel.model_validate(user_data)
-        submission.type = project_info.return_type
-        logger.debug(f"Submission data: {submission}")
-        await message.answer(SUBMISSION_RECIEVED_MESSAGE)
-
         # If the input as text
         if project_info.return_type == TaskType.TEXT:
-            if message.text == None:
-                await message.answer("Please input a text")
-                return
+            if message.text != None:
+                submission.payload_text = message.text.strip()
 
-            submission.payload_text = message.text.strip()
+            new_path = None
+        else: 
+            new_path = result.metadata.get("new_path")
 
-        if not project_info.require_geo:
-            await finalize_submission(message, submission, result.metadata.get("new_path"), project_info, user_data)
+        # Check if the max submit < 1 and does not require geo
+        # Submit
+        if (project_info.max_submit is not None and project_info.cur_submit is not None):
+            logger.debug(f"Max Submit {project_info.max_submit} Cur Submit {project_info.cur_submit} Difference {project_info.max_submit - project_info.cur_submit}")
+            
+            if (project_info.max_submit - project_info.cur_submit) > 1:
+                await finalize_submission(message, submission, new_path, project_info, user_data)
 
-            return
-        
-        await state.update_data(geo_require_time =  dt.datetime.now().isoformat())
+                # await state.update_data(cur_submit = cur_submit + 1)
+
+                # await message.answer("Submit another image", 
+                #                      reply_markup=skip_task_inline_kb("agent"))
+                
+                return 
+
+        return 
     
-        await message.answer("Great! Now click the button below to share your location.", reply_markup=request_location_keyboard)
-        await state.update_data(submission = submission.model_dump())
-        await state.update_data(new_path = result.metadata.get("new_path"))
+        if not project_info.require_geo or (max_submit is None or  cur_submit is None) or ((max_submit - cur_submit) <= 1):
+            await finalize_submission(message, submission, new_path, project_info, user_data)
+            return
+
+        await state.update_data(submission = submission.model_dump(), 
+                                geo_require_time =  dt.datetime.now().isoformat(),
+                                new_path = [new_path])
         await state.set_state(TaskState.waiting_for_location)
+        await message.answer("Great! Now click the button below to share your location.", reply_markup=request_location_keyboard)
 
         return
     except Exception as e:
-        logger.error(f"Error in handle_audio_task_submission: {str(e)}")
+        logger.error(f"Error in handle_submission_input: {str(e)}")
         await message.answer("Error occurred, please submit again")
 
 
@@ -185,7 +189,6 @@ async def handle_location(message: Message, state: FSMContext):
         await finalize_submission(message, submission, new_path, project_info, user_data)
     
         return
-
     except Exception as e:
-        logger.error(f"Error in handle_audio_task_submission: {str(e)}")
+        logger.error(f"Error in handling location: {str(e)}")
         await message.answer("Error occurred, please try again.")

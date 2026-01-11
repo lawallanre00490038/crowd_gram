@@ -5,6 +5,6 @@ from src.config import ADMIN_IDS
 
 class AuthMiddleware(BaseMiddleware):
     async def __call__(self, handler, event, data):
-        if isinstance(event, Message) and event.from_user.id in ADMIN_IDS:
+        if isinstance(event, Message) and event.from_user is not None and event.from_user.id in ADMIN_IDS:
             return await handler(event, data)
         return
