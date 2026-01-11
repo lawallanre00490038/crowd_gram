@@ -9,7 +9,7 @@ from src.handlers.task_handlers.utils import extract_project_info
 from src.constant.task_constants import ContributorTaskStatus, TaskType
 from src.handlers.task_handlers.contributor_handler import build_redo_task_message, build_task_message, finalize_submission, process_and_send_task, validate_task
 
-from src.keyboards.inline import skip_task_inline_kb
+from src.keyboards.inline import next_task_inline_kb, skip_task_inline_kb
 from src.models.api2_models.agent import SubmissionModel
 from src.routes.task_routes.task_formaters import ERROR_MESSAGE
 
@@ -79,6 +79,17 @@ async def handle_submission_input(message: Message, state: FSMContext):
         if project_info == None:
             return
         
+        if (project_info.max_submit is not None and project_info.cur_submit is not None) and ((project_info.max_submit - project_info.cur_submit) <= 0):
+            redo_task = user_data.get("redo_task", False)
+            task_type = "redo" if redo_task else "task"
+
+            await message.answer("Maximum Image submitted for this task \n Begin the next task." if not redo_task else "Begin the next REDO task.",
+                        reply_markup=next_task_inline_kb(
+                            user_type="agent",
+                            task_type=task_type,
+                        ),
+                    )
+                 
         # Validate the Submission
         submission = SubmissionModel.model_validate(user_data)
         submission.type = project_info.return_type
@@ -107,31 +118,14 @@ async def handle_submission_input(message: Message, state: FSMContext):
             new_path = None
         else: 
             new_path = result.metadata.get("new_path")
-
-        # Check if the max submit < 1 and does not require geo
-        # Submit
-        if (project_info.max_submit is not None and project_info.cur_submit is not None):
-            logger.debug(f"Max Submit {project_info.max_submit} Cur Submit {project_info.cur_submit} Difference {project_info.max_submit - project_info.cur_submit}")
-            
-            if (project_info.max_submit - project_info.cur_submit) > 1:
-                await finalize_submission(message, submission, new_path, project_info, user_data)
-
-                # await state.update_data(cur_submit = cur_submit + 1)
-
-                # await message.answer("Submit another image", 
-                #                      reply_markup=skip_task_inline_kb("agent"))
-                
-                return 
-
-        return 
     
-        if not project_info.require_geo or (max_submit is None or  cur_submit is None) or ((max_submit - cur_submit) <= 1):
-            await finalize_submission(message, submission, new_path, project_info, user_data)
+        if not project_info.require_geo:
+            await finalize_submission(message, submission, new_path, project_info, user_data, state=state)
             return
 
         await state.update_data(submission = submission.model_dump(), 
                                 geo_require_time =  dt.datetime.now().isoformat(),
-                                new_path = [new_path])
+                                new_path = new_path)
         await state.set_state(TaskState.waiting_for_location)
         await message.answer("Great! Now click the button below to share your location.", reply_markup=request_location_keyboard)
 
@@ -186,7 +180,7 @@ async def handle_location(message: Message, state: FSMContext):
 
         project_info = extract_project_info(user_data)
 
-        await finalize_submission(message, submission, new_path, project_info, user_data)
+        await finalize_submission(message, submission, new_path, project_info, user_data, state = state) # type: ignore
     
         return
     except Exception as e:

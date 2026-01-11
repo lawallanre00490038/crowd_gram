@@ -61,7 +61,7 @@ async def validate_image_input(message: Message):
                 response="Please take a photograph",
                 metadata={})
     
-    return await handle_image_submission(file_id = message.photo[-1].file_id, bot = message.bot)
+    return await handle_image_submission(file_id = message.photo[-1].file_id, bot = message.bot) # type: ignore
     # return await handle_api2_audio_submission(task_info={}, file_id=message.voice.file_id if message.voice else message.audio.file_id, user_id=message.from_user.id, bot=message.bot)
 
 async def validate_audio_input(message: Message):
@@ -80,6 +80,7 @@ async def finalize_submission(
     new_path,
     project_info: ExtractedProjectInfo,
     user_data: dict,
+    state
 ):
     """
     Finalize a submission:
@@ -136,6 +137,11 @@ async def finalize_submission(
                             task_type=task_type,
                         ),
                     )
+                else:
+                    await state.update_data(cur_submit = project_info.cur_submit + 1)
+                    await message.answer("You another image: " \
+                    f"{project_info.cur_submit + 1} of {project_info.max_submit} submitted", 
+                    reply_markup=skip_task_inline_kb("agent"))
 
             return True
 
@@ -173,7 +179,12 @@ async def process_and_send_task(
             await callback.message.answer(project_not_selected_message)
             return
         
-        allocations = await fetch_user_tasks(project_info, status=status_filter, skip=len(skipped_task))
+        if status_filter == ContributorTaskStatus.ASSIGNED:
+            allocations = await fetch_user_tasks(project_info, status=ContributorTaskStatus.NOT_COMPLETED, skip=len(skipped_task))
+            if (allocations == None) or (len(allocations) == 0):
+                allocations = await fetch_user_tasks(project_info, status=status_filter, skip=len(skipped_task))
+        else:
+            allocations = await fetch_user_tasks(project_info, status=status_filter, skip=len(skipped_task))
         
         if (allocations == None) or (len(allocations) == 0):
             await callback.message.answer(no_tasks_message)

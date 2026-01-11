@@ -8,7 +8,8 @@ class ContributorTaskStatus(str, Enum):
     REDO = "redo"
     SUBMITTED = "submitted"
     ASSIGNED = "assigned"
-
+    NOT_COMPLETED = "not_completed"
+    COMPLETED = "completed"
 
 class ReviewerTaskStatus(str, Enum):
     PENDING = "pending"

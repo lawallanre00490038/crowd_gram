@@ -46,7 +46,7 @@ class AgentResults(BaseModel):
     quality: str
     orientation: str
     ocr: str
-    deduplication: str
+    deduplication: Optional[str] = None
     decision: str
 
 class ImageError(BaseModel):
