@@ -1,6 +1,8 @@
 from enum import Enum
+from optparse import Option
 from typing import List, Optional
 from datetime import datetime
+from xmlrpc.client import Boolean
 from src.constant.task_constants import ContributorTaskStatus, ReviewerTaskStatus, TaskType
 from src.models.api2_models.reviewer import ReviewerAllocation
 from src.models.api2_models.task import TaskDetailResponseModel
@@ -26,6 +28,8 @@ class ProjectModel(BaseModel):
         default="Please translate carefully."
     )
     return_type: TaskType = Field(default=TaskType.TEXT)
+    is_check_fmcg: Optional[Boolean] = None
+    is_reciept_keywords: Optional[Boolean] = None
 
 class UserProjectState(BaseModel):
     user_email: str
@@ -41,6 +45,11 @@ class ExtractedProjectInfo(BaseModel):
     instruction: str
     return_type: TaskType
     require_geo: bool = False
+    max_submit: Optional[int] = None
+    cur_submit: Optional[int] = None
+    is_check_fmcg: Optional[Boolean] = None
+    is_reciept_keywords: Optional[Boolean] = None
+    
 
 
 class Project(BaseModel):

@@ -9,8 +9,6 @@ from src.keyboards.inline import quiz_options_kb
 from src.routes.task_routes.task_formaters import IMAGE_REQUEST_MESSAGE
 
 # --- Utility Functions ---
-
-
 def format_caption(question: str, target_lang: str, annotation_type: str) -> str:
     """
     Formats the caption for open-ended image tasks.
@@ -29,8 +27,6 @@ async def handle_open_end_task(message: Message, quiz, target_lang: str):
     return await message.answer_photo(photo=image_file, caption=caption)
 
 # --- Handlers ---
-
-
 async def handle_close_end_task(message: Message, image_path: str, question: str, options: list):
     """
     Handles close-ended image task: sends image, question, and options as inline keyboard.
@@ -59,7 +55,6 @@ async def handle_request_task(message: Message, quiz, target_lang: str):
         example=example
     )
     return await message.answer(msg)
-
 
 async def handle_image_task(message: Message, quiz_data, target_lang: str):
     """

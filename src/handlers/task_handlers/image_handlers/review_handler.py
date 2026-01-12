@@ -11,8 +11,6 @@ from src.routes.task_routes.task_formaters import IMAGE_SUBMISSION_RECEIVED_MESS
 import asyncio
 
 # --- Description Review Handler ---
-
-
 async def handle_description_review(message: Message, state: FSMContext, annotation_type: str):
     """
     Review user input for image description based on required type from task_info.
@@ -42,20 +40,25 @@ async def handle_description_review(message: Message, state: FSMContext, annotat
 
 # --- Close-Ended Review Handler ---
 
-
 async def handle_closeEnd_submission(callback: CallbackQuery, options: List, answer: str):
     user_answer = callback.data
     await callback.answer()
+
+    if user_answer is None:
+        return 
+    
     # Use extract_option to map callback data to the actual option
     selected_option = extract_option(user_answer, options)
+
+    if callback.message is None:
+        return 
+    
     if selected_option == answer:
         await callback.message.answer('✅ Correct!')
     else:
         await callback.message.answer("❌ Incorrect. Try again:")
 
 # --- Request Task Submission Handler ---
-
-
 async def handle_request_submission(message: Message, state: FSMContext, bot, quiz):
     """
     Handles user submission for request tasks: expects an image, then a description (text or audio).

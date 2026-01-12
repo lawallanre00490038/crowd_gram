@@ -13,6 +13,8 @@ from src.handlers.task_handlers.audio_task_handler import handle_api2_audio_subm
 from src.handlers.task_handlers.image_handlers.image_task_submission_handler import handle_image_submission
 from src.handlers.task_handlers.utils import extract_project_info, fetch_user_tasks, set_task_state_by_type, update_state_with_task
 from src.keyboards.inline import next_task_inline_kb, skip_task_inline_kb
+from src.models.api2_models.agent import ImageAnalysisResponse, SubmissionResponseModel
+from src.models.api2_models.projects import ExtractedProjectInfo
 from src.models.api2_models.task import SubmissionResult, TaskDetailResponseModel
 from src.responses.task_formaters import TASK_MSG
 from src.services.quality_assurance.text_validation import validate_text_input
@@ -35,13 +37,16 @@ async def validate_task(message: Message, task_type: TaskType) -> Optional[Submi
 
     if task_type == TaskType.TEXT:
         if message.text == None:
-            return
+            return SubmissionResult(
+                success = False, 
+                response = "- YOu did not input a text",
+            )
         
         result = validate_text_input(message.text.strip(), task_lang=None, exp_task_script=None)
 
         return SubmissionResult(
             success=result['success'],
-            response="".join(result['fail_reasons']),
+            response="\n * ".join(result['fail_reasons']),
             metadata=result['metadata']
         )
     elif task_type == TaskType.AUDIO:
@@ -56,7 +61,7 @@ async def validate_image_input(message: Message):
                 response="Please take a photograph",
                 metadata={})
     
-    return await handle_image_submission(file_id = message.photo[-1].file_id, bot = message.bot)
+    return await handle_image_submission(file_id = message.photo[-1].file_id, bot = message.bot) # type: ignore
     # return await handle_api2_audio_submission(task_info={}, file_id=message.voice.file_id if message.voice else message.audio.file_id, user_id=message.from_user.id, bot=message.bot)
 
 async def validate_audio_input(message: Message):
@@ -73,9 +78,10 @@ async def finalize_submission(
     message,
     submission,
     new_path,
-    project_info,
+    project_info: ExtractedProjectInfo,
     user_data: dict,
-) -> bool:
+    state
+):
     """
     Finalize a submission:
     - Create submission (with or without file)
@@ -98,28 +104,46 @@ async def finalize_submission(
     if new_path and os.path.exists(new_path):
         os.remove(new_path)
 
-    if not submission_response:
-        await message.answer("Failed to submit your work. Please try again.")
-        return False
+    if isinstance(submission_response, ImageAnalysisResponse):
+        if not submission_response.success:
+            errors = "\n\n".join([f"⚠️ {err.code}\n ━━━━━━━━━━━━━━━\n❌ {err.message}\n💡 {err.instruction}" for err in submission_response.errors])
+            
+            await message.answer(f"There are some issues with your submission \n\n{errors}", reply_markup=skip_task_inline_kb("agent"))
+            
+            return False
+        
+    elif isinstance(submission_response, SubmissionResponseModel):
+        if not submission_response:
+            await message.answer("Failed to submit your work. Please try again.")
+            return False
+        else:
+            # Success message
+            await message.answer(
+                f"Your {project_info.return_type} submission has been received and recorded successfully. Thank you!"
+            )
 
-    # Success message
-    await message.answer(
-        f"Your {project_info.return_type} submission has been received and recorded successfully. Thank you!"
-    )
+            if (project_info.max_submit is not None and project_info.cur_submit is not None):
+                logger.debug(f"Max Submit {project_info.max_submit} Cur Submit {project_info.cur_submit} Difference {project_info.max_submit - project_info.cur_submit}")
 
-    # Next task logic
-    redo_task = user_data.get("redo_task", False)
-    task_type = "redo" if redo_task else "task"
+                if (project_info.max_submit - project_info.cur_submit) <= 1:
+                    # Next task logic
+                    redo_task = user_data.get("redo_task", False)
+                    task_type = "redo" if redo_task else "task"
 
-    await message.answer(
-        "Begin the next task." if not redo_task else "Begin the next REDO task.",
-        reply_markup=next_task_inline_kb(
-            user_type="agent",
-            task_type=task_type,
-        ),
-    )
+                    await message.answer(
+                        "Begin the next task." if not redo_task else "Begin the next REDO task.",
+                        reply_markup=next_task_inline_kb(
+                            user_type="agent",
+                            task_type=task_type,
+                        ),
+                    )
+                else:
+                    await state.update_data(cur_submit = project_info.cur_submit + 1)
+                    await message.answer("You another image: " \
+                    f"{project_info.cur_submit + 1} of {project_info.max_submit} submitted", 
+                    reply_markup=skip_task_inline_kb("agent"))
 
-    return True
+            return True
 
 
 # New Reusable Function
@@ -155,7 +179,12 @@ async def process_and_send_task(
             await callback.message.answer(project_not_selected_message)
             return
         
-        allocations = await fetch_user_tasks(project_info, status=status_filter, skip=len(skipped_task))
+        if status_filter == ContributorTaskStatus.ASSIGNED:
+            allocations = await fetch_user_tasks(project_info, status=ContributorTaskStatus.NOT_COMPLETED, skip=len(skipped_task))
+            if (allocations == None) or (len(allocations) == 0):
+                allocations = await fetch_user_tasks(project_info, status=status_filter, skip=len(skipped_task))
+        else:
+            allocations = await fetch_user_tasks(project_info, status=status_filter, skip=len(skipped_task))
         
         if (allocations == None) or (len(allocations) == 0):
             await callback.message.answer(no_tasks_message)
@@ -217,7 +246,9 @@ def build_task_message(task: TaskDetailResponseModel, instruction, return_type):
     task_msg = TASK_MSG["intro"].format(
         task_type=task_type,
         task_instruction=instruction,
-        task_text=task_text
+        task_text=task_text,
+        max_submit = task.max_submissions_allowed,
+        cur_submit = task.current_submission_count
     )
     return task_msg, task_type
 
@@ -255,7 +286,9 @@ def build_redo_task_message(task: TaskDetailResponseModel, instruction, return_t
         task_instruction=instruction,
         task_text=task_text,
         previous_submission=submission,
-        reviewer_comment=reviewer_comment
+        reviewer_comment=reviewer_comment,
+        max_submit = task.max_submissions_allowed,
+        cur_submit = task.current_submission_count
     )
 
     return task_msg, task_type

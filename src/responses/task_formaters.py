@@ -93,24 +93,23 @@ Focus on what is happening, the people, objects, and actions you see.
 ❌ Avoid unrelated details.
 """
 
-
+main_task_msg = (
+    "🆕 Your task is <b>{task_type}</b> task!\n\n"
+    "Instructions: <i>{task_instruction}</i>\n\n"
+    "───────────────────────────────────────────\n"
+    "Task Prompt: <b>{task_text}</b>\n"
+    "Max Submission: <b>{max_submit}</b>\n"
+    "Current Submission: <b>{cur_submit}</b>\n"
+    "───────────────────────────────────────────\n\n"
+)
 TASK_MSG = {
-    "intro": (
-        "🆕 Your task is <b>{task_type}</b> task!\n\n"
-        "Instructions: <i>{task_instruction}</i>\n\n"
-        "───────────────────────────────────────────\n"
-        "Task Prompt: <b>{task_text}</b>\n"
-        "───────────────────────────────────────────\n\n"
+    "intro": main_task_msg + (
         "📝 Please follow the instructions carefully and submit your work when done."
     ),
 
     "redo_task": (
-        "🔁 <b>Redo Required</b>\n\n"
-        "🆕 Your task is a <b>{task_type}</b> task that needs revision.\n\n"
-        "Instructions: <i>{task_instruction}</i>\n\n"
-        "───────────────────────────────────────────\n"
-        "Task Prompt: <b>{task_text}</b>\n"
-        "───────────────────────────────────────────\n\n"
+        "🔁 <b>Redo Required</b>\n\n" + 
+        main_task_msg + 
         "🧾 <b>Your Previous Submission:</b>\n<blockquote>{previous_submission}</blockquote>\n\n"
         "💬 <b>Your Audio contains:</b>\n{reviewer_comment}\n\n"
         "📝 Please revise your work according to the feedback above and resubmit when ready."

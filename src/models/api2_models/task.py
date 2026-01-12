@@ -128,6 +128,8 @@ class TaskDetailResponseModel(BaseModel):
     review_decision: Optional[ReviewDecision] = None  # Replaces review_info's decision field
     reviewed_at: Optional[datetime] = None  # Replaces review_info's timestamp
 
+    max_submissions_allowed: Optional[int] = None
+    current_submission_count: Optional[int] = None
     # Removed/Modified fields:
     # reviewer_email: Optional[str] = None  # Removed (not in new schema)
     # reviewer_name: Optional[str] = None    # Removed (not in new schema)

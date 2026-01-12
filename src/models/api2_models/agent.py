@@ -1,4 +1,6 @@
 from ast import Dict
+from optparse import Option
+from xmlrpc.client import Boolean
 from pydantic import BaseModel, RootModel, Field
 from typing import List, Optional, Union, Dict, Any
 from datetime import datetime
@@ -17,6 +19,8 @@ class SubmissionModel(BaseModel):
     telegram_file_id: Optional[str] = None
     file: Optional[Union[str, dict]] = None
     meta: Dict[str, Any] = Field(default_factory=dict) 
+    is_check_fmcg: Optional[Boolean] = False
+    is_reciept_keywords: Optional[Boolean] = False
 
 
 class SubmissionResponseModel(BaseModel):
@@ -34,6 +38,34 @@ class SubmissionResponseModel(BaseModel):
     created_at: datetime
     updated_at: datetime
     prompt: Optional[PromptInfoModel] = None
+    meta: Optional[Dict] = None 
+
+class ImageMetrics(BaseModel):
+    blur_score: float
+    rotation:  Optional[float] = None
+    skew_angle: Optional[float] = None
+
+class AgentResults(BaseModel):
+    quality: str
+    orientation: str
+    ocr: str
+    deduplication: Optional[str] = None
+    decision: str
+
+class ImageError(BaseModel):
+    code: str
+    message: str
+    instruction: str
+    impact: float
+    status: str
+
+class ImageAnalysisResponse(BaseModel):
+    success: bool
+    decision: str
+    confidence: float
+    errors: List[ImageError]
+    metrics: ImageMetrics
+    agent_results: AgentResults
 
 
 
