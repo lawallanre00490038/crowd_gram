@@ -1,5 +1,6 @@
 from ast import Dict
 from optparse import Option
+from xmlrpc.client import Boolean
 from pydantic import BaseModel, RootModel, Field
 from typing import List, Optional, Union, Dict, Any
 from datetime import datetime
@@ -18,6 +19,8 @@ class SubmissionModel(BaseModel):
     telegram_file_id: Optional[str] = None
     file: Optional[Union[str, dict]] = None
     meta: Dict[str, Any] = Field(default_factory=dict) 
+    is_check_fmcg: Optional[Boolean] = False
+    is_reciept_keywords: Optional[Boolean] = False
 
 
 class SubmissionResponseModel(BaseModel):

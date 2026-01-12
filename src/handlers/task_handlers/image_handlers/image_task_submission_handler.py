@@ -35,7 +35,6 @@ async def handle_image_submission(file_id, bot):
 
         final_metadata = {"new_path": file_path}
 
-
         return SubmissionResult(
             success=True,
             response="Image accepted and passed all checks.",

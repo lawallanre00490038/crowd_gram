@@ -13,7 +13,6 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from src.utils.file_url_handlers import build_file_section
 
-
 def extract_project_info(user_data: dict) -> Optional[ExtractedProjectInfo]:
     """
     Extract and validate project details from user data using Pydantic.
@@ -35,7 +34,9 @@ def extract_project_info(user_data: dict) -> Optional[ExtractedProjectInfo]:
             return_type=project.return_type,
             require_geo=project.require_geo,
             max_submit = user_data.get("max_submit"),
-            cur_submit = user_data.get("cur_submit")
+            cur_submit = user_data.get("cur_submit"),
+            is_check_fmcg=project.is_check_fmcg,
+            is_reciept_keywords=project.is_reciept_keywords
         )
 
     except Exception as e:
@@ -61,8 +62,6 @@ async def fetch_user_tasks(project_info: ExtractedProjectInfo, status=Contributo
     
     return allocations.allocations  
 
-
-
 async def update_state_with_task(state, project_info: ExtractedProjectInfo, task: TaskDetailResponseModel, task_type, task_msg, redo_task=False):
     """Store task info in FSM state."""
     await state.update_data(
@@ -77,7 +76,6 @@ async def update_state_with_task(state, project_info: ExtractedProjectInfo, task
         cur_submit=task.current_submission_count,
     )
     await state.set_state(TaskState.working_on_task)
-
 
 async def set_task_state_by_type(message: Message, state: FSMContext, task_type=None):
     try:
@@ -102,7 +100,6 @@ async def set_task_state_by_type(message: Message, state: FSMContext, task_type=
         await message.answer("Error occurred, please try again.")
 
     return
-
 
 def format_submission(first_task: ReviewerAllocation, submission_type: str):
     """

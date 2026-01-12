@@ -93,6 +93,9 @@ async def handle_submission_input(message: Message, state: FSMContext):
         # Validate the Submission
         submission = SubmissionModel.model_validate(user_data)
         submission.type = project_info.return_type
+        submission.is_reciept_keywords = project_info.is_reciept_keywords
+        submission.is_check_fmcg = project_info.is_check_fmcg
+        
         logger.debug(f"Submission data: {submission}")
         await message.answer(SUBMISSION_RECIEVED_MESSAGE)
 
