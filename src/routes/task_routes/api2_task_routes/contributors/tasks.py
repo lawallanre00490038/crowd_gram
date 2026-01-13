@@ -166,6 +166,8 @@ async def handle_location(message: Message, state: FSMContext):
 
         if (cur_time - prev_time) > dt.timedelta(seconds=240):
             await message.answer("Wait time exceeded", reply_markup=ReplyKeyboardRemove())
+            await state.set_state(TaskState.waiting_for_submission)
+
             return
 
         lat = message.location.latitude
