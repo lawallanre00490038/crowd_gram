@@ -95,6 +95,7 @@ async def handle_submission_input(message: Message, state: FSMContext):
         submission.type = project_info.return_type
         submission.is_reciept_keywords = project_info.is_reciept_keywords
         submission.is_check_fmcg = project_info.is_check_fmcg
+        submission.image_category = project_info.image_category
         
         logger.debug(f"Submission data: {submission}")
         await message.answer(SUBMISSION_RECIEVED_MESSAGE)

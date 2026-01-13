@@ -21,6 +21,7 @@ class SubmissionModel(BaseModel):
     meta: Dict[str, Any] = Field(default_factory=dict) 
     is_check_fmcg: Optional[Boolean] = False
     is_reciept_keywords: Optional[Boolean] = False
+    image_category: Optional[str] = None
 
 
 class SubmissionResponseModel(BaseModel):
