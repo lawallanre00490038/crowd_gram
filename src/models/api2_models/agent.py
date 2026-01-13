@@ -64,10 +64,8 @@ class ImageAnalysisResponse(BaseModel):
     decision: str
     confidence: float
     errors: List[ImageError]
-    metrics: ImageMetrics
-    agent_results: AgentResults
-
-
+    # metrics: ImageMetrics
+    # agent_results: AgentResults
 
 class SubmissionListResponseModel(RootModel[List[SubmissionResponseModel]]):
     """Model representing a list of submissions."""
