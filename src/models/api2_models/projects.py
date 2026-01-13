@@ -87,6 +87,10 @@ class Project(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+    is_check_fmcg: Optional[Boolean] = False
+    is_reciept_keywords: Optional[Boolean] = False
+    image_category: Optional[str] = None
+
     # Fixes cases where API sends null values instead of arrays
     @field_validator("predefined_comments", "review_decisions", mode="before")
     def default_to_list(cls, v):
