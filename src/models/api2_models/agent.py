@@ -21,6 +21,7 @@ class SubmissionModel(BaseModel):
     meta: Dict[str, Any] = Field(default_factory=dict) 
     is_check_fmcg: Optional[Boolean] = False
     is_reciept_keywords: Optional[Boolean] = False
+    image_category: Optional[str] = None
 
 
 class SubmissionResponseModel(BaseModel):
@@ -64,10 +65,8 @@ class ImageAnalysisResponse(BaseModel):
     decision: str
     confidence: float
     errors: List[ImageError]
-    metrics: ImageMetrics
-    agent_results: AgentResults
-
-
+    # metrics: ImageMetrics
+    # agent_results: AgentResults
 
 class SubmissionListResponseModel(RootModel[List[SubmissionResponseModel]]):
     """Model representing a list of submissions."""

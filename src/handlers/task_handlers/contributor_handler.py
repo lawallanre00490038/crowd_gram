@@ -139,7 +139,7 @@ async def finalize_submission(
                     )
                 else:
                     await state.update_data(cur_submit = project_info.cur_submit + 1)
-                    await message.answer("You another image: " \
+                    await message.answer("Image Submission: " \
                     f"{project_info.cur_submit + 1} of {project_info.max_submit} submitted", 
                     reply_markup=skip_task_inline_kb("agent"))
 

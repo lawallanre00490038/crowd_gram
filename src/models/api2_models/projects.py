@@ -30,6 +30,7 @@ class ProjectModel(BaseModel):
     return_type: TaskType = Field(default=TaskType.TEXT)
     is_check_fmcg: Optional[Boolean] = None
     is_reciept_keywords: Optional[Boolean] = None
+    image_category: Optional[str] = None 
 
 class UserProjectState(BaseModel):
     user_email: str
@@ -49,7 +50,7 @@ class ExtractedProjectInfo(BaseModel):
     cur_submit: Optional[int] = None
     is_check_fmcg: Optional[Boolean] = None
     is_reciept_keywords: Optional[Boolean] = None
-    
+    image_category: Optional[str] = None
 
 
 class Project(BaseModel):

@@ -24,6 +24,7 @@ async def create_submission(submission_data: SubmissionModel, file_path: str | N
     url = f"{BASE_URL_V2}/submission/projects/{submission_data.project_id}/agent"
     form = aiohttp.FormData()
 
+    logger.debug(submission_data.model_dump())
     # Add text fields
     for key, value in submission_data.model_dump(exclude_none=True, exclude={"file"}, mode="json").items():
         form.add_field(key, json.dumps(value) if isinstance(
@@ -57,11 +58,11 @@ async def create_submission(submission_data: SubmissionModel, file_path: str | N
                 if response.status == 200:
                     logger.info(f"Response: {data}")
                     return SubmissionResponseModel.model_validate(data)
-                else:
+                elif response.status == 422:
                     data = await response.json()
                     logger.info(f"Image Response: {data}")
                     return ImageAnalysisResponse.model_validate(data)
-                
+                else:
                     logger.debug(f"url: {url}, status: {response.status}, form data keys: {output}")
                     error_message = await response.text()
                     logger.error(

@@ -36,7 +36,8 @@ def extract_project_info(user_data: dict) -> Optional[ExtractedProjectInfo]:
             max_submit = user_data.get("max_submit"),
             cur_submit = user_data.get("cur_submit"),
             is_check_fmcg=project.is_check_fmcg,
-            is_reciept_keywords=project.is_reciept_keywords
+            is_reciept_keywords=project.is_reciept_keywords,
+            image_category = project.image_category
         )
 
     except Exception as e:

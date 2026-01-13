@@ -95,6 +95,7 @@ async def handle_submission_input(message: Message, state: FSMContext):
         submission.type = project_info.return_type
         submission.is_reciept_keywords = project_info.is_reciept_keywords
         submission.is_check_fmcg = project_info.is_check_fmcg
+        submission.image_category = project_info.image_category
         
         logger.debug(f"Submission data: {submission}")
         await message.answer(SUBMISSION_RECIEVED_MESSAGE)
@@ -165,6 +166,8 @@ async def handle_location(message: Message, state: FSMContext):
 
         if (cur_time - prev_time) > dt.timedelta(seconds=240):
             await message.answer("Wait time exceeded", reply_markup=ReplyKeyboardRemove())
+            await state.set_state(TaskState.waiting_for_submission)
+
             return
 
         lat = message.location.latitude
@@ -184,7 +187,8 @@ async def handle_location(message: Message, state: FSMContext):
         project_info = extract_project_info(user_data)
 
         await finalize_submission(message, submission, new_path, project_info, user_data, state = state) # type: ignore
-    
+        await state.set_state(TaskState.waiting_for_submission)
+        
         return
     except Exception as e:
         logger.error(f"Error in handling location: {str(e)}")
