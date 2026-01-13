@@ -185,7 +185,8 @@ async def handle_location(message: Message, state: FSMContext):
         project_info = extract_project_info(user_data)
 
         await finalize_submission(message, submission, new_path, project_info, user_data, state = state) # type: ignore
-    
+        await state.set_state(TaskState.waiting_for_submission)
+        
         return
     except Exception as e:
         logger.error(f"Error in handling location: {str(e)}")

@@ -24,6 +24,7 @@ async def create_submission(submission_data: SubmissionModel, file_path: str | N
     url = f"{BASE_URL_V2}/submission/projects/{submission_data.project_id}/agent"
     form = aiohttp.FormData()
 
+    logger.debug(submission_data.model_dump())
     # Add text fields
     for key, value in submission_data.model_dump(exclude_none=True, exclude={"file"}, mode="json").items():
         form.add_field(key, json.dumps(value) if isinstance(
