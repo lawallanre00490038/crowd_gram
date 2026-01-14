@@ -141,11 +141,65 @@ async def handle_submission_input(message: Message, state: FSMContext):
         await message.answer("Error occurred, please submit again")
 
 
+
 @router.message(TaskState.waiting_for_location, F.location)
 async def handle_location(message: Message, state: FSMContext):
     try:
-       
+        # 1. PRE-CHECK DATA (Keep this outside the loader so errors stop the flow)
+        user_data = await state.get_data()
+        submission_raw = user_data.get("submission")
+        date_object = user_data.get("geo_require_time")
+        new_path = user_data.get("new_path")
 
+        if not all([submission_raw, date_object, new_path]):
+            return await message.answer("❌ Missing session data. Please restart with /start_task")
+
+        # 2. TIME VALIDATION
+        prev_time = dt.datetime.fromisoformat(str(date_object))
+        if (dt.datetime.now() - prev_time) > dt.timedelta(seconds=240):
+            await message.answer("⏰ Wait time exceeded (4 mins). Please try again.", reply_markup=ReplyKeyboardRemove())
+            return await state.set_state(TaskState.waiting_for_submission)
+
+        # 3. PROCESSING START
+        # Use ONE loader and update the text to keep the chat clean
+        async with TelegramLoader(message, text="Storing location data") as loader:
+            
+            # Save Coords
+            submission = SubmissionModel.model_validate(submission_raw)
+            submission.meta = {
+                "lat": message.location.latitude, 
+                "lon": message.location.longitude
+            }
+            
+            # Add a tiny delay so the user sees the "Storing" step
+            await asyncio.sleep(0.5) 
+
+            # Update the existing loader text for the next step
+            await loader.update_text("Validating your image")
+            
+            project_info = extract_project_info(user_data)
+            
+            # Heavy processing step
+            await finalize_submission(
+                message, 
+                submission, 
+                new_path, 
+                project_info, 
+                user_data, 
+                state=state
+            )
+
+        # Loader closes here automatically
+        await state.set_state(TaskState.waiting_for_submission)
+        
+    except Exception as e:
+        logger.error(f"Error in handling location: {str(e)}")
+        await message.answer("⚠️ Processing failed. Please try again.")
+
+        
+# @router.message(TaskState.waiting_for_location, F.location)
+# async def handle_location(message: Message, state: FSMContext):
+    try:
         # Storing image block
         async with TelegramLoader(message, text="Wait while we store your location") as loader:
             user_data = await state.get_data()
@@ -208,12 +262,6 @@ async def handle_location(message: Message, state: FSMContext):
         # Once the block ends, the loader stops automatically
         await state.set_state(TaskState.waiting_for_submission)
 
-
-
-        # project_info = extract_project_info(user_data)
-
-        # await finalize_submission(message, submission, new_path, project_info, user_data, state = state) # type: ignore
-        # await state.set_state(TaskState.waiting_for_submission)
         
         return
     except Exception as e:
