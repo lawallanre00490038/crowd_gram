@@ -85,3 +85,13 @@ class TelegramLoader:
             await self.loading_msg.edit_text(f"✅ {self.text} Complete!")
         else:
             await self.loading_msg.edit_text(f"❌ {self.text} Failed.")
+    
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.task:
+            self.task.cancel()
+        
+        # Optional: Delete the loading message to keep the chat clean for the next step
+        try:
+            await self.loading_msg.delete()
+        except:
+            pass
