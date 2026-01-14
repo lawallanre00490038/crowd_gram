@@ -144,26 +144,28 @@ async def handle_submission_input(message: Message, state: FSMContext):
 @router.message(TaskState.waiting_for_location, F.location)
 async def handle_location(message: Message, state: FSMContext):
     try:
-        user_data = await state.get_data()
-        submission = user_data.get("submission")
-        date_object = user_data.get("geo_require_time")
-        new_path = user_data.get("new_path")
-
-        if date_object is None:
-            message.answer("Time not taken into context")
-
-        if submission is None:
-            message.answer("Submission not recieved file Please get task using /start_task")
-
-        if new_path is None:
-            message.answer("Result details is not available")
-
-        if message.location == None:
-            message.answer("Please supply your live location")
-            return  
+       
 
         # Storing image block
         async with TelegramLoader(message, text="Wait while we store your location") as loader:
+            user_data = await state.get_data()
+            submission = user_data.get("submission")
+            date_object = user_data.get("geo_require_time")
+            new_path = user_data.get("new_path")
+
+            if date_object is None:
+                message.answer("Time not taken into context")
+
+            if submission is None:
+                message.answer("Submission not recieved file Please get task using /start_task")
+
+            if new_path is None:
+                message.answer("Result details is not available")
+
+            if message.location == None:
+                message.answer("Please supply your live location")
+                return  
+
                
             submission = SubmissionModel.model_validate(submission)
             prev_time = dt.datetime.fromisoformat(str(date_object))
