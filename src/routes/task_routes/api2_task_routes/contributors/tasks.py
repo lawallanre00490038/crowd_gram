@@ -172,37 +172,57 @@ async def handle_location(message: Message, state: FSMContext):
 
             return
 
-        # lat = message.location.latitude
-        # lon = message.location.longitude
-        
-        # submission.meta = {
-        #     "lat": lat, 
-        #     "lon": lon
-        # }    
+
+        # # You now have both! (photo_id, lat, lon)
+        # await message.answer(
+        #     f"Location Received!",
+        #     reply_markup=ReplyKeyboardRemove()
+        # )
+
+        # # Storing image block
+        # async with TelegramLoader(message, text="Wait while we store your location") as loader:
+        #     lat = message.location.latitude
+        #     lon = message.location.longitude
+            
+        #     submission.meta = {"lat": lat, "lon": lon}
+
+
     
+        # # Validating image block
+        # async with TelegramLoader(message, text="Validating your image") as loader:
+            
+        #     # 2. Put your heavy work inside this block
+        #     project_info = extract_project_info(user_data)
+            
+        #     # While this runs, the dots will automatically blink!
+        #     await finalize_submission(
+        #         message, 
+        #         submission, 
+        #         new_path, 
+        #         project_info, 
+        #         user_data, 
+        #         state=state
+        #     )
 
-        # You now have both! (photo_id, lat, lon)
-        await message.answer(
-            f"Location Received!",
-            reply_markup=ReplyKeyboardRemove()
-        )
+        # # Once the block ends, the loader stops automatically
+        # await state.set_state(TaskState.waiting_for_submission)
 
-        # Storing image block
-        async with TelegramLoader(message, text="Wait while we store your location") as loader:
+
+        async with TelegramLoader(message, text="Storing location") as loader:
+            
+            # --- STEP 1: Storing ---
             lat = message.location.latitude
             lon = message.location.longitude
-            
+            submission = SubmissionModel.model_validate(user_data.get("submission"))
             submission.meta = {"lat": lat, "lon": lon}
-
-
-    
-        # Validating image block
-        async with TelegramLoader(message, text="Validating your image") as loader:
             
-            # 2. Put your heavy work inside this block
+            # Small sleep so the user actually sees the first status
+            await asyncio.sleep(0.8) 
+
+            # --- STEP 2: Change text for Validation ---
+            await loader.update_text("Validating your image")
+            
             project_info = extract_project_info(user_data)
-            
-            # While this runs, the dots will automatically blink!
             await finalize_submission(
                 message, 
                 submission, 
@@ -212,17 +232,11 @@ async def handle_location(message: Message, state: FSMContext):
                 state=state
             )
 
-        # Once the block ends, the loader stops automatically
+        # After the 'with' block, the loading message is deleted automatically
+        await message.answer("✅ Submission finalized successfully!")
         await state.set_state(TaskState.waiting_for_submission)
-
-
-
-        # project_info = extract_project_info(user_data)
-
-        # await finalize_submission(message, submission, new_path, project_info, user_data, state = state) # type: ignore
-        # await state.set_state(TaskState.waiting_for_submission)
-        
         return
+
     except Exception as e:
         logger.error(f"Error in handling location: {str(e)}")
         await message.answer("Error occurred, please try again.")
