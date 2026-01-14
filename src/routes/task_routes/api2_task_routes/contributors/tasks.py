@@ -10,6 +10,7 @@ from src.constant.task_constants import ContributorTaskStatus, TaskType
 from src.handlers.task_handlers.contributor_handler import build_redo_task_message, build_task_message, finalize_submission, process_and_send_task, validate_task
 
 from src.keyboards.inline import next_task_inline_kb, skip_task_inline_kb
+from src.loader import TelegramLoader
 from src.models.api2_models.agent import SubmissionModel
 from src.routes.task_routes.task_formaters import ERROR_MESSAGE
 
@@ -180,14 +181,40 @@ async def handle_location(message: Message, state: FSMContext):
     
         # You now have both! (photo_id, lat, lon)
         await message.answer(
-            f" Location Received!",
+            f"Location Received!",
             reply_markup=ReplyKeyboardRemove()
         )
 
-        project_info = extract_project_info(user_data)
+        try:
+            # 1. Use the Utility here
+            async with TelegramLoader(message, text="Validating your image") as loader:
+                
+                # 2. Put your heavy work inside this block
+                project_info = extract_project_info(user_data)
+                
+                # While this runs, the dots will automatically blink!
+                await finalize_submission(
+                    message, 
+                    submission, 
+                    new_path, 
+                    project_info, 
+                    user_data, 
+                    state=state
+                )
 
-        await finalize_submission(message, submission, new_path, project_info, user_data, state = state) # type: ignore
-        await state.set_state(TaskState.waiting_for_submission)
+            # Once the block ends, the loader stops automatically
+            await state.set_state(TaskState.waiting_for_submission)
+
+        except Exception as e:
+            logger.error(f"Error: {e}")
+            await message.answer("An error occurred during validation.")
+
+
+
+        # project_info = extract_project_info(user_data)
+
+        # await finalize_submission(message, submission, new_path, project_info, user_data, state = state) # type: ignore
+        # await state.set_state(TaskState.waiting_for_submission)
         
         return
     except Exception as e:

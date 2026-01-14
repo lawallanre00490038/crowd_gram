@@ -56,6 +56,14 @@ async def validate_task(message: Message, task_type: TaskType) -> Optional[Submi
 
 async def validate_image_input(message: Message):
     if not message.photo:
+
+        await message.answer(
+            "📸 Please take a live photo of the receipt using your camera.\n\n"
+            "• Do NOT upload images\n"
+            "• Do NOT forward photos\n"
+            "• Ensure the receipt is clear and flat"
+        )
+        
         return SubmissionResult(
                 success=False,
                 response="Please take a photograph",
