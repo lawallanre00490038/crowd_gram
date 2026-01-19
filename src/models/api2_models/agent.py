@@ -55,18 +55,18 @@ class AgentResults(BaseModel):
 
 class ImageError(BaseModel):
     code: str
-    message: str
-    instruction: str
-    impact: float
-    status: str
+    message: Optional[str] = None
+    instruction: Optional[str] = None
+    impact: Optional[float] = None
+    status: Optional[str] = None
 
 class ImageAnalysisResponse(BaseModel):
     success: bool
-    decision: str
-    confidence: float
-    errors: List[ImageError]
-    # metrics: ImageMetrics
-    # agent_results: AgentResults
+    decision: Optional[str] = None
+    confidence: Optional[float] = None
+    errors: Optional[List[ImageError]] = None
+    # metrics: Optional[ImageMetrics] = None
+    # agent_results: Optional[AgentResults] = None
 
 class SubmissionListResponseModel(RootModel[List[SubmissionResponseModel]]):
     """Model representing a list of submissions."""
